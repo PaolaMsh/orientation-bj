@@ -15,6 +15,9 @@ import HeaderParent from './components/headerParent';
 import Footer from './components/footer';
 import ScrollToTop from './components/ScrollToTop';
 import BoursesAides from './pages/bourses-aides';
+import Profile from './pages/profil';
+import Parcours from './pages/parcours';
+import Contact from './pages/contact';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, token } = useAuth();
@@ -97,6 +100,33 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <BoursesAides />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/profil"
+                        element={
+                            <ProtectedRoute>
+                                <Profile />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/contact"
+                        element={
+                            <ProtectedRoute>
+                                <Contact />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/parcours"
+                        element={
+                            <ProtectedRoute>
+                                <Parcours />
                             </ProtectedRoute>
                         }
                     />

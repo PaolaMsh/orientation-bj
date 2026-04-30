@@ -184,7 +184,7 @@ const Home = () => {
                 <div className="heros-image">
                     <img src="/etudiant.jpg" alt="Illustration étudiants" />
                 </div>
-            </section>
+            </section>+
 
             <section className="universities-section">
                 <div className="section-header">

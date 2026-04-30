@@ -109,6 +109,14 @@
     border-radius: 999px;
 }
 
+.to-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-top: 1rem;
+    color: white;
+}
+
 .to-section-label {
     text-align: center;
     font-size: 1.05rem;
