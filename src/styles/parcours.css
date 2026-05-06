@@ -135,7 +135,6 @@
 }
 
 .nav-item.active {
-    background: var(--primary-light);
     color: var(--primary-color);
 }
 
@@ -529,7 +528,7 @@
 }
 
 .advice-card {
-    background: var(--primary-light);
+    background: white;
     padding: 20px;
     border-radius: 16px;
     border: 1px solid var(--primary-border);
@@ -712,6 +711,27 @@
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
+
+.save-profile-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.cancel-edit-btn {
+    background: none;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
 
 /* Responsive */
 @media (max-width: 900px) {

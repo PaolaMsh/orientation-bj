@@ -83,7 +83,7 @@ const Testsorientations = () => {
                         <span className="to-hero-accent">qui te correspond</span>
                     </h1>
                     <p className="to-hero-sub">
-                        Un test scientifique de 18 questions pour identifier ton profil parmi 6
+                        Un test scientifique de questions pour identifier ton profil parmi 6
                         dimensions et te recommander les meilleures formations au Bénin.
                     </p>
                     <div className="to-hero-pills">
@@ -108,7 +108,7 @@ const Testsorientations = () => {
                         <div className="to-card-icon">📋</div>
                         <h2 className="to-card-title">Test complet</h2>
                         <p className="to-card-desc">
-                            Répondez aux 18 questions en une seule session pour obtenir un profil
+                            Répondez aux  questions en une seule session pour obtenir un profil
                             RIASEC complet et des recommandations précises.
                         </p>
                         <ul className="to-card-features">

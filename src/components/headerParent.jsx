@@ -128,13 +128,7 @@ const Header = () => {
                                             <FontAwesomeIcon icon={faUser} />
                                             <span>Mon profil</span>
                                         </button>
-                                        <button
-                                            onClick={handleAccessParcours}
-                                            className="menu-item"
-                                        >
-                                            <FontAwesomeIcon icon={faGraduationCap} />
-                                            <span>Mon parcours</span>
-                                        </button>
+                                        
                                         <button
                                             onClick={() => setShowLogoutConfirm(true)}
                                             className="menu-item logout-item"

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/orientations.css';
+import { saveTestResultGlobal } from '../pages/parcours';
+
 
 const IconDoc = () => (
     <svg
@@ -686,21 +688,53 @@ export default function Orientations() {
                 description: `L'axe ${axisNames[w] || w} est à développer.`,
             }));
 
-            setData({
-                scores: scores,
-                recommendations: MOCK_RECOMMENDATIONS,
-                assessmentInfo: {
-                    status: 'COMPLETED',
-                    completedAt: resultData.createdAt || new Date().toISOString(),
-                    coherence: resultData.consistencyLevel || 'MOYENNE',
-                    code: resultData.phase2Code || 'REA'
-                },
-                behavioral: {
-                    pointsForts: pointsForts,
-                    axesAmelioration: axesAmelioration,
-                },
-            });
-            setError(null);
+            // Dans fetchCompleteReport, vers la ligne 586-590
+setData({
+    scores: scores,
+    recommendations: MOCK_RECOMMENDATIONS,
+    assessmentInfo: {
+        status: 'COMPLETED',
+        completedAt: resultData.createdAt || new Date().toISOString(),
+        coherence: resultData.consistencyLevel || 'MOYENNE',
+        code: resultData.phase2Code || 'REA'
+    },
+    behavioral: {
+        pointsForts: pointsForts,
+        axesAmelioration: axesAmelioration,
+    },
+});
+
+// 🔴 AJOUTER ICI - Sauvegarde du test dans localStorage
+const riasecCode = resultData.phase2Code || 
+    Object.entries(scores)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([key]) => key[0])
+        .join('');
+
+const testResult = {
+    title: "Test RIASEC complet",
+    score: Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 6),
+    type: "RIASEC",
+    code: riasecCode,
+    fullReport: {
+        scores: scores,
+        code: riasecCode,
+        recommendations: MOCK_RECOMMENDATIONS,
+        completedAt: new Date().toISOString(),
+        assessmentId: id
+    }
+};
+
+// Sauvegarder dans localStorage
+const existingTests = localStorage.getItem('testHistory');
+let tests = existingTests ? JSON.parse(existingTests) : [];
+tests.unshift(testResult);
+localStorage.setItem('testHistory', JSON.stringify(tests));
+
+console.log('✅ Test sauvegardé:', testResult);
+
+setError(null);
         } catch (err) {
             console.error('❌ Erreur fetchCompleteReport:', err);
             setError(err.message || 'Erreur lors du chargement des résultats');

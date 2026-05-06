@@ -162,11 +162,13 @@
     display: block;
     font-size: 1.5rem;
     font-weight: 700;
+    color:rgb(15, 15, 15);  
 }
 
 .stat-label {
     font-size: 0.75rem;
     opacity: 0.85;
+    color: #e5e7eb;
 }
 
 .hero-wave {
@@ -910,21 +912,6 @@
     }
 }
 
-/* Ajouts au fichier bourses-aides.css */
-
-/* Badge Partenariat Bénin */
-.benin-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-    color: #1a1a2e;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin-left: 0.5rem;
-}
 
 .scholarship-card.benin-partnership {
     border-left: 4px solid #ffd700;

@@ -15,7 +15,6 @@ import HeaderParent from './components/headerParent';
 import Footer from './components/footer';
 import ScrollToTop from './components/ScrollToTop';
 import BoursesAides from './pages/bourses-aides';
-import Profile from './pages/profil';
 import Parcours from './pages/parcours';
 import Contact from './pages/contact';
 
@@ -104,14 +103,6 @@ function App() {
                         }
                     />
 
-                    <Route
-                        path="/profil"
-                        element={
-                            <ProtectedRoute>
-                                <Profile />
-                            </ProtectedRoute>
-                        }
-                    />
 
                     <Route
                         path="/contact"

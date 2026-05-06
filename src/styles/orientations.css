@@ -408,6 +408,7 @@
     font-size: 19px;
     font-weight: 700;
     color: #111827;
+    margin-bottom: 1px;
 }
 
 .ria-tabs {
@@ -419,6 +420,8 @@
     overflow: hidden;
     margin-bottom: 20px;
 }
+
+
 
 .ria-tab {
     flex: 0 0 auto;
@@ -440,7 +443,7 @@
 }
 
 .ria-tab:not(.active):hover {
-    background: #f9fafb;
+    background: var(--ria-primary-light);
     color: #374151;
 }
 

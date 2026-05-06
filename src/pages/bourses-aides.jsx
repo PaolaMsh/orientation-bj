@@ -951,12 +951,7 @@ const Scholarships = () => {
                                         />
                                         <span>{scholarship.type}</span>
                                     </div>
-                                    {scholarship.beninPartnership && (
-                                        <div className="benin-badge">
-                                            <FontAwesomeIcon icon={faHandsHelping} />
-                                            <span>Partenariat Bénin</span>
-                                        </div>
-                                    )}
+                                    
                                     <div className="card-actions">
                                         <button
                                             className={`save-btn ${savedScholarships.includes(scholarship.id) ? 'saved' : ''}`}

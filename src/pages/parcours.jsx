@@ -74,9 +74,32 @@ const IconScholarship = () => (
     </svg>
 );
 
+const IconEdit = () => (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M17 3l4 4L7 21H3v-4L17 3z" />
+    </svg>
+);
+
+const IconSave = () => (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+        <polyline points="17 21 17 13 7 13 7 21" />
+        <polyline points="7 3 7 8 15 8" />
+    </svg>
+);
+
+const IconCancel = () => (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+);
+
 export default function EspacePersonnel() {
     const navigate = useNavigate();
     const [activeMenu, setActiveMenu] = useState('dashboard');
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editFormData, setEditFormData] = useState({});
     const [userInfo, setUserInfo] = useState({
         name: 'Koffi Amoussou',
         email: 'koffi.amoussou@email.bj',
@@ -96,7 +119,7 @@ export default function EspacePersonnel() {
         progression: []
     });
 
-    // ✅ CORRECTION 1: updateEvolutionData avec useCallback
+    // Fonction pour mettre à jour les données d'évolution
     const updateEvolutionData = useCallback((tests) => {
         const completedTests = tests.filter(t => t.status === 'completed');
         const completedCount = completedTests.length;
@@ -114,7 +137,7 @@ export default function EspacePersonnel() {
         const lastThreeMonths = months.slice(Math.max(0, currentMonthIndex - 2), currentMonthIndex + 1);
         
         const progression = lastThreeMonths.map(month => {
-            const testInMonth = completedTests.find(t => t.date.includes(month));
+            const testInMonth = completedTests.find(t => t.date && t.date.includes(month));
             return { month: month, score: testInMonth ? testInMonth.score : null };
         });
 
@@ -141,21 +164,25 @@ export default function EspacePersonnel() {
             try {
                 const user = JSON.parse(storedUser);
                 setUserInfo(prev => ({ ...prev, ...user }));
+                setEditFormData(user);
             } catch(e) {}
+        } else {
+            setEditFormData(userInfo);
         }
     };
 
-    // ✅ CORRECTION 2: Supprimer le test par défaut
     const loadTestHistory = () => {
         const storedTests = localStorage.getItem('testHistory');
+        console.log('📂 Chargement testHistory:', storedTests);
         if (storedTests) {
             try {
                 const tests = JSON.parse(storedTests);
                 setTestHistory(tests);
                 updateEvolutionData(tests);
-            } catch(e) {}
+            } catch(e) {
+                console.error('Erreur parsing:', e);
+            }
         } else {
-            // Commencer avec un historique vide
             setTestHistory([]);
             updateEvolutionData([]);
         }
@@ -181,9 +208,9 @@ export default function EspacePersonnel() {
         }
     };
 
-    // ✅ CORRECTION 3: saveTestResult avec mise à jour fonctionnelle et useCallback
+    // ✅ Sauvegarde d'un résultat de test - MISE À JOUR IMMÉDIATE
     const saveTestResult = useCallback((testResult) => {
-        console.log('💾 Sauvegarde du test:', testResult);
+        console.log('💾 Sauvegarde immédiate du test:', testResult);
         
         const newTest = {
             id: Date.now(),
@@ -196,11 +223,14 @@ export default function EspacePersonnel() {
             fullReport: testResult.fullReport || {}
         };
 
-        // Mise à jour fonctionnelle de testHistory
+        // MISE À JOUR IMMÉDIATE de l'état (sans attendre localStorage)
         setTestHistory(prevHistory => {
             const updatedHistory = [newTest, ...prevHistory];
+            // Sauvegarde dans localStorage
             localStorage.setItem('testHistory', JSON.stringify(updatedHistory));
+            // Met à jour les données d'évolution
             updateEvolutionData(updatedHistory);
+            console.log('✅ Historique mis à jour:', updatedHistory.length, 'tests');
             return updatedHistory;
         });
         
@@ -220,26 +250,43 @@ export default function EspacePersonnel() {
             return updatedReports;
         });
         
-        alert(`✅ Test "${newTest.title}" enregistré avec succès ! Score: ${newTest.score}/100`);
+        // Notification visuelle
+        alert(`✅ Test "${newTest.title}" enregistré ! Score: ${newTest.score}/100`);
+        
+        // Si on est sur le tableau de bord, forcer un petit re-render
+        if (activeMenu === 'dashboard') {
+            setActiveMenu('dashboard'); // Force refresh du dashboard
+        }
+        
         return newTest;
-    }, [updateEvolutionData]);
+    }, [updateEvolutionData, activeMenu]);
 
-    const generatePdfReport = (test) => {
-        const newReport = {
-            id: Date.now(),
-            title: `Rapport ${test.type} - ${test.date}`,
-            date: test.date,
-            size: `${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 9)} Mo`,
-            type: test.type.toLowerCase(),
-            testId: test.id,
-            content: test.fullReport
-        };
+    // Mise à jour du profil
+    const handleEditProfile = () => {
+        setIsEditingProfile(true);
+        setEditFormData({ ...userInfo });
+    };
 
-        setPdfReports(prevReports => {
-            const updatedReports = [newReport, ...prevReports];
-            localStorage.setItem('pdfReports', JSON.stringify(updatedReports));
-            return updatedReports;
-        });
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSaveProfile = () => {
+        if (!editFormData.name || !editFormData.email) {
+            alert('Veuillez remplir les champs obligatoires (nom et email)');
+            return;
+        }
+
+        setUserInfo(editFormData);
+        localStorage.setItem('user', JSON.stringify(editFormData));
+        setIsEditingProfile(false);
+        alert('Profil mis à jour avec succès !');
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditingProfile(false);
+        setEditFormData(userInfo);
     };
 
     const handleDownloadReport = (report) => {
@@ -298,7 +345,7 @@ export default function EspacePersonnel() {
                         h1 { color: #3347df; }
                         .meta { color: #666; margin-bottom: 20px; }
                         pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
-                        button { margin-top: 20px; padding: 10px 20px; background: #3347df; color: white; border: none; border-radius: 8px; cursor: pointer; }
+                        button { margin: 20px 10px 0 0; padding: 10px 20px; background: #3347df; color: white; border: none; border-radius: 8px; cursor: pointer; }
                     </style>
                 </head>
                 <body>
@@ -328,34 +375,60 @@ export default function EspacePersonnel() {
         alert('Bourse retirée des favoris');
     };
 
-    // ✅ CORRECTION 4: useEffect avec saveTestResult comme dépendance
+    // ✅ Écouter les événements de nouveau test en temps réel
     useEffect(() => {
         const handleNewTestResult = (event) => {
-            console.log('📡 Événement reçu:', event.detail);
+            console.log('📡 Événement reçu en temps réel:', event.detail);
             if (event.detail && event.detail.testResult) {
+                // Sauvegarde immédiate
                 saveTestResult(event.detail.testResult);
             }
         };
         
         window.addEventListener('newTestResult', handleNewTestResult);
+        
+        // Vérifier s'il y a un test en attente (utile après redirection)
+        const pendingTest = sessionStorage.getItem('pendingTestResult');
+        if (pendingTest) {
+            try {
+                const testResult = JSON.parse(pendingTest);
+                console.log('📦 Test en attente détecté:', testResult);
+                saveTestResult(testResult);
+                sessionStorage.removeItem('pendingTestResult');
+            } catch(e) {
+                console.error('Erreur:', e);
+            }
+        }
+        
         return () => {
             window.removeEventListener('newTestResult', handleNewTestResult);
         };
     }, [saveTestResult]);
 
-    // ✅ CORRECTION 5: Rafraîchir quand la page devient visible
+    // ✅ Rafraîchir les données quand la page devient visible
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (!document.hidden) {
+                console.log('👁️ Page visible - vérification des nouvelles données');
                 loadTestHistory();
                 loadPdfReports();
                 loadSavedScholarships();
             }
         };
         
+        const handleStorageChange = (e) => {
+            if (e.key === 'testHistory') {
+                console.log('🔄 Changement localStorage détecté');
+                loadTestHistory();
+            }
+        };
+        
         document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('storage', handleStorageChange);
+        
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
 
@@ -368,12 +441,16 @@ export default function EspacePersonnel() {
         { id: 'profile', label: 'Mon profil', icon: <IconUser /> }
     ];
 
+    // Nombre de tests complétés pour affichage
+    const completedTestsCount = testHistory.filter(t => t.status === 'completed').length;
+    const lastTest = testHistory.filter(t => t.status === 'completed')[0];
+
     return (
         <div className="espace-container">
-            {/* En-tête */}
+            {/* En-tête avec stats en temps réel */}
             <div className="espace-header">
                 <div className="espace-header-content">
-                    <h1>👋 Espace personnel</h1>
+                    <h1> Espace personnel</h1>
                     <p>Suivez votre parcours d'orientation</p>
                 </div>
                 <div className="espace-header-stats">
@@ -398,7 +475,6 @@ export default function EspacePersonnel() {
                     <div className="user-card">
                         <h3>{userInfo.name}</h3>
                         <p>{userInfo.location}</p>
-                        <span className="member-badge">Membre depuis {userInfo.memberSince}</span>
                     </div>
                     <nav className="sidebar-nav">
                         {menuItems.map(item => (
@@ -419,10 +495,12 @@ export default function EspacePersonnel() {
                 </aside>
 
                 <main className="espace-main">
-                    {/* DASHBOARD */}
+                    {/* DASHBOARD - Affichage en temps réel */}
                     {activeMenu === 'dashboard' && (
                         <div className="dashboard-content">
                             <h2>Aperçu de votre parcours</h2>
+                            
+                          
                             <div className="progress-card">
                                 <h3>🎯 Progression globale</h3>
                                 <div className="progress-bar-container">
@@ -433,31 +511,49 @@ export default function EspacePersonnel() {
                                     <span>📊 Score moyen: {evolutionData.averageScore}/100</span>
                                 </div>
                             </div>
+                            
                             <div className="last-test-card">
                                 <h3>📝 Dernier test réalisé</h3>
-                                {testHistory.filter(t => t.status === 'completed')[0] && (
+                                {lastTest ? (
                                     <div className="test-result">
                                         <div className="test-info">
-                                            <strong>{testHistory.filter(t => t.status === 'completed')[0]?.title}</strong>
-                                            <span className="test-date"><IconCalendar /> {testHistory.filter(t => t.status === 'completed')[0]?.date}</span>
+                                            <strong>{lastTest.title}</strong>
+                                            <span className="test-date"><IconCalendar /> {lastTest.date}</span>
                                         </div>
-                                        <div className="test-score-badge">{testHistory.filter(t => t.status === 'completed')[0]?.score}/100</div>
+                                        <div className="test-score-badge">{lastTest.score}/100</div>
+                                        {lastTest.code && <div className="test-code-badge">Code: {lastTest.code}</div>}
+                                    </div>
+                                ) : (
+                                    <div className="no-test-message">
+                                        <p>Aucun test réalisé pour le moment.</p>
                                     </div>
                                 )}
-                                <button className="view-details-btn" onClick={() => setActiveMenu('history')}>Voir l'historique →</button>
+                                {lastTest && (
+                                    <button className="view-details-btn" onClick={() => setActiveMenu('history')}>Voir l'historique →</button>
+                                )}
                             </div>
+                            
                             <div className="quick-actions">
                                 <h3>⚡ Actions rapides</h3>
                                 <div className="actions-grid">
-                                    <button className="action-card" onClick={() => navigate('/tests')}><span>📋</span><span>Nouveau test</span></button>
-                                    <button className="action-card" onClick={() => setActiveMenu('reports')}><span>📄</span><span>Mes rapports</span></button>
-                                    <button className="action-card" onClick={() => navigate('/bourses')}><span>💰</span><span>Bourses</span></button>
+                                    <button className="action-card" onClick={() => navigate('/tests')}>
+                                        <span>📋</span>
+                                        <span>Nouveau test</span>
+                                    </button>
+                                    <button className="action-card" onClick={() => setActiveMenu('reports')}>
+                                        <span>📄</span>
+                                        <span>Mes rapports</span>
+                                    </button>
+                                    <button className="action-card" onClick={() => navigate('/bourses')}>
+                                        <span>💰</span>
+                                        <span>Bourses</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* HISTORIQUE DES TESTS */}
+                    {/* HISTORIQUE DES TESTS - Affichage en temps réel */}
                     {activeMenu === 'history' && (
                         <div className="history-content">
                             <div className="section-header">
@@ -468,24 +564,38 @@ export default function EspacePersonnel() {
                                 {testHistory.length === 0 ? (
                                     <div className="empty-state">
                                         <p>Aucun test réalisé pour le moment.</p>
-                                        <button className="new-test-btn" onClick={() => navigate('/tests')}>Commencer mon premier test</button>
+                                        <button className="new-test-btn" onClick={() => navigate('/tests')}>Commencer un test</button>
                                     </div>
                                 ) : (
                                     testHistory.map(test => (
                                         <div key={test.id} className={`test-card ${test.status === 'pending' ? 'pending' : ''}`}>
                                             <div className="test-card-header">
-                                                <div><h4>{test.title}</h4><span className="test-type">{test.type}</span></div>
-                                                {test.status === 'completed' ? <span className="status-badge completed">✓ Terminé</span> : <span className="status-badge pending">⏳ En attente</span>}
+                                                <div>
+                                                    <h4>{test.title}</h4>
+                                                    <span className="test-type">{test.type}</span>
+                                                </div>
+                                                {test.status === 'completed' ? (
+                                                    <span className="status-badge completed">✓ Terminé</span>
+                                                ) : (
+                                                    <span className="status-badge pending">⏳ En attente</span>
+                                                )}
                                             </div>
                                             <div className="test-card-body">
                                                 <div className="test-meta"><IconCalendar /> {test.date}</div>
-                                                {test.status === 'completed' && (<div className="test-score-large"><span className="score-number">{test.score}</span><span className="score-max">/100</span></div>)}
-                                                {test.code && (<div className="test-code">Code RIASEC: <strong>{test.code}</strong></div>)}
+                                                {test.status === 'completed' && (
+                                                    <div className="test-score-large">
+                                                        <span className="score-number">{test.score}</span>
+                                                        <span className="score-max">/100</span>
+                                                    </div>
+                                                )}
+                                                {test.code && (
+                                                    <div className="test-code">Code RIASEC: <strong>{test.code}</strong></div>
+                                                )}
                                             </div>
                                             <div className="test-card-footer">
-                                                 
-                                                    <button className="btn-resume" onClick={() => handleResumeTest(test)}>Reprendre le test</button>
-                                                
+                                                <button className="btn-resume" onClick={() => handleResumeTest(test)}>
+                                                    {test.status === 'completed' ? 'Voir les détails' : 'Reprendre le test'}
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -512,11 +622,18 @@ export default function EspacePersonnel() {
                                             <div className="report-icon">📄</div>
                                             <div className="report-info">
                                                 <h4>{report.title}</h4>
-                                                <div className="report-meta"><span>📅 {report.date}</span><span>💾 {report.size}</span></div>
+                                                <div className="report-meta">
+                                                    <span>📅 {report.date}</span>
+                                                    <span>💾 {report.size}</span>
+                                                </div>
                                             </div>
                                             <div className="report-actions">
-                                                <button className="action-icon" onClick={() => handleViewReport(report)} title="Voir"><IconEye /></button>
-                                                <button className="action-icon" onClick={() => handleDownloadReport(report)} title="Télécharger"><IconDownload /></button>
+                                                <button className="action-icon" onClick={() => handleViewReport(report)} title="Voir">
+                                                    <IconEye />
+                                                </button>
+                                                <button className="action-icon" onClick={() => handleDownloadReport(report)} title="Télécharger">
+                                                    <IconDownload />
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -526,7 +643,9 @@ export default function EspacePersonnel() {
                                 <div className="reports-summary">
                                     <h3>📊 Bilan personnalisé</h3>
                                     <p>Vous avez {pdfReports.length} rapport(s) disponible(s) dans votre espace.</p>
-                                    <button className="download-all-btn" onClick={handleDownloadAllReports}>📦 Télécharger tous les rapports</button>
+                                    <button className="download-all-btn" onClick={handleDownloadAllReports}>
+                                        📦 Télécharger tous les rapports
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -541,7 +660,13 @@ export default function EspacePersonnel() {
                                 <div className="simple-chart">
                                     {evolutionData.progression.map((item, idx) => (
                                         <div key={idx} className="chart-bar-wrapper">
-                                            <div className="chart-bar" style={{ height: item.score ? `${item.score}%` : '0%', backgroundColor: item.score ? '#3347df' : '#e5e7eb' }}>
+                                            <div 
+                                                className="chart-bar" 
+                                                style={{ 
+                                                    height: item.score ? `${item.score}%` : '0%', 
+                                                    backgroundColor: item.score ? '#3347df' : '#e5e7eb' 
+                                                }}
+                                            >
                                                 {item.score && <span className="bar-value">{item.score}</span>}
                                             </div>
                                             <span className="bar-label">{item.month}</span>
@@ -550,9 +675,27 @@ export default function EspacePersonnel() {
                                 </div>
                             </div>
                             <div className="stats-grid">
-                                <div className="stat-card"><div className="stat-icon">🏆</div><div><div className="stat-number">{evolutionData.bestScore}</div><div className="stat-label">Meilleur score</div></div></div>
-                                <div className="stat-card"><div className="stat-icon">📊</div><div><div className="stat-number">{evolutionData.averageScore}</div><div className="stat-label">Moyenne générale</div></div></div>
-                                <div className="stat-card"><div className="stat-icon">✅</div><div><div className="stat-number">{evolutionData.testsCompleted}</div><div className="stat-label">Tests complétés</div></div></div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">🏆</div>
+                                    <div>
+                                        <div className="stat-number">{evolutionData.bestScore}</div>
+                                        <div className="stat-label">Meilleur score</div>
+                                    </div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">📊</div>
+                                    <div>
+                                        <div className="stat-number">{evolutionData.averageScore}</div>
+                                        <div className="stat-label">Moyenne générale</div>
+                                    </div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">✅</div>
+                                    <div>
+                                        <div className="stat-number">{evolutionData.testsCompleted}</div>
+                                        <div className="stat-label">Tests complétés</div>
+                                    </div>
+                                </div>
                             </div>
                             <div className="advice-card">
                                 <h3>💡 Conseils personnalisés</h3>
@@ -595,8 +738,12 @@ export default function EspacePersonnel() {
                                                 </div>
                                             </div>
                                             <div className="scholarship-footer">
-                                                <button className="btn-view" onClick={() => window.open(scholarship.link, '_blank')}>Voir les détails →</button>
-                                                <button className="btn-remove" onClick={() => handleRemoveScholarship(scholarship.id)}>🗑️ Retirer</button>
+                                                <button className="btn-view" onClick={() => window.open(scholarship.link, '_blank')}>
+                                                    Voir les détails →
+                                                </button>
+                                                <button className="btn-remove" onClick={() => handleRemoveScholarship(scholarship.id)}>
+                                                    🗑️ Retirer
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -611,19 +758,91 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* MON PROFIL */}
+                    {/* MON PROFIL AVEC ÉDITION */}
                     {activeMenu === 'profile' && (
                         <div className="profile-content">
-                            <h2>👤 Informations personnelles</h2>
-                            <div className="profile-form">
-                                <div className="form-group"><label>Nom complet</label><input type="text" value={userInfo.name} readOnly disabled /></div>
-                                <div className="form-group"><label>Email</label><input type="email" value={userInfo.email} readOnly disabled /></div>
-                                <div className="form-group"><label>Téléphone</label><input type="tel" value={userInfo.phone} readOnly disabled /></div>
-                                <div className="form-group"><label>Ville</label><input type="text" value={userInfo.location} readOnly disabled /></div>
-                                <div className="form-group"><label>Membre depuis</label><input type="text" value={userInfo.memberSince} readOnly disabled /></div>
+                            <div className="section-header">
+                                <h2>👤 Informations personnelles</h2>
+                                {!isEditingProfile && (
+                                    <button className="edit-profile-btn" onClick={handleEditProfile}>
+                                        <IconEdit /> Modifier
+                                    </button>
+                                )}
                             </div>
-                            <div className="profile-actions">
-                                <button className="edit-profile-btn" onClick={() => alert('Fonctionnalité à venir')}>✏️ Modifier mon profil</button>
+                            <div className="profile-form">
+                                {isEditingProfile ? (
+                                    <>
+                                        <div className="form-group">
+                                            <label>Nom complet *</label>
+                                            <input 
+                                                type="text" 
+                                                name="name"
+                                                value={editFormData.name || ''} 
+                                                onChange={handleInputChange}
+                                                placeholder="Votre nom complet"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Email *</label>
+                                            <input 
+                                                type="email" 
+                                                name="email"
+                                                value={editFormData.email || ''} 
+                                                onChange={handleInputChange}
+                                                placeholder="votre@email.com"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Téléphone</label>
+                                            <input 
+                                                type="tel" 
+                                                name="phone"
+                                                value={editFormData.phone || ''} 
+                                                onChange={handleInputChange}
+                                                placeholder="+229 XX XX XX XX"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Ville</label>
+                                            <input 
+                                                type="text" 
+                                                name="location"
+                                                value={editFormData.location || ''} 
+                                                onChange={handleInputChange}
+                                                placeholder="Votre ville"
+                                            />
+                                        </div>
+                                       
+                                        <div className="profile-actions editing-actions">
+                                            <button className="save-profile-btn" onClick={handleSaveProfile}>
+                                                 Enregistrer
+                                            </button>
+                                            <button className="cancel-edit-btn" onClick={handleCancelEdit}>
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="form-group">
+                                            <label>Nom complet</label>
+                                            <input type="text" value={userInfo.name} readOnly disabled />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input type="email" value={userInfo.email} readOnly disabled />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Téléphone</label>
+                                            <input type="tel" value={userInfo.phone} readOnly disabled />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Ville</label>
+                                            <input type="text" value={userInfo.location} readOnly disabled />
+                                        </div>
+                                       
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -633,11 +852,40 @@ export default function EspacePersonnel() {
     );
 }
 
-// Fonctions utilitaires à exporter
+// ✅ Fonction globale à appeler APRÈS chaque test complété
 export const saveTestResultGlobal = (testResult) => {
-    console.log('📤 saveTestResultGlobal appelé:', testResult);
+    console.log('📤 Sauvegarde globale du test:', testResult);
+    
+    // Sauvegarde dans sessionStorage pour récupération après redirection
+    sessionStorage.setItem('pendingTestResult', JSON.stringify(testResult));
+    
+    // Dispatch immédiat pour mise à jour si la page est déjà ouverte
     const event = new CustomEvent('newTestResult', { detail: { testResult } });
     window.dispatchEvent(event);
+    
+    // Alternative : sauvegarde directe dans localStorage
+    const storedTests = localStorage.getItem('testHistory');
+    let tests = [];
+    if (storedTests) {
+        try {
+            tests = JSON.parse(storedTests);
+        } catch(e) {}
+    }
+    
+    const newTest = {
+        id: Date.now(),
+        title: testResult.title || "Test d'orientation",
+        date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        score: testResult.score,
+        type: testResult.type || "RIASEC",
+        code: testResult.code || "",
+        status: "completed",
+        fullReport: testResult.fullReport || {}
+    };
+    
+    tests.unshift(newTest);
+    localStorage.setItem('testHistory', JSON.stringify(tests));
+    console.log('✅ Test sauvegardé dans localStorage');
 };
 
 export const saveScholarship = (scholarship) => {
@@ -656,5 +904,7 @@ export const saveScholarship = (scholarship) => {
         
         const event = new CustomEvent('newScholarshipSaved', { detail: { scholarship } });
         window.dispatchEvent(event);
+        return true;
     }
+    return false;
 };
