@@ -420,6 +420,7 @@
     color: #6246e5;
 }
 
+
 .error-message {
     text-align: center;
     padding: 2rem;
@@ -477,6 +478,45 @@
     border-radius: 20px;
     font-weight: 500;
 }
+
+.phase2-sections-indicator {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin: 1rem 0 2rem 0;
+    padding: 1rem;
+    border-radius: 60px;
+    flex-wrap: wrap;
+}
+
+.sec {
+    display: flex;
+    flex-direction: row;        
+    gap: 0.2px; 
+    color: #f0f0f0;
+    background-color: #6366f1;  
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    position: relative;               
+}
+
+.section-check {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
 
 /* Spinner styles */
 .spinner-container {

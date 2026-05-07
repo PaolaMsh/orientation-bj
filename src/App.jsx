@@ -17,6 +17,8 @@ import ScrollToTop from './components/ScrollToTop';
 import BoursesAides from './pages/bourses-aides';
 import Parcours from './pages/parcours';
 import Contact from './pages/contact';
+import Guide from './pages/guide-riasec';
+import Faq from './pages/faq';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, token } = useAuth();
@@ -118,6 +120,22 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Parcours />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guide-riasec"
+                        element={
+                            <ProtectedRoute>
+                                <Guide />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/faq"
+                        element={
+                            <ProtectedRoute>
+                                <Faq />
                             </ProtectedRoute>
                         }
                     />

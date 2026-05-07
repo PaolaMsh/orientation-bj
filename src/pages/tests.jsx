@@ -148,12 +148,12 @@ const ProgressHeader = ({
                 <div className="phase-indicator">
                     <span className="phase-name">
                         {currentPhase === 'PHASE1'
-                            ? 'Phase 1 - Intérêts'
-                            : `Phase 2 - ${section?.label || currentSection}`}
+                            ? 'Phase 1 - '
+                            : `Phase 2 - `}
                     </span>
                     <span className="phase-desc">
                         {currentPhase === 'PHASE1'
-                            ? 'Évaluation de vos intérêts professionnels'
+                            ? 'Evaluation de vos intérêts professionnels'
                             : section?.description || 'Évaluation approfondie'}
                     </span>
                 </div>
@@ -624,18 +624,19 @@ const Test = () => {
                                 key={section.name}
                                 className={`section-badge ${section.name === currentSection ? 'active' : ''} ${phase2SectionsCompleted[section.name] ? 'completed' : ''}`}
                             >
+                                <div className='sec'>
                                 <span className="section-icon">{section.icon}</span>
                                 <span className="section-name">{section.label}</span>
                                 {phase2SectionsCompleted[section.name] && (
                                     <span className="section-check">✓</span>
                                 )}
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
 
                 <div className="page-indicator-header">
-                    <span>Questions - {currentBatch.length}</span>
                     {allAnswered && <span className="page-complete-badge">✓ Complété !</span>}
                 </div>
 
