@@ -25,53 +25,23 @@ const UniversitiesPage = () => {
             try {
                 setLoading(true);
                 const data = await universityService.getAllUniversities();
-                setUniversities(data);
-                setFilteredUniversities(data);
+                 // CORRECTION: Ajouter le chemin correct pour les images
+                const universitiesWithCorrectImages = data.map(uni => ({
+                    ...uni,
+                    // Si uni.image est juste le nom du fichier (ex: "universite.jpg")
+                    // ajouter le / devant
+                    image: uni.image && !uni.image.startsWith('/') && !uni.image.startsWith('http') 
+                        ? `/${uni.image}` 
+                        : uni.image || '/default-university.jpg'
+                }));
+                
+                setUniversities(universitiesWithCorrectImages);
+                setFilteredUniversities(universitiesWithCorrectImages);
             } catch (err) {
                 console.error('Erreur:', err);
                 setError('Impossible de charger les universités');
-
-                // Données par défaut en cas d'erreur
-                const defaultUniversities = [
-                    {
-                        id: 1,
-                        name: "Université d'Abomey-Calavi (UAC)",
-                        location: 'Abomey-Calavi, Bénin',
-                        students: 80000,
-                        formations: [
-                            'Informatique',
-                            'Droit',
-                            'Médecine',
-                            'Économie',
-                            'Génie civil',
-                        ],
-                        description: 'La plus grande université publique du Bénin',
-                        image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=250&fit=crop',
-                        website: 'https://www.uac.bj',
-                    },
-                    {
-                        id: 2,
-                        name: 'Université de Parakou (UP)',
-                        location: 'Parakou, Bénin',
-                        students: 35000,
-                        formations: ['Agronomie', 'Médecine vétérinaire', 'Droit', 'Gestion'],
-                        description: 'Deuxième grande université publique',
-                        image: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=250&fit=crop',
-                        website: 'https://www.up.bj',
-                    },
-                    {
-                        id: 3,
-                        name: "ESGIS - École Supérieure de Gestion d'Informatique et des Sciences",
-                        location: 'Cotonou, Bénin',
-                        students: 4000,
-                        formations: ['Informatique de gestion', 'Réseaux', 'Marketing', 'Finance'],
-                        description: 'École privée de référence dans les métiers du numérique',
-                        image: '/ESGIS.jpeg',
-                        website: 'https://www.esgis.bj/',
-                    },
-                ];
-                setUniversities(defaultUniversities);
-                setFilteredUniversities(defaultUniversities);
+                setUniversities([]);
+                setFilteredUniversities([]);
             } finally {
                 setLoading(false);
             }
