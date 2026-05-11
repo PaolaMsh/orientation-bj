@@ -4,7 +4,7 @@ import {
     faSearch,
     faMapMarkerAlt,
     faGraduationCap,
-    faUsers,
+    faEnvelope,
     faUniversity,
     faExternalLinkAlt,
 } from '@fortawesome/free-solid-svg-icons';
@@ -19,22 +19,22 @@ const UniversitiesPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Charger les universités depuis l'API
     useEffect(() => {
         const fetchUniversities = async () => {
             try {
                 setLoading(true);
                 const data = await universityService.getAllUniversities();
-                 // CORRECTION: Ajouter le chemin correct pour les images
-                const universitiesWithCorrectImages = data.map(uni => ({
+                const universitiesWithCorrectImages = data.map((uni) => ({
                     ...uni,
-                    // Si uni.image est juste le nom du fichier (ex: "universite.jpg")
-                    // ajouter le / devant
-                    image: uni.image && !uni.image.startsWith('/') && !uni.image.startsWith('http') 
-                        ? `/${uni.image}` 
-                        : uni.image || '/default-university.jpg'
+
+                    image:
+                        uni.coverUrl &&
+                        !uni.coverUrl.startsWith('/') &&
+                        !uni.coverUrl.startsWith('http')
+                            ? `/${uni.coverUrl}`
+                            : uni.coverUrl,
                 }));
-                
+
                 setUniversities(universitiesWithCorrectImages);
                 setFilteredUniversities(universitiesWithCorrectImages);
             } catch (err) {
@@ -50,7 +50,6 @@ const UniversitiesPage = () => {
         fetchUniversities();
     }, []);
 
-    // Filtrer les universités
     useEffect(() => {
         const term = searchTerm.toLowerCase().trim();
         if (term === '') {
@@ -58,9 +57,9 @@ const UniversitiesPage = () => {
         } else {
             const filtered = universities.filter(
                 (uni) =>
-                    uni.name.toLowerCase().includes(term) ||
-                    uni.location.toLowerCase().includes(term) ||
-                    uni.formations?.some((f) => f.toLowerCase().includes(term)),
+                    uni.acronym.toLowerCase().includes(term) ||
+                    uni.address.toLowerCase().includes(term) ||
+                    uni.email?.some((e) => e.toLowerCase().includes(term)),
             );
             setFilteredUniversities(filtered);
         }
@@ -125,20 +124,17 @@ const UniversitiesPage = () => {
                             </div>
                             <div className="uni-content">
                                 <h3>{uni.name}</h3>
-                                <div className="uni-location">
-                                    <FontAwesomeIcon icon={faMapMarkerAlt} />
-                                    <span>{uni.location}</span>
-                                </div>
-                                <div className="uni-students">
-                                    <FontAwesomeIcon icon={faUsers} />
-                                    <span>{uni.students?.toLocaleString()} étudiants</span>
-                                </div>
-                                <div className="uni-formations">
+                                <div className="uni-acronym">
                                     <FontAwesomeIcon icon={faGraduationCap} />
-                                    <span>
-                                        {uni.formations?.slice(0, 3).join(', ')}
-                                        {uni.formations?.length > 3 && '...'}
-                                    </span>
+                                    <span>{uni.acronym}</span>
+                                </div>
+                                <div className="uni-address">
+                                    <FontAwesomeIcon icon={faMapMarkerAlt} />
+                                    <span>{uni.address}</span>
+                                </div>
+                                <div className="uni-email">
+                                    <FontAwesomeIcon icon={faEnvelope} />
+                                    <span>{uni.email}</span>
                                 </div>
 
                                 <a
