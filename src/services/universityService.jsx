@@ -24,15 +24,21 @@ export const universityService = {
         }
     },
 
-    searchUniversities: async (query) => {
+   searchUniversities: async (query) => {
         try {
-    const response = await api.get(`/universities/search?q=${query}`); 
-    return response.data;
+            if (!query || query.trim() === '') {
+                return [];
+            }
+
+            const url = `/universities/search/?q=${encodeURIComponent(query.trim())}`;
+            console.log('URL complète:', api.defaults.baseURL + url);
+
+            const response = await api.get(url);
+            return response.data;
         } catch (error) {
-            console.error(`Aucune université trouvée pour ce nom "${query}":`, error);
+            console.error(`Erreur lors de la recherche pour "${query}":`, error);
+            console.error("Détails de l'erreur:", error.response?.data);
             throw error;
         }
-    }, 
-            
-
+    },
 };

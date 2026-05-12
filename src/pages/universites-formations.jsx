@@ -18,6 +18,7 @@ const UniversitiesPage = () => {
     const [showAll, setShowAll] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searching, setSearching] = useState(false);
 
     useEffect(() => {
         const fetchUniversities = async () => {
@@ -50,20 +51,47 @@ const UniversitiesPage = () => {
         fetchUniversities();
     }, []);
 
-    useEffect(() => {
-        const term = searchTerm.toLowerCase().trim();
-        if (term === '') {
+    const performSearch = async (query) => {
+        if (!query.trim()) {
+            // Si recherche vide, revenir à la liste complète
             setFilteredUniversities(universities);
-        } else {
-            const filtered = universities.filter(
-                (uni) =>
-                    uni.acronym.toLowerCase().includes(term) ||
-                    uni.address.toLowerCase().includes(term) ||
-                    uni.email?.some((e) => e.toLowerCase().includes(term)),
-            );
-            setFilteredUniversities(filtered);
+            return;
         }
-        setShowAll(false);
+
+        try {
+            setSearching(true);
+            const results = await universityService.searchUniversities(query);
+            // Adapter les URLs des images pour les résultats de recherche
+            const resultsWithCorrectImages = results.map((uni) => ({
+                ...uni,
+                image: uni.coverUrl && !uni.coverUrl.startsWith('/') && !uni.coverUrl.startsWith('http')
+                    ? `/${uni.coverUrl}`
+                    : uni.coverUrl,
+            }));
+            setFilteredUniversities(resultsWithCorrectImages);
+            setShowAll(false);
+        } catch (err) {
+            console.error('Erreur de recherche:', err);
+            setFilteredUniversities([]);
+            setError('Aucun résultat trouvé');
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    // Gestionnaire de changement avec debounce pour éviter trop d'appels API
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (searchTerm.trim() !== '') {
+                performSearch(searchTerm);
+            } else {
+                // Si le terme est vide, afficher toutes les universités
+                setFilteredUniversities(universities);
+                setShowAll(false);
+            }
+        }, 500); // Attendre 500ms après la dernière frappe
+
+        return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, universities]);
 
     const visibleCount = showAll ? filteredUniversities.length : 15;

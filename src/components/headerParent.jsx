@@ -124,9 +124,9 @@ const Header = () => {
                             {isAuthenticated ? (
                                 !showLogoutConfirm ? (
                                     <>
-                                        <button onClick={handleAccessProfile} className="menu-item">
+                                        <button onClick={handleAccessParcours} className="menu-item">
                                             <FontAwesomeIcon icon={faUser} />
-                                            <span>Mon profil</span>
+                                            <span>Mon parcours</span>
                                         </button>
                                         
                                         <button
