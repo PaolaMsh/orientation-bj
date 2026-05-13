@@ -184,10 +184,10 @@ const Home = () => {
                 <div className="heros-image">
                     <img src="/etudiant.jpg" alt="Illustration étudiants" />
                 </div>
-            </section>+
+            </section>
 
             <section className="universities-section">
-                <div className="section-header">
+                <div className="container">
                     <h2>Universités populaires</h2>
                     <p>Explorez les établissements les plus prestigieux du Bénin</p>
                 </div>
@@ -212,9 +212,7 @@ const Home = () => {
                                         {uni.programs || uni.formations?.length || 10} formations
                                     </span>
                                 </div>
-                                <Link to={`/university/${uni.id}`} className="university-link">
-                                    En savoir plus <FontAwesomeIcon icon={faArrowRight} />
-                                </Link>
+                                
                             </div>
                         </div>
                     ))}
@@ -222,7 +220,7 @@ const Home = () => {
             </section>
 
             <section className="programs-section">
-                <div className="section-header">
+                <div className="container">
                     <h2>Formations prisées</h2>
                     <p>Les programmes les plus demandés par les étudiants</p>
                 </div>
@@ -237,12 +235,7 @@ const Home = () => {
                             <span className="program-spots">
                                 {program.spots} places disponibles
                             </span>
-                            <Link
-                                to={`/program/${program.name.toLowerCase().replace(/\s/g, '-')}`}
-                                className="program-link"
-                            >
-                                En savoir plus
-                            </Link>
+                           
                         </div>
                     ))}
                 </div>
@@ -289,7 +282,7 @@ const Home = () => {
             </section>
 
             <section className="benefits-section">
-                <div className="section-header">
+                <div className="container">
                     <h2>Pourquoi nous choisir ?</h2>
                     <p>Nous vous aidons à prendre la bonne décision pour votre avenir</p>
                 </div>

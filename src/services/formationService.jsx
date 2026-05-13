@@ -39,6 +39,7 @@ export const formationService = {
                 throw new Error('id est requis');
             }
             const response = await api.get(`/formations/${id}`);
+            console.log('Formation récupérée:', response.data);
             return response.data;
         } catch (error) {
             console.error(`Erreur lors de la récupération de la formation ${id}:`, error);
@@ -54,6 +55,7 @@ export const formationService = {
             }
             // Si pas d'université spécifique, on peut faire une recherche vide ou appeler un endpoint général
             const response = await api.get('/formations');
+            console.log('Toutes les formations récupérées:', response.data);
             return response.data;
         } catch (error) {
             console.error('Erreur lors de la récupération de toutes les formations:', error);

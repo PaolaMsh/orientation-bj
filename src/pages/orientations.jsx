@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/orientations.css';
 import { saveTestResultGlobal } from '../pages/parcours';
+import { formationService } from '../services/formationService';
+
 
 
 const IconDoc = () => (
@@ -200,9 +202,7 @@ const IconPrinter = ({ size = 20 }) => (
         <rect x="8" y="11" width="8" height="2" />
     </svg>
 );
-// Au début du composant, après avoir les scores, ajoute :
 
-// Composant d'onglet générique
 function GenericTab({ axisKey, axisLabel, score, recommendations }) {
     const reco = recommendations?.[axisKey] || {
         formations: ['Aucune formation disponible'],
@@ -210,7 +210,6 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
         ecoles: ['Aucune école disponible'],
     };
 
-    // Définitions par axe
     const definitions = {
         REALISTIC: {
             text: "L'axe Réaliste valorise l'action concrète, la manipulation d'outils, les travaux manuels et techniques. Vous préférez les tâches tangibles, pratiques et bien définies.",
@@ -239,6 +238,29 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
     };
 
     const def = definitions[axisKey] || definitions.INVESTIGATIVE;
+
+    useEffect(() => {
+    const testAPI = async () => {
+        try {
+            // Test de recherche
+            const results = await formationService.searchFormations('informatique');
+            console.log('Résultats recherche:', results);
+            
+            // Test de formation par ID
+            const formation = await formationService.getFormationById(1);
+            console.log('Formation spécifique:', formation);
+            
+            // Test de toutes les formations
+            const allFormations = await formationService.getAllFormations();
+            console.log('Toutes les formations:', allFormations);
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
+    };
+    
+    testAPI();
+}, []);
 
     return (
         <>
@@ -321,7 +343,6 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
     );
 }
 
-// Données mockées pour fallback
 const MOCK_SCORES = {
     REALISTIC: 78,
     INVESTIGATIVE: 92,
@@ -331,44 +352,10 @@ const MOCK_SCORES = {
     CONVENTIONAL: 45,
 };
 
-const MOCK_RECOMMENDATIONS = {
-    INVESTIGATIVE: {
-        formations: [
-            'Master Data Science & IA',
-            'Doctorat en Physique/Chimie',
-            'Ingénierie Recherche & Développement',
-            'Master Biotechnologies',
-        ],
-        metiers: [
-            'Data Scientist',
-            'Chercheur en laboratoire',
-            'Ingénieur R&D',
-            'Analyste cybersécurité',
-            'Bio-informaticien',
-        ],
-        ecoles: [
-            'Ecole Polytechnique (X)',
-            'CentraleSupelec',
-            'INRIA - Institut national de recherche',
-            'Université Paris-Saclay (Master IA)',
-            'EPFL Lausanne - Doctorat sciences exactes',
-        ],
-    },
-    REALISTIC: {
-        formations: [
-            'BTS Maintenance industrielle',
-            'Licence Pro Génie Civil',
-            'DUT Génie Mécanique',
-        ],
-        metiers: ['Ingénieur Procédés', 'Technicien de maintenance', 'Conducteur de travaux'],
-        ecoles: [],
-    },
-};
 
-// Configuration API
+
 const API_BASE_URL = 'https://api-orientation-production.up.railway.app/api/v1';
 
-/* ─── RADAR CHART ─── */
 function RadarChart({ scores }) {
     const cx = 200,
         cy = 175,
@@ -478,7 +465,6 @@ function RadarChart({ scores }) {
     );
 }
 
-/* ─── TAB CONTENT ─── */
 function TabInvestigateur({ scores, recommendations }) {
     const score = scores?.INVESTIGATIVE || 0;
     const reco = recommendations?.INVESTIGATIVE || MOCK_RECOMMENDATIONS.INVESTIGATIVE;
@@ -617,7 +603,6 @@ function TabRealiste({ scores, recommendations }) {
     );
 }
 
-/* ─── MAIN COMPONENT ─── */
 export default function Orientations() {
     const navigate = useNavigate();
     const { assessmentId } = useParams();
@@ -631,7 +616,6 @@ export default function Orientations() {
         behavioral: null,
     });
 
-    // Fonction pour récupérer le rapport complet
     const fetchCompleteReport = async (id) => {
         setLoading(true);
         try {
@@ -688,7 +672,6 @@ export default function Orientations() {
                 description: `L'axe ${axisNames[w] || w} est à développer.`,
             }));
 
-            // Dans fetchCompleteReport, vers la ligne 586-590
 setData({
     scores: scores,
     recommendations: MOCK_RECOMMENDATIONS,
@@ -704,7 +687,6 @@ setData({
     },
 });
 
-// 🔴 AJOUTER ICI - Sauvegarde du test dans localStorage
 const riasecCode = resultData.phase2Code || 
     Object.entries(scores)
         .sort((a, b) => b[1] - a[1])
@@ -726,7 +708,6 @@ const testResult = {
     }
 };
 
-// Sauvegarder dans localStorage
 const existingTests = localStorage.getItem('testHistory');
 let tests = existingTests ? JSON.parse(existingTests) : [];
 tests.unshift(testResult);
@@ -754,7 +735,6 @@ setError(null);
         }
     };
 
-    // ✅ CORRIGÉ : useEffect pour charger les données (reste au même endroit)
     useEffect(() => {
         const loadData = async () => {
             console.log('🔍 AssessmentId from URL/Params:', assessmentId);
@@ -792,7 +772,6 @@ setError(null);
         window.print();
     };
 
-    // Trouver les scores dominants
     const getDominantScores = () => {
         const scores = data.scores || MOCK_SCORES;
         if (!scores) return [];
@@ -800,7 +779,6 @@ setError(null);
         return sorted.slice(0, 3);
     };
 
-    // ✅ CORRIGÉ : getTopAxes déplacé AVANT le if (loading)
     const getTopAxes = () => {
         const scores = data.scores || MOCK_SCORES;
         if (!scores) return [];
@@ -820,14 +798,12 @@ setError(null);
     const topScoreValue = dominantScores[0]?.[1] || 0;
     const code = dominantScores.map(([key]) => key[0]).join('');
 
-    // ✅ CORRIGÉ : useEffect pour initialiser l'onglet actif - DÉPLACÉ ICI (AVANT le if loading)
     useEffect(() => {
         if (topAxes.length > 0 && activeTab === 'investigative') {
             setActiveTab(topAxes[0].key);
         }
     }, [topAxes, activeTab]);
 
-    // Récupérer les observations comportementales (peut rester ici car ce n'est pas un hook)
     const behavioralData = data.behavioral || {
         pointsForts: [
             {
@@ -847,7 +823,6 @@ setError(null);
         ],
     };
 
-    // ✅ CORRIGÉ : Affichage chargement (garde les returns conditionnels à la fin)
     if (loading) {
         return (
             <div className="ria-body">
@@ -861,7 +836,6 @@ setError(null);
         );
     }
 
-    // Affichage erreur
     if (error) {
         return (
             <div className="ria-body">
@@ -893,7 +867,6 @@ setError(null);
     return (
         <div className="ria-body">
             <div className="ria-container">
-                {/* PAGE HEADER */}
                 <div className="ria-page-header">
                     <div className="ria-page-header-icon">
                         <IconBarChart />
@@ -902,7 +875,6 @@ setError(null);
                     <span className="ria-dominant-badge">dominants détectés</span>
                 </div>
 
-                {/* HEADER RAPPORT */}
                 <div className="ria-card ria-header-card">
                     <div className="orientations-header">
                         <h1>🎯 Mon rapport d'orientation RIASEC</h1>
@@ -938,7 +910,6 @@ setError(null);
                     </div>
                 </div>
 
-                {/* SECTION 1 : RESUME */}
                 <section className="ria-section">
                     <div className="ria-section-label">
                         <span className="ria-section-label-icon">
@@ -987,7 +958,6 @@ setError(null);
                     </div>
                 </section>
 
-                {/* SECTION 2 : DETAIL & OBSERVATIONS */}
                 <section className="ria-section">
                     <div className="ria-section-label">
                         <span className="ria-section-label-icon">
@@ -1049,7 +1019,6 @@ setError(null);
                     </div>
                 </section>
 
-                {/* SECTION 3 : PROFIL HEXAGRAMME */}
                 <section className="ria-section">
                     <div className="ria-section-label">
                         <span className="ria-section-label-icon">
@@ -1135,7 +1104,6 @@ setError(null);
                     )}
                 </section>
 
-                {/* BOUTONS DE NAVIGATION */}
                 <div className="Buttons">
                     <button className="button" onClick={() => navigate('/tests')}>
                         Retour
