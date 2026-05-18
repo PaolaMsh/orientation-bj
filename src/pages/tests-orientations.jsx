@@ -49,7 +49,7 @@ const Testsorientations = () => {
                 // Adapter selon la structure de la réponse
                 if (response.data) {
                     setStats({
-                        totalTests: response.data.totalTests || response.data.total || 12543,
+                        totalTests: response.data.totalTests || response.data.total || 50,
                         avgTime: response.data.avgTime || response.data.averageTime || 12,
                     });
                 } else if (response.data.totalTests) {
@@ -59,12 +59,12 @@ const Testsorientations = () => {
                     });
                 } else {
                     // Données par défaut
-                    setStats({ totalTests: 12543, avgTime: 12 });
+                    setStats({ totalTests: 50, avgTime: 12 });
                 }
             } catch (error) {
                 console.error('Erreur chargement stats:', error);
                 // Données par défaut en cas d'erreur
-                setStats({ totalTests: 12543, avgTime: 12 });
+                setStats({ totalTests: 50, avgTime: 12 });
             } finally {
                 setLoading(false);
             }

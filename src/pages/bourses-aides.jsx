@@ -667,7 +667,7 @@ const Scholarships = () => {
         { icon: faGlobeAfrica, value: '50+', label: "Pays d'accueil" },
         { icon: faUsers, value: '10000+', label: 'Étudiants aidés' },
         { icon: faEuroSign, value: '€50M+', label: 'Financements' },
-        { icon: faPalette, value: '200+', label: 'Bourses artistiques' },
+        { icon: faPalette, value: '100+', label: 'Bourses artistiques' },
         { icon: faHandsHelping, value: '15', label: 'Partenaires Bénin' },
     ];
 

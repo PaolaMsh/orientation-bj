@@ -533,18 +533,35 @@ const Test = () => {
                     sessionData.sessionToken,
                     sessionData.assessmentId,
                 );
-                 /*
-
-                if (progressData.status === 'COMPLETED') {
-                    navigate('/orientations', {
-                        state: {
-                            assessmentId: sessionData.assessmentId,
-                            sessionToken: sessionData.sessionToken,
-                        },
-                    });
+                // 🔥 VÉRIFICATION : Si le test est terminé, on en crée un nouveau
+            if (progressData.status === 'COMPLETED') {
+                console.log('⚠️ Test déjà terminé, création d\'un nouveau...');
+                
+                // Nettoyer l'ancien
+                localStorage.removeItem('session_token');
+                localStorage.removeItem('assessment_id');
+                
+                // Créer une nouvelle session
+                const newSession = await initializeSession();
+                if (newSession) {
+                    setSessionToken(newSession.sessionToken);
+                    setAssessmentId(newSession.assessmentId);
+                    
+                    // Recharger la progression
+                    const newProgress = await resolveProgress(
+                        newSession.sessionToken,
+                        newSession.assessmentId
+                    );
+                    
+                    const phase = newProgress.currentPhase || 'PHASE1';
+                    const section = newProgress.currentSection || 
+                        (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
+                    
+                    await fetchBatch(phase, section, newSession.sessionToken, newSession.assessmentId);
+                    setLoading(false);
                     return;
                 }
-                 */
+            }
 
                 const phase = progressData.currentPhase || 'PHASE1';
                 const section =
@@ -636,9 +653,7 @@ const Test = () => {
                     </div>
                 )}
 
-                <div className="page-indicator-header">
-                    {allAnswered && <span className="page-complete-badge">✓ Complété !</span>}
-                </div>
+               
 
                 {loadingBatch ? (
                     <Spinner size={30} /> 

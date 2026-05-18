@@ -44,10 +44,7 @@ function App() {
 
                     <Route
                         path="/universites-formations"
-                        element={
-                            <ProtectedRoute>
-                                <UniversitiesPage />
-                            </ProtectedRoute>
+                        element={<UniversitiesPage />
                         }
                     />
 
