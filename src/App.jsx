@@ -42,11 +42,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/accueil" replace />} />
                     <Route path="/accueil" element={<Home />} />
 
-                    <Route
-                        path="/universites-formations"
-                        element={<UniversitiesPage />
-                        }
-                    />
+                    <Route path="/universites-formations" element={<UniversitiesPage />} />
 
                     <Route
                         path="/metiers-porteurs"
@@ -101,7 +97,6 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-
 
                     <Route
                         path="/contact"

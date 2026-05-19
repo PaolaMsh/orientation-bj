@@ -16,7 +16,12 @@
 .espace-container {
     min-height: 100vh;
     background: #f5f7fa;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
 }
 
 /* En-tête */
@@ -79,13 +84,11 @@
     background: white;
     border-radius: 20px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 20px;
     height: fit-content;
 }
-
-
 
 .user-card h3 {
     font-size: 18px;
@@ -149,7 +152,8 @@
     border-top: 1px solid #e5e7eb;
 }
 
-.help-btn, .support-btn {
+.help-btn,
+.support-btn {
     flex: 1;
     padding: 10px;
     border-radius: 10px;
@@ -166,7 +170,7 @@
     background: white;
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .espace-main h2 {
@@ -176,14 +180,20 @@
 }
 
 /* Dashboard */
-.progress-card, .last-test-card, .quick-actions, .next-test-card {
+.progress-card,
+.last-test-card,
+.quick-actions,
+.next-test-card {
     background: #f9fafb;
     border-radius: 16px;
     padding: 20px;
     margin-bottom: 25px;
 }
 
-.progress-card h3, .last-test-card h3, .quick-actions h3, .next-test-card h3 {
+.progress-card h3,
+.last-test-card h3,
+.quick-actions h3,
+.next-test-card h3 {
     font-size: 16px;
     margin-bottom: 15px;
     color: #1f2937;
@@ -239,7 +249,8 @@
     font-weight: 600;
 }
 
-.view-details-btn, .resume-test-btn {
+.view-details-btn,
+.resume-test-btn {
     background: none;
     border: none;
     color: var(--primary-color);
@@ -288,7 +299,8 @@
     margin-bottom: 25px;
 }
 
-.new-test-btn, .generate-btn {
+.new-test-btn,
+.generate-btn {
     background: var(--primary-color);
     color: white;
     border: none;
@@ -683,12 +695,13 @@
     margin-top: 30px;
 }
 
-.edit-profile-btn, .change-password-btn {
+.edit-profile-btn,
+.change-password-btn {
     padding: 12px 24px;
     border-radius: 10px;
     cursor: pointer;
     font-weight: 500;
-    margin-left:20rem;
+    margin-left: 20rem;
 }
 
 .edit-profile-btn {
@@ -732,39 +745,38 @@
     font-weight: 500;
 }
 
-
 /* Responsive */
 @media (max-width: 900px) {
     .espace-body {
         flex-direction: column;
     }
-    
+
     .espace-sidebar {
         width: 100%;
         position: static;
     }
-    
+
     .sidebar-nav {
         flex-direction: row;
         flex-wrap: wrap;
     }
-    
+
     .nav-item {
         width: auto;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .actions-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .simple-chart {
         gap: 20px;
     }
-    
+
     .chart-bar {
         width: 40px;
     }
@@ -775,11 +787,11 @@
         flex-direction: column;
         text-align: center;
     }
-    
+
     .espace-main {
         padding: 20px;
     }
-    
+
     .test-card-body {
         flex-direction: column;
         align-items: flex-start;

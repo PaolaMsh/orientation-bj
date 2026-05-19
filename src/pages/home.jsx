@@ -212,7 +212,6 @@ const Home = () => {
                                         {uni.programs || uni.formations?.length || 10} formations
                                     </span>
                                 </div>
-                                
                             </div>
                         </div>
                     ))}
@@ -235,7 +234,6 @@ const Home = () => {
                             <span className="program-spots">
                                 {program.spots} places disponibles
                             </span>
-                           
                         </div>
                     ))}
                 </div>

@@ -24,7 +24,7 @@ export const universityService = {
         }
     },
 
-   searchUniversities: async (query) => {
+    searchUniversities: async (query) => {
         try {
             if (!query || query.trim() === '') {
                 return [];

@@ -124,11 +124,14 @@ const Header = () => {
                             {isAuthenticated ? (
                                 !showLogoutConfirm ? (
                                     <>
-                                        <button onClick={handleAccessParcours} className="menu-item">
+                                        <button
+                                            onClick={handleAccessParcours}
+                                            className="menu-item"
+                                        >
                                             <FontAwesomeIcon icon={faUser} />
                                             <span>Mon parcours</span>
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => setShowLogoutConfirm(true)}
                                             className="menu-item logout-item"

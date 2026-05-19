@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
 
-
 // --- Small presentational pieces (single responsibility) ---
 const EmotionSvgs = {
     sad: (
@@ -79,14 +78,14 @@ const BATCH_SIZE = 6;
 // Composant Spinner réutilisable
 const Spinner = ({ size = 40, color = '#6246E5' }) => (
     <div className="spinner-container" style={{ textAlign: 'center', padding: '50px' }}>
-        <div 
-            className="spinner" 
-            style={{ 
-                width: size, 
+        <div
+            className="spinner"
+            style={{
+                width: size,
                 height: size,
                 border: `3px solid ${color}20`,
                 borderTopColor: color,
-            }} 
+            }}
         />
     </div>
 );
@@ -147,9 +146,7 @@ const ProgressHeader = ({
             <div className="progress-section">
                 <div className="phase-indicator">
                     <span className="phase-name">
-                        {currentPhase === 'PHASE1'
-                            ? 'Phase 1 - '
-                            : `Phase 2 - `}
+                        {currentPhase === 'PHASE1' ? 'Phase 1 - ' : `Phase 2 - `}
                     </span>
                     <span className="phase-desc">
                         {currentPhase === 'PHASE1'
@@ -338,7 +335,6 @@ const Test = () => {
         }
     }, []);
 
-    
     const fetchBatch = useCallback(
         async (phase, section = null, tokenParam = null, assessmentIdParam = null) => {
             setLoadingBatch(true);
@@ -497,15 +493,14 @@ const Test = () => {
         try {
             console.log('📤 Envoi des résultats au serveur...');
             await api.post('/results/compute', { sessionToken, assessmentId });
-            
+
             console.log('✅ Résultats calculés avec succès');
             console.log('🆔 AssessmentId:', assessmentId);
-            
+
             localStorage.setItem('assessment_id', assessmentId);
-            
+
             console.log('🔀 Redirection vers /orientations');
             navigate('/orientations');
-            
         } catch (err) {
             console.error('❌ Erreur finalisation:', err);
             if (err.response?.status === 400) {
@@ -534,34 +529,40 @@ const Test = () => {
                     sessionData.assessmentId,
                 );
                 // 🔥 VÉRIFICATION : Si le test est terminé, on en crée un nouveau
-            if (progressData.status === 'COMPLETED') {
-                console.log('⚠️ Test déjà terminé, création d\'un nouveau...');
-                
-                // Nettoyer l'ancien
-                localStorage.removeItem('session_token');
-                localStorage.removeItem('assessment_id');
-                
-                // Créer une nouvelle session
-                const newSession = await initializeSession();
-                if (newSession) {
-                    setSessionToken(newSession.sessionToken);
-                    setAssessmentId(newSession.assessmentId);
-                    
-                    // Recharger la progression
-                    const newProgress = await resolveProgress(
-                        newSession.sessionToken,
-                        newSession.assessmentId
-                    );
-                    
-                    const phase = newProgress.currentPhase || 'PHASE1';
-                    const section = newProgress.currentSection || 
-                        (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
-                    
-                    await fetchBatch(phase, section, newSession.sessionToken, newSession.assessmentId);
-                    setLoading(false);
-                    return;
+                if (progressData.status === 'COMPLETED') {
+                    console.log("⚠️ Test déjà terminé, création d'un nouveau...");
+
+                    // Nettoyer l'ancien
+                    localStorage.removeItem('session_token');
+                    localStorage.removeItem('assessment_id');
+
+                    // Créer une nouvelle session
+                    const newSession = await initializeSession();
+                    if (newSession) {
+                        setSessionToken(newSession.sessionToken);
+                        setAssessmentId(newSession.assessmentId);
+
+                        // Recharger la progression
+                        const newProgress = await resolveProgress(
+                            newSession.sessionToken,
+                            newSession.assessmentId,
+                        );
+
+                        const phase = newProgress.currentPhase || 'PHASE1';
+                        const section =
+                            newProgress.currentSection ||
+                            (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
+
+                        await fetchBatch(
+                            phase,
+                            section,
+                            newSession.sessionToken,
+                            newSession.assessmentId,
+                        );
+                        setLoading(false);
+                        return;
+                    }
                 }
-            }
 
                 const phase = progressData.currentPhase || 'PHASE1';
                 const section =
@@ -599,29 +600,32 @@ const Test = () => {
         }
     }, [allAnswered, submitting, loadingBatch, currentBatch.length, handleBatchComplete]);
 
-    if (loading) return (
-        <div className="test-page">
-            <div className="test-container">
-                <Loader />
+    if (loading)
+        return (
+            <div className="test-page">
+                <div className="test-container">
+                    <Loader />
+                </div>
             </div>
-        </div>
-    );
+        );
 
-    if (error) return (
-        <div className="test-page">
-            <div className="test-container">
-                <ErrorView message={error} onRetry={() => window.location.reload()} />
+    if (error)
+        return (
+            <div className="test-page">
+                <div className="test-container">
+                    <ErrorView message={error} onRetry={() => window.location.reload()} />
+                </div>
             </div>
-        </div>
-    );
+        );
 
-    if (currentBatch.length === 0) return (
-        <div className="test-page">
-            <div className="test-container">
-                <EmptyView onReload={() => window.location.reload()} />
+    if (currentBatch.length === 0)
+        return (
+            <div className="test-page">
+                <div className="test-container">
+                    <EmptyView onReload={() => window.location.reload()} />
+                </div>
             </div>
-        </div>
-    );
+        );
 
     return (
         <div className="test-page">
@@ -641,22 +645,20 @@ const Test = () => {
                                 key={section.name}
                                 className={`section-badge ${section.name === currentSection ? 'active' : ''} ${phase2SectionsCompleted[section.name] ? 'completed' : ''}`}
                             >
-                                <div className='sec'>
-                                <span className="section-icon">{section.icon}</span>
-                                <span className="section-name">{section.label}</span>
-                                {phase2SectionsCompleted[section.name] && (
-                                    <span className="section-check">✓</span>
-                                )}
+                                <div className="sec">
+                                    <span className="section-icon">{section.icon}</span>
+                                    <span className="section-name">{section.label}</span>
+                                    {phase2SectionsCompleted[section.name] && (
+                                        <span className="section-check">✓</span>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
 
-               
-
                 {loadingBatch ? (
-                    <Spinner size={30} /> 
+                    <Spinner size={30} />
                 ) : (
                     <>
                         <div className="questions-grid">

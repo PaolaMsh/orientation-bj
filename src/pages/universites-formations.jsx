@@ -64,9 +64,12 @@ const UniversitiesPage = () => {
             // Adapter les URLs des images pour les résultats de recherche
             const resultsWithCorrectImages = results.map((uni) => ({
                 ...uni,
-                image: uni.coverUrl && !uni.coverUrl.startsWith('/') && !uni.coverUrl.startsWith('http')
-                    ? `/${uni.coverUrl}`
-                    : uni.coverUrl,
+                image:
+                    uni.coverUrl &&
+                    !uni.coverUrl.startsWith('/') &&
+                    !uni.coverUrl.startsWith('http')
+                        ? `/${uni.coverUrl}`
+                        : uni.coverUrl,
             }));
             setFilteredUniversities(resultsWithCorrectImages);
             setShowAll(false);

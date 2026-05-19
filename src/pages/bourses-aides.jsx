@@ -951,7 +951,7 @@ const Scholarships = () => {
                                         />
                                         <span>{scholarship.type}</span>
                                     </div>
-                                    
+
                                     <div className="card-actions">
                                         <button
                                             className={`save-btn ${savedScholarships.includes(scholarship.id) ? 'saved' : ''}`}

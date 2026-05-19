@@ -13,7 +13,10 @@ export const formationService = {
             const response = await api.get(`/formations/university/${universityId}`);
             return response.data;
         } catch (error) {
-            console.error(`Erreur lors de la récupération des formations pour l'université ${universityId}:`, error);
+            console.error(
+                `Erreur lors de la récupération des formations pour l'université ${universityId}:`,
+                error,
+            );
             throw error;
         }
     },
@@ -24,7 +27,9 @@ export const formationService = {
             if (!query || query.trim() === '') {
                 return [];
             }
-            const response = await api.get(`/formations/search?q=${encodeURIComponent(query.trim())}`);
+            const response = await api.get(
+                `/formations/search?q=${encodeURIComponent(query.trim())}`,
+            );
             return response.data;
         } catch (error) {
             console.error(`Erreur lors de la recherche de formations pour "${query}":`, error);
@@ -61,5 +66,5 @@ export const formationService = {
             console.error('Erreur lors de la récupération de toutes les formations:', error);
             throw error;
         }
-    }
+    },
 };

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/orientations.css';
-import { saveTestResultGlobal } from '../pages/parcours';
-import { formationService } from '../services/formationService';
+import { recommendationService } from '../services/recommendationService';
 
 const IconDoc = () => (
     <svg
@@ -279,26 +278,34 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
                     <div>
                         <div className="ria-reco-col-label">Formations</div>
                         <div className="ria-chip-list">
-                            {reco.formations?.map((f, i) => (
-                                <span key={i} className="ria-chip">
-                                    {f}
-                                </span>
-                            ))}
+                            {reco.formations?.length > 0 ? (
+                                reco.formations.map((f, i) => (
+                                    <span key={i} className="ria-chip">
+                                        {f}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="ria-chip">Aucune formation disponible</span>
+                            )}
                         </div>
                     </div>
                     <div>
                         <div className="ria-reco-col-label">Métiers</div>
                         <div className="ria-chip-list">
-                            {reco.metiers?.map((m, i) => (
-                                <span key={i} className={`ria-chip ${i === 0 ? 'active' : ''}`}>
-                                    {m}
-                                </span>
-                            ))}
+                            {reco.metiers?.length > 0 ? (
+                                reco.metiers.map((m, i) => (
+                                    <span key={i} className={`ria-chip ${i === 0 ? 'active' : ''}`}>
+                                        {m}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="ria-chip">Aucun métier disponible</span>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {reco.ecoles?.length > 0 && (
+                {reco.ecoles?.length > 0 ? (
                     <>
                         <div className="ria-ecoles-title">
                             <IconHome size={18} /> Écoles / Centres de formation
@@ -310,6 +317,16 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
                                     {e}
                                 </div>
                             ))}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="ria-ecoles-title">
+                            <IconHome size={18} /> Écoles / Centres de formation
+                        </div>
+                        <div className="ria-ecole-item">
+                            <span className="ria-ecole-dot" />
+                            Aucune école disponible
                         </div>
                     </>
                 )}
@@ -588,136 +605,6 @@ export default function Orientations() {
     });
     
 
-    // REMPLACEZ votre fonction formatRecommendationsForRIASEC par celle-ci :
-
-const formatRecommendationsForRIASEC = (apiData) => {
-    const result = {
-        REALISTIC: { formations: [], metiers: [], ecoles: [] },
-        INVESTIGATIVE: { formations: [], metiers: [], ecoles: [] },
-        ARTISTIC: { formations: [], metiers: [], ecoles: [] },
-        SOCIAL: { formations: [], metiers: [], ecoles: [] },
-        ENTERPRISING: { formations: [], metiers: [], ecoles: [] },
-        CONVENTIONAL: { formations: [], metiers: [], ecoles: [] },
-    };
-
-    // Si pas de données
-    if (!apiData) {
-        console.warn('⚠️ Aucune donnée API');
-        return result;
-    }
-
-    // Extraction des données selon le format retourné
-    let formationsList = [];
-    
-    // Cas 1: La réponse est directement un tableau
-    if (Array.isArray(apiData)) {
-        formationsList = apiData;
-    }
-    // Cas 2: La réponse est un objet avec une propriété contenant le tableau
-    else if (typeof apiData === 'object') {
-        formationsList = apiData.data || apiData.results || apiData.items || apiData.formations || [];
-    }
-
-    if (!formationsList.length) {
-        console.warn('⚠️ Aucune formation trouvée dans la réponse');
-        return result;
-    }
-
-    console.log(`📦 ${formationsList.length} formations reçues`);
-
-    // Mapping RIASEC
-    const riasecMapping = {
-        R: 'REALISTIC',
-        I: 'INVESTIGATIVE',
-        A: 'ARTISTIC',
-        S: 'SOCIAL',
-        E: 'ENTERPRISING',
-        C: 'CONVENTIONAL',
-    };
-
-    formationsList.forEach((item) => {
-        // Adapter selon la structure réelle de l'API
-        const formationName = item.name || item.title || item.formation || item.libelle || 'Formation';
-        const metierName = item.careerName || item.metier || item.profession || item.name || formationName;
-        const ecoleName = item.schoolName || item.ecole || item.university || item.establishment || item.organization;
-        const riasecCodes = item.riasecCodes || item.riasec_code || item.codes || [];
-        
-        // Si la formation a des codes RIASEC
-        if (riasecCodes.length > 0) {
-            riasecCodes.forEach((code) => {
-                const axis = riasecMapping[code];
-                if (axis && result[axis]) {
-                    if (!result[axis].formations.includes(formationName)) {
-                        result[axis].formations.push(formationName);
-                    }
-                    if (metierName && !result[axis].metiers.includes(metierName)) {
-                        result[axis].metiers.push(metierName);
-                    }
-                    if (ecoleName && !result[axis].ecoles.includes(ecoleName)) {
-                        result[axis].ecoles.push(ecoleName);
-                    }
-                }
-            });
-        } else {
-            // Si pas de codes RIASEC, distribuer dans tous les axes (ou selon la catégorie)
-            Object.keys(result).forEach(axis => {
-                if (!result[axis].formations.includes(formationName)) {
-                    result[axis].formations.push(formationName);
-                }
-                if (metierName && !result[axis].metiers.includes(metierName)) {
-                    result[axis].metiers.push(metierName);
-                }
-                if (ecoleName && !result[axis].ecoles.includes(ecoleName)) {
-                    result[axis].ecoles.push(ecoleName);
-                }
-            });
-        }
-    });
-
-    // Limiter à 6 éléments par axe
-    Object.keys(result).forEach((axis) => {
-        result[axis].formations = result[axis].formations.slice(0, 6);
-        result[axis].metiers = result[axis].metiers.slice(0, 6);
-        result[axis].ecoles = [...new Set(result[axis].ecoles)].slice(0, 6);
-    });
-
-    console.log('✅ Recommandations formatées par axe:', result);
-    return result;
-};const fetchCareerRecommendations = async (assessmentId) => {
-    try {
-        const token = localStorage.getItem('token');
-        const sessionToken = localStorage.getItem('session_token');
-
-        const url = new URL(`${API_BASE_URL}/careers/career-recommendations`);
-        url.searchParams.append('assessmentId', assessmentId);
-        url.searchParams.append('limit', '20');
-        url.searchParams.append('category', 'NUMERIQUE');
-        url.searchParams.append('force', 'true');
-        url.searchParams.append('advanced', 'true');
-        
-        console.log('📡 URL carrières:', url.toString());
-
-        const response = await fetch(url.toString(), {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'X-Session-Token': sessionToken || '',
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('📚 Recommandations métiers:', data);
-        return data;
-    } catch (error) {
-        console.error('❌ Erreur:', error);
-        return [];
-    }
-};
-
     const fetchCompleteReport = async (id) => {
         setLoading(true);
 
@@ -748,14 +635,8 @@ const formatRecommendationsForRIASEC = (apiData) => {
 
             let recommendationsData = [];
             try {
-                const apiRecommendations = await fetchRecommendations(id);
-                if (apiRecommendations && Array.isArray(apiRecommendations)) {
-                    // FORMATER LES DONNÉES ICI !
-                    recommendationsData = formatRecommendationsForRIASEC(apiRecommendations);
-                    console.log('✅ Recommandations API formatées:', recommendationsData);
-                } else {
-                    console.warn("⚠️ L'API a retourné un tableau vide");
-                }
+                recommendationsData = await recommendationService.getRiasecRecommendations(id);
+                console.log('✅ Recommandations API fusionnées et formatées:', recommendationsData);
             } catch (recoError) {
                 console.error('❌ Erreur API recommandations:', recoError);
             }

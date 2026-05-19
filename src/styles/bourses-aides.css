@@ -163,7 +163,7 @@
     display: block;
     font-size: 1.5rem;
     font-weight: 700;
-    color:rgb(15, 15, 15);  
+    color: rgb(15, 15, 15);
 }
 
 .stat-label {
@@ -912,7 +912,6 @@
         white-space: nowrap;
     }
 }
-
 
 .scholarship-card.benin-partnership {
     border-left: 4px solid #ffd700;

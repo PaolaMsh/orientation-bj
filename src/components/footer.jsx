@@ -32,7 +32,6 @@ const Footer = () => {
                         <li>
                             <Link to="/support">Support</Link>
                         </li>
-                        
                     </ul>
                 </div>
 

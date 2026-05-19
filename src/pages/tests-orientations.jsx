@@ -108,7 +108,7 @@ const Testsorientations = () => {
                         <div className="to-card-icon">📋</div>
                         <h2 className="to-card-title">Test complet</h2>
                         <p className="to-card-desc">
-                            Répondez aux  questions en une seule session pour obtenir un profil
+                            Répondez aux questions en une seule session pour obtenir un profil
                             RIASEC complet et des recommandations précises.
                         </p>
                         <ul className="to-card-features">
