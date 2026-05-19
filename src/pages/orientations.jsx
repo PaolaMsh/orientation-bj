@@ -586,234 +586,270 @@ export default function Orientations() {
         assessmentInfo: null,
         behavioral: null,
     });
+    
 
-    // Fonction pour formater les recommandations API au format attendu par GenericTab
-    const formatRecommendationsForRIASEC = (apiData) => {
-        // Structure par défaut pour chaque axe
-        const result = {
-            REALISTIC: { formations: [], metiers: [], ecoles: [] },
-            INVESTIGATIVE: { formations: [], metiers: [], ecoles: [] },
-            ARTISTIC: { formations: [], metiers: [], ecoles: [] },
-            SOCIAL: { formations: [], metiers: [], ecoles: [] },
-            ENTERPRISING: { formations: [], metiers: [], ecoles: [] },
-            CONVENTIONAL: { formations: [], metiers: [], ecoles: [] },
-        };
+    // REMPLACEZ votre fonction formatRecommendationsForRIASEC par celle-ci :
 
-        if (!apiData || !Array.isArray(apiData) || apiData.length === 0) {
-            console.warn('⚠️ Aucune donnée API');
-            return result;
-        }
+const formatRecommendationsForRIASEC = (apiData) => {
+    const result = {
+        REALISTIC: { formations: [], metiers: [], ecoles: [] },
+        INVESTIGATIVE: { formations: [], metiers: [], ecoles: [] },
+        ARTISTIC: { formations: [], metiers: [], ecoles: [] },
+        SOCIAL: { formations: [], metiers: [], ecoles: [] },
+        ENTERPRISING: { formations: [], metiers: [], ecoles: [] },
+        CONVENTIONAL: { formations: [], metiers: [], ecoles: [] },
+    };
 
-        const riasecMapping = {
-            R: 'REALISTIC',
-            I: 'INVESTIGATIVE',
-            A: 'ARTISTIC',
-            S: 'SOCIAL',
-            E: 'ENTERPRISING',
-            C: 'CONVENTIONAL',
-        };
+    // Si pas de données
+    if (!apiData) {
+        console.warn('⚠️ Aucune donnée API');
+        return result;
+    }
 
-        apiData.forEach((item) => {
-            const career = item.career;
-            if (!career || !career.riasecCodes || !Array.isArray(career.riasecCodes)) return;
+    // Extraction des données selon le format retourné
+    let formationsList = [];
+    
+    // Cas 1: La réponse est directement un tableau
+    if (Array.isArray(apiData)) {
+        formationsList = apiData;
+    }
+    // Cas 2: La réponse est un objet avec une propriété contenant le tableau
+    else if (typeof apiData === 'object') {
+        formationsList = apiData.data || apiData.results || apiData.items || apiData.formations || [];
+    }
 
-            const careerName = career.name;
-            const formation = career.formationLevel;
+    if (!formationsList.length) {
+        console.warn('⚠️ Aucune formation trouvée dans la réponse');
+        return result;
+    }
 
-            career.riasecCodes.forEach((code) => {
+    console.log(`📦 ${formationsList.length} formations reçues`);
+
+    // Mapping RIASEC
+    const riasecMapping = {
+        R: 'REALISTIC',
+        I: 'INVESTIGATIVE',
+        A: 'ARTISTIC',
+        S: 'SOCIAL',
+        E: 'ENTERPRISING',
+        C: 'CONVENTIONAL',
+    };
+
+    formationsList.forEach((item) => {
+        // Adapter selon la structure réelle de l'API
+        const formationName = item.name || item.title || item.formation || item.libelle || 'Formation';
+        const metierName = item.careerName || item.metier || item.profession || item.name || formationName;
+        const ecoleName = item.schoolName || item.ecole || item.university || item.establishment || item.organization;
+        const riasecCodes = item.riasecCodes || item.riasec_code || item.codes || [];
+        
+        // Si la formation a des codes RIASEC
+        if (riasecCodes.length > 0) {
+            riasecCodes.forEach((code) => {
                 const axis = riasecMapping[code];
                 if (axis && result[axis]) {
-                    if (!result[axis].metiers.includes(careerName)) {
-                        result[axis].metiers.push(careerName);
+                    if (!result[axis].formations.includes(formationName)) {
+                        result[axis].formations.push(formationName);
                     }
-                    if (formation && !result[axis].formations.includes(formation)) {
-                        result[axis].formations.push(formation);
+                    if (metierName && !result[axis].metiers.includes(metierName)) {
+                        result[axis].metiers.push(metierName);
+                    }
+                    if (ecoleName && !result[axis].ecoles.includes(ecoleName)) {
+                        result[axis].ecoles.push(ecoleName);
                     }
                 }
             });
-        });
+        } else {
+            // Si pas de codes RIASEC, distribuer dans tous les axes (ou selon la catégorie)
+            Object.keys(result).forEach(axis => {
+                if (!result[axis].formations.includes(formationName)) {
+                    result[axis].formations.push(formationName);
+                }
+                if (metierName && !result[axis].metiers.includes(metierName)) {
+                    result[axis].metiers.push(metierName);
+                }
+                if (ecoleName && !result[axis].ecoles.includes(ecoleName)) {
+                    result[axis].ecoles.push(ecoleName);
+                }
+            });
+        }
+    });
 
-        Object.keys(result).forEach((axis) => {
-            if (result[axis].metiers.length > 6) {
-                result[axis].metiers = result[axis].metiers.slice(0, 6);
-            }
-            if (result[axis].formations.length > 6) {
-                result[axis].formations = result[axis].formations.slice(0, 6);
-            }
-        });
+    // Limiter à 6 éléments par axe
+    Object.keys(result).forEach((axis) => {
+        result[axis].formations = result[axis].formations.slice(0, 6);
+        result[axis].metiers = result[axis].metiers.slice(0, 6);
+        result[axis].ecoles = [...new Set(result[axis].ecoles)].slice(0, 6);
+    });
 
-        return result;
-    };
+    console.log('✅ Recommandations formatées par axe:', result);
+    return result;
+};const fetchCareerRecommendations = async (assessmentId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const sessionToken = localStorage.getItem('session_token');
 
-    const fetchRecommendations = async (assessmentId) => {
-        try {
-            const token = localStorage.getItem('token');
-            const sessionToken = localStorage.getItem('session_token');
-
-            const url = new URL(`${API_BASE_URL}/careers/recommendations/formations`);
+        const url = new URL(`${API_BASE_URL}/careers/career-recommendations`);
         url.searchParams.append('assessmentId', assessmentId);
         url.searchParams.append('limit', '20');
-        url.searchParams.append('category', 'NUMERIQUE');     
-        url.searchParams.append('force', 'true');              
-        url.searchParams.append('advanced', 'true');           
-        url.searchParams.append('latitude', '6.5');            
-        url.searchParams.append('longitude', '2.6');           
-        url.searchParams.append('radiusKm', '50');            
-        console.log('📡 URL complète:', url.toString());
+        url.searchParams.append('category', 'NUMERIQUE');
+        url.searchParams.append('force', 'true');
+        url.searchParams.append('advanced', 'true');
+        
+        console.log('📡 URL carrières:', url.toString());
 
         const response = await fetch(url.toString(), {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'X-Session-Token': sessionToken || '', 
+                'X-Session-Token': sessionToken || '',
                 'Content-Type': 'application/json',
-            },
-        });
-
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('📚 Recommandations formations:', data);
-            return data; 
-        } catch (error) {
-            console.error('❌ Erreur:', error);
-            return [];
-        }
-    };
-
-   const fetchCompleteReport = async (id) => {
-    setLoading(true);
-
-    try {
-        console.log('🔍 Fetching results for assessment:', id);
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('❌ Token manquant');
-            setError("Token d'authentification manquant");
-            setLoading(false);
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/results/by-assessment/${id}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
             },
         });
 
         if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+            throw new Error(`HTTP ${response.status}`);
         }
 
-        const resultData = await response.json();
-        console.log('📊 Données reçues:', resultData);
-
-        let recommendationsData = [];
-        try {
-            const apiRecommendations = await fetchRecommendations(id);
-            if (apiRecommendations && Array.isArray(apiRecommendations)) {
-                recommendationsData = apiRecommendations;
-                console.log('✅ Recommandations API chargées:', recommendationsData.length, 'éléments');
-            } else {
-                console.warn("⚠️ L'API a retourné un tableau vide");
-            }
-        } catch (recoError) {
-            console.error('❌ Erreur API recommandations:', recoError);
-        }
-
-        const phase2Scores = resultData.phase2Scores || {};
-        const convertScore = (value) => Math.round((value / 20) * 100);
-
-        const scores = {
-            REALISTIC: convertScore(phase2Scores.R || 0),
-            INVESTIGATIVE: convertScore(phase2Scores.I || 0),
-            ARTISTIC: convertScore(phase2Scores.A || 0),
-            SOCIAL: convertScore(phase2Scores.S || 0),
-            ENTERPRISING: convertScore(phase2Scores.E || 0),
-            CONVENTIONAL: convertScore(phase2Scores.C || 0),
-        };
-
-        console.log('🎯 Scores convertis:', scores);
-
-        const axisNames = {
-            I: 'Investigateur',
-            R: 'Réaliste',
-            A: 'Artistique',
-            S: 'Social',
-            E: 'Entreprenant',
-            C: 'Conventionnel',
-        };
-
-        const pointsForts = (resultData.strengths || []).map((s) => ({
-            title: axisNames[s] || s,
-            description: `Vous avez un fort potentiel dans l'axe ${axisNames[s] || s}.`,
-        }));
-
-        const axesAmelioration = (resultData.weaknesses || []).map((w) => ({
-            title: axisNames[w] || w,
-            description: `L'axe ${axisNames[w] || w} est à développer.`,
-        }));
-
-        const riasecCode = resultData.phase2Code ||
-            Object.entries(scores)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3)
-                .map(([key]) => key[0])
-                .join('');
-
-        setData({
-            scores: scores,
-            recommendations: recommendationsData,
-            assessmentInfo: {
-                status: 'COMPLETED',
-                completedAt: resultData.createdAt || new Date().toISOString(),
-                coherence: resultData.consistencyLevel ,
-                code: riasecCode,
-            },
-            behavioral: {
-                pointsForts: pointsForts,
-                axesAmelioration: axesAmelioration,
-            },
-        });
-
-        const testResult = {
-            title: 'Test RIASEC complet',
-            score: Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 6),
-            type: 'RIASEC',
-            code: riasecCode,
-            fullReport: {
-                scores: scores,
-                code: riasecCode,
-                recommendations: recommendationsData,
-                completedAt: new Date().toISOString(),
-                assessmentId: id,
-            },
-        };
-
-        const existingTests = localStorage.getItem('testHistory');
-        let tests = existingTests ? JSON.parse(existingTests) : [];
-        tests.unshift(testResult);
-        localStorage.setItem('testHistory', JSON.stringify(tests));
-
-        console.log('✅ Test sauvegardé');
-        setError(null);
-        
-    } catch (err) {
-        console.error('❌ Erreur fetchCompleteReport:', err);
-        setError(err.message || 'Erreur lors du chargement des résultats');
-        setData({
-            scores: null,
-            recommendations: null,
-            assessmentInfo: null,
-            behavioral: null,
-        });
-    } finally {
-        setLoading(false);
+        const data = await response.json();
+        console.log('📚 Recommandations métiers:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ Erreur:', error);
+        return [];
     }
 };
+
+    const fetchCompleteReport = async (id) => {
+        setLoading(true);
+
+        try {
+            console.log('🔍 Fetching results for assessment:', id);
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('❌ Token manquant');
+                setError("Token d'authentification manquant");
+                setLoading(false);
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/results/by-assessment/${id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+
+            const resultData = await response.json();
+            console.log('📊 Données reçues:', resultData);
+
+            let recommendationsData = [];
+            try {
+                const apiRecommendations = await fetchRecommendations(id);
+                if (apiRecommendations && Array.isArray(apiRecommendations)) {
+                    // FORMATER LES DONNÉES ICI !
+                    recommendationsData = formatRecommendationsForRIASEC(apiRecommendations);
+                    console.log('✅ Recommandations API formatées:', recommendationsData);
+                } else {
+                    console.warn("⚠️ L'API a retourné un tableau vide");
+                }
+            } catch (recoError) {
+                console.error('❌ Erreur API recommandations:', recoError);
+            }
+
+            const phase2Scores = resultData.phase2Scores || {};
+            const convertScore = (value) => Math.round((value / 20) * 100);
+
+            const scores = {
+                REALISTIC: convertScore(phase2Scores.R || 0),
+                INVESTIGATIVE: convertScore(phase2Scores.I || 0),
+                ARTISTIC: convertScore(phase2Scores.A || 0),
+                SOCIAL: convertScore(phase2Scores.S || 0),
+                ENTERPRISING: convertScore(phase2Scores.E || 0),
+                CONVENTIONAL: convertScore(phase2Scores.C || 0),
+            };
+
+            console.log('🎯 Scores convertis:', scores);
+
+            const axisNames = {
+                I: 'Investigateur',
+                R: 'Réaliste',
+                A: 'Artistique',
+                S: 'Social',
+                E: 'Entreprenant',
+                C: 'Conventionnel',
+            };
+
+            const pointsForts = (resultData.strengths || []).map((s) => ({
+                title: axisNames[s] || s,
+                description: `Vous avez un fort potentiel dans l'axe ${axisNames[s] || s}.`,
+            }));
+
+            const axesAmelioration = (resultData.weaknesses || []).map((w) => ({
+                title: axisNames[w] || w,
+                description: `L'axe ${axisNames[w] || w} est à développer.`,
+            }));
+
+            const riasecCode =
+                resultData.phase2Code ||
+                Object.entries(scores)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 3)
+                    .map(([key]) => key[0])
+                    .join('');
+
+            setData({
+                scores: scores,
+                recommendations: recommendationsData, // Maintenant c'est formaté correctement
+                assessmentInfo: {
+                    status: 'COMPLETED',
+                    completedAt: resultData.createdAt || new Date().toISOString(),
+                    coherence: resultData.consistencyLevel,
+                    code: riasecCode,
+                },
+                behavioral: {
+                    pointsForts: pointsForts,
+                    axesAmelioration: axesAmelioration,
+                },
+            });
+
+            const testResult = {
+                title: 'Test RIASEC complet',
+                score: Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 6),
+                type: 'RIASEC',
+                code: riasecCode,
+                fullReport: {
+                    scores: scores,
+                    code: riasecCode,
+                    recommendations: recommendationsData,
+                    completedAt: new Date().toISOString(),
+                    assessmentId: id,
+                },
+            };
+
+            const existingTests = localStorage.getItem('testHistory');
+            let tests = existingTests ? JSON.parse(existingTests) : [];
+            tests.unshift(testResult);
+            localStorage.setItem('testHistory', JSON.stringify(tests));
+
+            console.log('✅ Test sauvegardé');
+            setError(null);
+        } catch (err) {
+            console.error('❌ Erreur fetchCompleteReport:', err);
+            setError(err.message || 'Erreur lors du chargement des résultats');
+            setData({
+                scores: null,
+                recommendations: null,
+                assessmentInfo: null,
+                behavioral: null,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -878,7 +914,7 @@ export default function Orientations() {
 
     const dominantScores = getDominantScores();
     const topAxes = getTopAxes();
-const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
+    const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
     const code = dominantScores.map(([key]) => key[0]).join('');
 
     useEffect(() => {
@@ -930,7 +966,7 @@ const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <p style={{ color: 'red', marginBottom: '20px' }}>Erreur : {error}</p>
                         <button
-                           onClick={() => navigate('/tests')}
+                            onClick={() => navigate('/tests')}
                             style={{
                                 padding: '10px 20px',
                                 backgroundColor: '#0d9488',
@@ -941,8 +977,6 @@ const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
                             }}
                         >
                             Faire un autre test
-
-                        
                         </button>
                     </div>
                 </div>
