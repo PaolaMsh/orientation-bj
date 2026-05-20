@@ -808,8 +808,7 @@ export default function Orientations() {
         pointsForts: [
             {
                 title: 'Curiosité intellectuelle',
-                description:
-                    'Vous aimez résoudre des problèmes complexes et apprendre par vous-même.',
+                description: 'Vous aimez résoudre des problèmes complexes et apprendre par vous-même.',
             },
             {
                 title: 'Pragmatisme',
@@ -828,10 +827,7 @@ export default function Orientations() {
         return (
             <div className="ria-body">
                 <div className="ria-container">
-                    <div
-                        className="loading-spinner"
-                        style={{ textAlign: 'center', padding: '50px' }}
-                    >
+                    <div className="loading-spinner" style={{ textAlign: 'center', padding: '50px' }}>
                         <div className="spinner"></div>
                         <p>Chargement de vos résultats...</p>
                     </div>
@@ -867,7 +863,6 @@ export default function Orientations() {
 
     const { scores, recommendations, assessmentInfo } = data;
     const finalScores = scores || MOCK_SCORES;
-
     return (
         <div className="ria-body">
             <div className="ria-container">
