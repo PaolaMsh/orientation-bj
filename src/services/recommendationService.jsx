@@ -6,18 +6,49 @@ const normalizeToArray = (payload) => {
     return payload.data || payload.results || payload.items || payload.formations || [];
 };
 
-const formatRecommendationsForRIASEC = (apiData) => {
+const RIASEC_AXES = ['REALISTIC', 'INVESTIGATIVE', 'ARTISTIC', 'SOCIAL', 'ENTERPRISING', 'CONVENTIONAL'];
+
+const createEmptyRiasecBuckets = () => ({
+    REALISTIC: { formations: [], metiers: [], ecoles: [] },
+    INVESTIGATIVE: { formations: [], metiers: [], ecoles: [] },
+    ARTISTIC: { formations: [], metiers: [], ecoles: [] },
+    SOCIAL: { formations: [], metiers: [], ecoles: [] },
+    ENTERPRISING: { formations: [], metiers: [], ecoles: [] },
+    CONVENTIONAL: { formations: [], metiers: [], ecoles: [] },
+});
+
+const mapCareerRecommendations = (payload) =>
+    normalizeToArray(payload)
+        .map((item) => ({
+            id: item?.id,
+            resultId: item?.resultId,
+            careerId: item?.careerId ?? item?.career?.id,
+            matchScore: Number(item?.matchScore) || 0,
+            rankPosition: item?.rankPosition ?? null,
+            career: item?.career ?? null,
+        }))
+        .filter((item) => item?.career?.id || item?.career?.name)
+        .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+        .slice(0, 20);
+
+const mapFormationRecommendations = (payload) =>
+    normalizeToArray(payload)
+        .map((item) => ({
+            id: item?.id ?? `${item?.formation?.id || 'formation'}-${item?.university?.id || 'university'}`,
+            score: Number(item?.score) || 0,
+            formation: item?.formation ?? null,
+            university: item?.university ?? null,
+        }))
+        .filter((item) => item?.formation?.id || item?.formation?.name || item?.formation?.title)
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, 20);
+
+const buildRecommendationsByAxis = (careers, formations) => {
     const result = {
-        REALISTIC: { formations: [], metiers: [], ecoles: [] },
-        INVESTIGATIVE: { formations: [], metiers: [], ecoles: [] },
-        ARTISTIC: { formations: [], metiers: [], ecoles: [] },
-        SOCIAL: { formations: [], metiers: [], ecoles: [] },
-        ENTERPRISING: { formations: [], metiers: [], ecoles: [] },
-        CONVENTIONAL: { formations: [], metiers: [], ecoles: [] },
+        ...createEmptyRiasecBuckets(),
     };
 
-    const recommendationsList = normalizeToArray(apiData);
-    if (!recommendationsList.length) {
+    if (!careers.length && !formations.length) {
         return result;
     }
 
@@ -30,71 +61,39 @@ const formatRecommendationsForRIASEC = (apiData) => {
         C: 'CONVENTIONAL',
     };
 
-    const hasCareerPayload = recommendationsList.some((item) => item && item.career);
-    const dominantAxesFromCareers = [];
+    careers.forEach((item) => {
+        const career = item?.career;
+        const metierName = career?.name;
+        if (!metierName) return;
 
-    recommendationsList.forEach((item) => {
-        const career = item.career || {};
-        const formation = item.formation || {};
-        const university = item.university || {};
+        const riasecCodes = Array.isArray(career?.riasecCodes) ? career.riasecCodes : [];
+        const targetAxes = riasecCodes
+            .map((code) => riasecMapping[code])
+            .filter((axis) => Boolean(axis && result[axis]));
 
-        const formationName =
-            formation.name ||
-            formation.title ||
-            item.name ||
-            item.title ||
-            item.formation ||
-            item.libelle ||
-            'Formation';
+        const fallbackAxis = ['INVESTIGATIVE'];
+        const axes = targetAxes.length > 0 ? targetAxes : fallbackAxis;
 
-        const metierName =
-            career.name ||
-            item.careerName ||
-            item.metier ||
-            item.profession ||
-            item.name ||
-            formationName;
+        axes.forEach((axis) => {
+            if (!result[axis].metiers.includes(metierName)) {
+                result[axis].metiers.push(metierName);
+            }
+        });
+    });
 
-        const ecoleName =
-            university.name ||
-            item.schoolName ||
-            item.ecole ||
-            item.university ||
-            item.establishment ||
-            item.organization;
+    const dominantAxesFromCareers = RIASEC_AXES.filter(
+        (axis) => result[axis].metiers.length > 0,
+    ).slice(0, 2);
+    const targetFormationAxes = dominantAxesFromCareers.length > 0 ? dominantAxesFromCareers : ['INVESTIGATIVE', 'REALISTIC'];
 
-        const riasecCodes = career.riasecCodes || item.riasecCodes || item.riasec_code || item.codes || [];
+    formations.forEach((item) => {
+        const formationName = item?.formation?.name || item?.formation?.title;
+        const ecoleName = item?.university?.name;
+        if (!formationName) return;
 
-        if (riasecCodes.length > 0) {
-            riasecCodes.forEach((code) => {
-                const axis = riasecMapping[code];
-                if (!axis || !result[axis]) return;
-                dominantAxesFromCareers.push(axis);
-
-                if (!result[axis].formations.includes(formationName)) {
-                    result[axis].formations.push(formationName);
-                }
-                if (metierName && !result[axis].metiers.includes(metierName)) {
-                    result[axis].metiers.push(metierName);
-                }
-                if (ecoleName && !result[axis].ecoles.includes(ecoleName)) {
-                    result[axis].ecoles.push(ecoleName);
-                }
-            });
-            return;
-        }
-
-        const fallbackAxes = hasCareerPayload
-            ? [...new Set(dominantAxesFromCareers)].slice(0, 2)
-            : Object.keys(result);
-        const targetAxes = fallbackAxes.length > 0 ? fallbackAxes : Object.keys(result);
-
-        targetAxes.forEach((axis) => {
+        targetFormationAxes.forEach((axis) => {
             if (!result[axis].formations.includes(formationName)) {
                 result[axis].formations.push(formationName);
-            }
-            if (metierName && !result[axis].metiers.includes(metierName)) {
-                result[axis].metiers.push(metierName);
             }
             if (ecoleName && !result[axis].ecoles.includes(ecoleName)) {
                 result[axis].ecoles.push(ecoleName);
@@ -102,7 +101,7 @@ const formatRecommendationsForRIASEC = (apiData) => {
         });
     });
 
-    Object.keys(result).forEach((axis) => {
+    RIASEC_AXES.forEach((axis) => {
         result[axis].formations = result[axis].formations.slice(0, 6);
         result[axis].metiers = result[axis].metiers.slice(0, 6);
         result[axis].ecoles = [...new Set(result[axis].ecoles)].slice(0, 6);
@@ -166,15 +165,15 @@ export const recommendationService = {
                 return [];
             }),
         ]);
-        const careers = normalizeToArray(careerRecommendations)
-            .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
-            .slice(0, 20);
-        const formations = normalizeToArray(formationRecommendations)
-            .sort((a, b) => (b.score || 0) - (a.score || 0))
-            .slice(0, 20);
+        const careers = mapCareerRecommendations(careerRecommendations);
+        const formations = mapFormationRecommendations(formationRecommendations);
         console.log('Reco debug -> careers count:', careers.length);
         console.log('Reco debug -> formations count:', formations.length);
 
-        return formatRecommendationsForRIASEC([...careers, ...formations]);
+        return {
+            careers,
+            formations,
+            recommendationsByAxis: buildRecommendationsByAxis(careers, formations),
+        };
     },
 };

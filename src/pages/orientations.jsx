@@ -455,142 +455,6 @@ function RadarChart({ scores }) {
     );
 }
 
-function TabInvestigateur({ scores, recommendations }) {
-    const score = scores?.INVESTIGATIVE || 0;
-
-    return (
-        <>
-            <div className="ria-def-card">
-                <div className="ria-def-title">
-                    <IconInfo /> Definition &amp; caracteristiques
-                </div>
-                <p className="ria-def-text">
-                    L'axe Investigateur valorise la curiosite, l'analyse, la resolution de problemes
-                    abstraits. Vous aimez apprendre, observer, experimenter et comprendre le monde
-                    scientifique.
-                </p>
-                <p className="ria-def-traits">
-                    <strong>Caracteristiques :</strong> Rigueur, esprit critique, gout pour la
-                    recherche, autonomie intellectuelle, preference pour les defis complexes.
-                </p>
-            </div>
-
-            <div className="ria-interp-card">
-                <div className="ria-interp-title">
-                    <IconSearch size={16} /> Interpretation personnalisee
-                </div>
-                <p className="ria-interp-text">
-                    Votre score ({score}/100) revele un besoin profond de comprendre les mecanismes
-                    sous-jacents. Vous excellez dans les environnements ou l'on vous confie des
-                    missions d'analyse, de R&amp;D ou de veille technologique.
-                </p>
-            </div>
-
-            <div className="ria-def-card">
-                <div className="ria-reco-title">
-                    <IconGrid /> Formations &amp; metiers recommandes
-                </div>
-                <div className="ria-reco-grid">
-                    <div>
-                        <div className="ria-reco-col-label">Formations</div>
-                        <div className="ria-chip-list">
-                            {reco.formations?.map((f, i) => (
-                                <span key={i} className="ria-chip">
-                                    {f}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <div className="ria-reco-col-label">Metiers</div>
-                        <div className="ria-chip-list">
-                            {reco.metiers?.map((m, i) => (
-                                <span key={i} className={`ria-chip ${i === 0 ? 'active' : ''}`}>
-                                    {m}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="ria-ecoles-title">
-                    <IconHome size={18} /> Ecoles / Centres de formation
-                </div>
-                <div>
-                    {reco.ecoles?.map((e, i) => (
-                        <div className="ria-ecole-item" key={i}>
-                            <span className="ria-ecole-dot" />
-                            {e}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </>
-    );
-}
-
-function TabRealiste({ scores, recommendations }) {
-    const score = scores?.REALISTIC || 0;
-
-    return (
-        <>
-            <div className="ria-def-card">
-                <div className="ria-def-title">
-                    <IconInfo /> Definition &amp; caracteristiques
-                </div>
-                <p className="ria-def-text">
-                    L'axe Realiste valorise l'action concrete, la manipulation d'outils, les travaux
-                    manuels et techniques. Vous preferez les taches tangibles, pratiques et bien
-                    definies.
-                </p>
-                <p className="ria-def-traits">
-                    <strong>Caracteristiques :</strong> Sens pratique, habilete manuelle, gout pour
-                    la technique, autonomie operationnelle, preference pour les resultats concrets.
-                </p>
-            </div>
-
-            <div className="ria-interp-card">
-                <div className="ria-interp-title">
-                    <IconSearch size={16} /> Interpretation personnalisee
-                </div>
-                <p className="ria-interp-text">
-                    Votre score ({score}/100) indique une forte inclination pour les environnements
-                    de travail concrets. Vous vous epanouissez dans les metiers de terrain, de
-                    fabrication ou d'ingenierie appliquee.
-                </p>
-            </div>
-
-            <div className="ria-def-card">
-                <div className="ria-reco-title">
-                    <IconGrid /> Formations &amp; metiers recommandes
-                </div>
-                <div className="ria-reco-grid">
-                    <div>
-                        <div className="ria-reco-col-label">Formations</div>
-                        <div className="ria-chip-list">
-                            {reco.formations?.map((f, i) => (
-                                <span key={i} className="ria-chip">
-                                    {f}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <div className="ria-reco-col-label">Metiers</div>
-                        <div className="ria-chip-list">
-                            {reco.metiers?.map((m, i) => (
-                                <span key={i} className={`ria-chip ${i === 0 ? 'active' : ''}`}>
-                                    {m}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
-}
-
 export default function Orientations() {
     const navigate = useNavigate();
     const { assessmentId } = useParams();
@@ -599,11 +463,12 @@ export default function Orientations() {
     const [error, setError] = useState(null);
     const [data, setData] = useState({
         scores: null,
-        recommendations: null,
+        recommendationsByAxis: null,
+        careers: [],
+        formations: [],
         assessmentInfo: null,
         behavioral: null,
     });
-    
 
     const fetchCompleteReport = async (id) => {
         setLoading(true);
@@ -633,10 +498,14 @@ export default function Orientations() {
             const resultData = await response.json();
             console.log('📊 Données reçues:', resultData);
 
-            let recommendationsData = [];
+            let recommendationsData = {
+                recommendationsByAxis: {},
+                careers: [],
+                formations: [],
+            };
             try {
                 recommendationsData = await recommendationService.getRiasecRecommendations(id);
-                console.log('✅ Recommandations API fusionnées et formatées:', recommendationsData);
+                console.log('✅ Recommandations API séparées et formatées:', recommendationsData);
             } catch (recoError) {
                 console.error('❌ Erreur API recommandations:', recoError);
             }
@@ -682,13 +551,25 @@ export default function Orientations() {
                     .map(([key]) => key[0])
                     .join('');
 
+            const topScoreValue = Math.max(...Object.values(scores));
+            let coherenceLevel = 'Faible';
+            if (topScoreValue >= 80) {
+                coherenceLevel = 'Élevée';
+            } else if (topScoreValue >= 50) {
+                coherenceLevel = 'Moyenne';
+            } else {
+                coherenceLevel = 'Faible';
+            }
+
             setData({
                 scores: scores,
-                recommendations: recommendationsData, // Maintenant c'est formaté correctement
+                recommendationsByAxis: recommendationsData?.recommendationsByAxis || {},
+                careers: recommendationsData?.careers || [],
+                formations: recommendationsData?.formations || [],
                 assessmentInfo: {
                     status: 'COMPLETED',
                     completedAt: resultData.createdAt || new Date().toISOString(),
-                    coherence: resultData.consistencyLevel,
+                    coherence: coherenceLevel,
                     code: riasecCode,
                 },
                 behavioral: {
@@ -723,7 +604,9 @@ export default function Orientations() {
             setError(err.message || 'Erreur lors du chargement des résultats');
             setData({
                 scores: null,
-                recommendations: null,
+                recommendationsByAxis: null,
+                careers: [],
+                formations: [],
                 assessmentInfo: null,
                 behavioral: null,
             });
@@ -808,7 +691,8 @@ export default function Orientations() {
         pointsForts: [
             {
                 title: 'Curiosité intellectuelle',
-                description: 'Vous aimez résoudre des problèmes complexes et apprendre par vous-même.',
+                description:
+                    'Vous aimez résoudre des problèmes complexes et apprendre par vous-même.',
             },
             {
                 title: 'Pragmatisme',
@@ -827,7 +711,10 @@ export default function Orientations() {
         return (
             <div className="ria-body">
                 <div className="ria-container">
-                    <div className="loading-spinner" style={{ textAlign: 'center', padding: '50px' }}>
+                    <div
+                        className="loading-spinner"
+                        style={{ textAlign: 'center', padding: '50px' }}
+                    >
                         <div className="spinner"></div>
                         <p>Chargement de vos résultats...</p>
                     </div>
@@ -861,7 +748,7 @@ export default function Orientations() {
         );
     }
 
-    const { scores, recommendations, assessmentInfo } = data;
+    const { scores, recommendationsByAxis, assessmentInfo } = data;
     const finalScores = scores || MOCK_SCORES;
     return (
         <div className="ria-body">
@@ -1076,7 +963,7 @@ export default function Orientations() {
                     </div>
 
                     <div className="ria-tabs">
-                        {topAxes.map((axis, index) => (
+                        {topAxes.map((axis) => (
                             <button
                                 key={axis.key}
                                 className={`ria-tab${activeTab === axis.key ? ' active' : ''}`}
@@ -1095,7 +982,7 @@ export default function Orientations() {
                                     axisKey={axis.key}
                                     axisLabel={axis.label}
                                     score={axis.score}
-                                    recommendations={data.recommendations || {}}
+                                    recommendations={recommendationsByAxis || {}}
                                 />
                             ),
                     )}
