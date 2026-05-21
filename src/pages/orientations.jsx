@@ -294,7 +294,7 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
                         <div className="ria-chip-list">
                             {reco.metiers?.length > 0 ? (
                                 reco.metiers.map((m, i) => (
-                                    <span key={i} className={`ria-chip ${i === 0 ? 'active' : ''}`}>
+                                    <span key={i} className="ria-chip">
                                         {m}
                                     </span>
                                 ))
