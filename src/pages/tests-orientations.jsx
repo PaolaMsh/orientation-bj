@@ -136,8 +136,8 @@ const Testsorientations = () => {
                             {phases.map((ph) => (
                                 <Link
                                     key={ph.id}
-                                    to="/tests"
-                                    state={{ mode: 'single', phaseId: ph.id }}
+                                    to={ph.id === 1 ? `/tests/phase/${ph.id}` : '/tests'}
+                                    state={ph.id === 1 ? undefined : { mode: 'single', phaseId: ph.id }}
                                     className="to-phase-btn"
                                 >
                                     <span className="to-phase-icon">{ph.icon}</span>

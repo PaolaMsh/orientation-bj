@@ -10,6 +10,7 @@ import Orientations from './pages/orientations';
 import Support from './pages/support';
 import Test from './pages/tests';
 import Testsorientations from './pages/tests-orientations';
+import PhaseTest from './pages/phaseText';
 import UniversitiesPage from './pages/universites-formations';
 import HeaderParent from './components/headerParent';
 import Footer from './components/footer';
@@ -19,6 +20,7 @@ import Parcours from './pages/parcours';
 import Contact from './pages/contact';
 import Guide from './pages/guide-riasec';
 import Faq from './pages/faq';
+import RapportPhase1 from './pages/rapport-phase1';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, token } = useAuth();
@@ -79,6 +81,14 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route
+                        path="/tests/phase/:id"
+                        element={
+                            <ProtectedRoute>
+                                <PhaseTest />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     <Route
                         path="/orientations"
@@ -128,6 +138,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Faq />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/rapport-phase1"
+                        element={
+                            <ProtectedRoute>
+                                <RapportPhase1 />
                             </ProtectedRoute>
                         }
                     />

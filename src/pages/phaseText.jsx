@@ -304,6 +304,14 @@ const PhaseTest = () => {
                 return false;
             } catch (err) {
                 console.error('Fetch batch error:', err);
+                const message = err.response?.data?.message || err.message || '';
+                if (
+                    String(message).toLowerCase().includes('aucun test actif') ||
+                    String(message).toLowerCase().includes('no active')
+                ) {
+                    await completePhase(tokenToUse, assessmentIdToUse);
+                    return false;
+                }
                 setError(err.response?.data?.message || 'Impossible de charger les questions');
                 return false;
             } finally {
@@ -317,15 +325,40 @@ const PhaseTest = () => {
         setSubmitting(true);
         try {
             // Calculer les résultats
-            await api.post('/results/compute', {
-                sessionToken: token,
-                assessmentId: assessmentIdParam,
-            });
+            try {
+                await api.post('/results/compute', {
+                    sessionToken: token,
+                    assessmentId: assessmentIdParam,
+                });
+            } catch (computeErr) {
+                console.warn('Compute warning (continuing to fetch phase result):', computeErr);
+            }
 
-            // Récupérer les résultats - utiliser le même endpoint que tests.jsx
-            const response = await api.get(`/results/phase${phaseId}`, {
-                params: { assessmentId: assessmentIdParam, sessionToken: token },
-            });
+            // Récupérer les résultats via endpoint stable par assessment
+            let response;
+            try {
+                response = await api.get(`/results/by-assessment/${assessmentIdParam}`);
+            } catch (resultErr) {
+                // Fallback legacy
+                response = await api.get(`/results/phase${phaseId}`, {
+                    params: { assessmentId: assessmentIdParam, sessionToken: token },
+                });
+            }
+
+            // Pour la phase 1, afficher la page de rapport dédiée
+            if (phaseId === 1) {
+                localStorage.setItem('assessment_id', String(assessmentIdParam));
+                localStorage.setItem('session_token', String(token));
+                localStorage.setItem('phase1_report_data', JSON.stringify(response?.data || {}));
+                navigate('/rapport-phase1', {
+                    state: {
+                        phaseResults: response?.data,
+                        assessmentId: assessmentIdParam,
+                        sessionToken: token,
+                    },
+                });
+                return;
+            }
 
             setPhaseResults(response.data);
             setPhaseCompleted(true);
@@ -334,7 +367,27 @@ const PhaseTest = () => {
             localStorage.removeItem(`phase_${phaseId}_assessment_id`);
         } catch (err) {
             console.error('Error completing phase:', err);
-            setError('Impossible de finaliser la phase');
+            // Dernière tentative pour phase 1 : afficher au moins le rapport si possible
+            if (phaseId === 1) {
+                try {
+                    const fallback = await api.get(`/results/by-assessment/${assessmentIdParam}`);
+                    localStorage.setItem('assessment_id', String(assessmentIdParam));
+                    localStorage.setItem(
+                        'phase1_report_data',
+                        JSON.stringify(fallback?.data || {}),
+                    );
+                    navigate('/rapport-phase1', {
+                        state: {
+                            phaseResults: fallback?.data,
+                            assessmentId: assessmentIdParam,
+                        },
+                    });
+                    return;
+                } catch (finalErr) {
+                    console.error('Phase1 fallback error:', finalErr);
+                }
+            }
+            setError("Impossible de finaliser la phase et d'afficher le rapport");
         } finally {
             setSubmitting(false);
         }
