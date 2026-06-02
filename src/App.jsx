@@ -21,10 +21,11 @@ import Contact from './pages/contact';
 import Guide from './pages/guide-riasec';
 import Faq from './pages/faq';
 import RapportPhase1 from './pages/rapport-phase1';
-
+import VerifyEmailGuard from './components/VerifyEmailGuard';
+    
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, token } = useAuth();
-    const isAuth = isAuthenticated || token;
+    const { token } = useAuth();  
+    const isAuth = !!token;  //
 
     if (!isAuth) {
         return <Navigate to="/login" replace />;
@@ -43,6 +44,9 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Navigate to="/accueil" replace />} />
                     <Route path="/accueil" element={<Home />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/verify-email" element={<VerifyEmailGuard />} />
 
                     <Route path="/universites-formations" element={<UniversitiesPage />} />
 
@@ -150,8 +154,7 @@ function App() {
                         }
                     />
 
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
+                    
                 </Routes>
                 <Footer />
             </Router>

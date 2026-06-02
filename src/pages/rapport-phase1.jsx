@@ -139,7 +139,6 @@ function RapportPhase1() {
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p style={{ color: 'red' }}>{error}</p>
                         <button onClick={() => navigate('/tests-orientations')} className="btn">
                             Retour 
                         </button>
@@ -218,17 +217,10 @@ function RapportPhase1() {
                         <div className="ori-logo-section">
                             <span className="ori-logo-icon">🎯</span>
                             <div>
-                                <h1 className="ori-title">Votre Rapport - Phase 1</h1>
-                                <p className="ori-subtitle">Évaluation de vos intérêts professionnels</p>
+                                <h1 style={{ marginTop: '5rem' }} className='orientations-header'>Votre Rapport - Phase 1</h1>
                             </div>
                         </div>
-                        <button
-                            className="ori-home-btn"
-                            onClick={() => navigate('/')}
-                            title="Accueil"
-                        >
-                            <IconHome />
-                        </button>
+                       
                     </div>
                 </div>
 
@@ -238,7 +230,6 @@ function RapportPhase1() {
                 </div>
 
                 <div className="ria-hero-card">
-                    <div className="ria-hero-label">Axe Dominant</div>
                     <div className="ria-hero-score">{primaryAxis.label || 'Non déterminé'}</div>
                     <div className="ria-hero-value">{primaryAxis.score || 0}/100</div>
                 </div>
@@ -315,13 +306,11 @@ function RapportPhase1() {
                 </div>
 
                 {/* Bouton de retour */}
-                <div className="ria-actions">
-                    <button
-                        className="ria-btn-primary"
-                        onClick={() => navigate('/tests-orientations')}
-                    >
-                        Retour
+                 <div className="Buttons">
+                    <button className="button" onClick={() => navigate('/tests')}>
+                        Nouveau test
                     </button>
+
                 </div>
             </div>
         </div>
