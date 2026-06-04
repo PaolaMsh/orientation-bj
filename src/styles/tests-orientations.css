@@ -116,7 +116,17 @@
     margin-top: 1rem;
     color: white;
 }
+.to-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 
+.to-stats svg {
+    width: 18px;
+    height: 18px;
+    stroke: white;
+}
 .to-section-label {
     text-align: center;
     font-size: 1.05rem;
