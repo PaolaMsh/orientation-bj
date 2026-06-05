@@ -1,9 +1,7 @@
-// EspacePersonnel.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/parcours.css';
 
-// Icônes réutilisables
 const IconUser = () => (
     <svg
         width="20"
@@ -485,19 +483,16 @@ export default function EspacePersonnel() {
         alert('Bourse retirée des favoris');
     };
 
-    // ✅ Écouter les événements de nouveau test en temps réel
     useEffect(() => {
         const handleNewTestResult = (event) => {
             console.log('📡 Événement reçu en temps réel:', event.detail);
             if (event.detail && event.detail.testResult) {
-                // Sauvegarde immédiate
                 saveTestResult(event.detail.testResult);
             }
         };
 
         window.addEventListener('newTestResult', handleNewTestResult);
 
-        // Vérifier s'il y a un test en attente (utile après redirection)
         const pendingTest = sessionStorage.getItem('pendingTestResult');
         if (pendingTest) {
             try {
@@ -515,7 +510,6 @@ export default function EspacePersonnel() {
         };
     }, [saveTestResult]);
 
-    // ✅ Rafraîchir les données quand la page devient visible
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (!document.hidden) {
@@ -551,13 +545,11 @@ export default function EspacePersonnel() {
         { id: 'profile', label: 'Mon profil', icon: <IconUser /> },
     ];
 
-    // Nombre de tests complétés pour affichage
     const completedTestsCount = testHistory.filter((t) => t.status === 'completed').length;
     const lastTest = testHistory.filter((t) => t.status === 'completed')[0];
 
     return (
         <div className="espace-container">
-            {/* En-tête avec stats en temps réel */}
             <div className="espace-header">
                 <div className="espace-header-content">
                     <h1> Espace personnel</h1>
@@ -587,7 +579,6 @@ export default function EspacePersonnel() {
                 </div>
             </div>
 
-            {/* Corps principal */}
             <div className="espace-body">
                 <aside className="espace-sidebar">
                     <div className="user-card">
@@ -617,7 +608,6 @@ export default function EspacePersonnel() {
                 </aside>
 
                 <main className="espace-main">
-                    {/* DASHBOARD - Affichage en temps réel */}
                     {activeMenu === 'dashboard' && (
                         <div className="dashboard-content">
                             <h2>Aperçu de votre parcours</h2>
@@ -702,7 +692,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* HISTORIQUE DES TESTS - Affichage en temps réel */}
                     {activeMenu === 'history' && (
                         <div className="history-content">
                             <div className="section-header">
@@ -778,7 +767,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* RAPPORTS PDF */}
                     {activeMenu === 'reports' && (
                         <div className="reports-content">
                             <div className="section-header">
@@ -847,7 +835,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* SUIVI ÉVOLUTION */}
                     {activeMenu === 'evolution' && (
                         <div className="evolution-content">
                             <h2>📈 Évolution de vos performances</h2>
@@ -922,7 +909,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* BOURSES ENREGISTRÉES */}
                     {activeMenu === 'scholarships' && (
                         <div className="scholarships-content">
                             <div className="section-header">
@@ -1003,7 +989,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* MON PROFIL AVEC ÉDITION */}
                     {activeMenu === 'profile' && (
                         <div className="profile-content">
                             <div className="section-header">
@@ -1125,18 +1110,14 @@ export default function EspacePersonnel() {
     );
 }
 
-// ✅ Fonction globale à appeler APRÈS chaque test complété
 export const saveTestResultGlobal = (testResult) => {
     console.log('📤 Sauvegarde globale du test:', testResult);
 
-    // Sauvegarde dans sessionStorage pour récupération après redirection
     sessionStorage.setItem('pendingTestResult', JSON.stringify(testResult));
 
-    // Dispatch immédiat pour mise à jour si la page est déjà ouverte
     const event = new CustomEvent('newTestResult', { detail: { testResult } });
     window.dispatchEvent(event);
 
-    // Alternative : sauvegarde directe dans localStorage
     const storedTests = localStorage.getItem('testHistory');
     let tests = [];
     if (storedTests) {

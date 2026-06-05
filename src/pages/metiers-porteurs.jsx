@@ -35,9 +35,89 @@ import {
     FaWind,
     FaPlane,
     FaHeartbeat,
+    FaInfoCircle,
+    FaChalkboardTeacher,
+    FaHandshake,
+    FaCertificate,
+    FaFire,
+    FaChartLine as FaChartTrend,
+    FaRocket,
 } from 'react-icons/fa';
 import { GiFarmer, GiFruitTree, GiFrozenBlock, GiBarn } from 'react-icons/gi';
 import { MdConstruction, MdSecurity, MdHotel, MdLocalHospital } from 'react-icons/md';
+
+// Composant pour l'icône feu (🔥)
+const IconFire = ({ size = 14, style = {} }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={style}
+    >
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+    </svg>
+);
+
+// Composant pour l'icône croissance (📈)
+const IconTrendUp = ({ size = 14, style = {} }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={style}
+    >
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+        <polyline points="17 6 23 6 23 12" />
+    </svg>
+);
+
+// Composant pour l'icône muscle/fort (💪)
+const IconStrong = ({ size = 14, style = {} }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={style}
+    >
+        <path d="M18 4v3a4 4 0 0 0 4 4 1 1 0 0 1 1 1 3 3 0 0 1-3 3 6 6 0 0 1-6-6 2 2 0 0 0-2-2H6a2 2 0 0 0-2 2 6 6 0 0 1-6 6 3 3 0 0 1-3-3 1 1 0 0 1 1-1 4 4 0 0 0 4-4V4" />
+        <path d="M12 2a2 2 0 0 0-2 2v2" />
+        <path d="M12 2a2 2 0 0 1 2 2v2" />
+    </svg>
+);
+
+// Composant pour l'icône cible (🎯)
+const IconTarget = ({ size = 20, style = {} }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={style}
+    >
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="2" />
+    </svg>
+);
 
 const MetiersPorteurs = () => {
     const [activeFilter, setActiveFilter] = useState('all');
@@ -69,7 +149,9 @@ const MetiersPorteurs = () => {
                 'Bonne connaissance des filières anacarde, ananas, soja et coton',
             ],
             formation: 'BTS Agro-industrie, Licence en Génie alimentaire',
-            demand: 'Très élevée 🔥',
+            demand: 'très-elevee',
+            demandText: 'Très élevée',
+            demandIcon: <IconFire size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Usines de transformation, coopératives agricoles, exportateurs',
         },
         {
@@ -86,7 +168,9 @@ const MetiersPorteurs = () => {
                 'Connaissance des normes sanitaires de conservation',
             ],
             formation: 'Licence Logistique, BTS Froid et climatisation',
-            demand: 'Élevée 📈',
+            demand: 'elevee',
+            demandText: 'Élevée',
+            demandIcon: <IconTrendUp size={14} style={{ marginRight: '4px' }} />,
             opportunities: "Sociétés d'export, grandes surfaces, plateformes logistiques",
         },
         {
@@ -103,7 +187,9 @@ const MetiersPorteurs = () => {
                 'Importance de la diversification des cultures',
             ],
             formation: 'Licence en Agriculture, Formation en management agricole',
-            demand: 'Forte 💪',
+            demand: 'forte',
+            demandText: 'Forte',
+            demandIcon: <IconStrong size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Exploitations privées, fermes modernes, agri-business',
         },
         {
@@ -120,7 +206,9 @@ const MetiersPorteurs = () => {
                 'Gestion de budget et de planning essentielle',
             ],
             formation: 'BTS Bâtiment, Licence Génie civil',
-            demand: 'Très élevée 🔥',
+            demand: 'très-elevee',
+            demandText: 'Très élevée',
+            demandIcon: <IconFire size={14} style={{ marginRight: '4px' }} />,
             opportunities: "Entreprises de BTP, promoteurs immobiliers, bureaux d'études",
         },
         {
@@ -137,7 +225,9 @@ const MetiersPorteurs = () => {
                 "Réseau d'architectes, notaires et banques indispensable",
             ],
             formation: 'Formation en immobilier, Droit foncier, Gestion de projets',
-            demand: 'Forte 💪',
+            demand: 'forte',
+            demandText: 'Forte',
+            demandIcon: <IconStrong size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Indépendant, agences immobilières, investisseurs',
         },
         {
@@ -154,7 +244,9 @@ const MetiersPorteurs = () => {
                 'Travail à distance possible pour des clients internationaux',
             ],
             formation: 'Bootcamp développement, Licence informatique, Autodidacte',
-            demand: 'Très élevée 🔥',
+            demand: 'très-elevee',
+            demandText: 'Très élevée',
+            demandIcon: <IconFire size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Start-ups, agences web, freelances, entreprises internationales',
         },
         {
@@ -171,7 +263,9 @@ const MetiersPorteurs = () => {
                 'Veille technologique permanente indispensable',
             ],
             formation: 'Licence en Sécurité informatique, Certifications professionnelles',
-            demand: 'Très élevée 🔥',
+            demand: 'très-elevee',
+            demandText: 'Très élevée',
+            demandIcon: <IconFire size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Banques, institutions financières, sociétés de services, gouvernement',
         },
         {
@@ -188,7 +282,9 @@ const MetiersPorteurs = () => {
                 'Potentiel énorme dans les zones non connectées au réseau',
             ],
             formation: 'Licence/ Master Énergies renouvelables, Formation technique solaire',
-            demand: 'Forte 💪',
+            demand: 'forte',
+            demandText: 'Forte',
+            demandIcon: <IconStrong size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Entreprises solaires, ONG, projets gouvernementaux, indépendant',
         },
         {
@@ -205,7 +301,9 @@ const MetiersPorteurs = () => {
                 "Connaissance des standards internationaux d'hôtellerie",
             ],
             formation: 'BTS Hôtellerie, Licence Management hôtelier',
-            demand: 'Forte 💪',
+            demand: 'forte',
+            demandText: 'Forte',
+            demandIcon: <IconStrong size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Hôtels, lodges, écolodges, résidences touristiques',
         },
         {
@@ -222,7 +320,9 @@ const MetiersPorteurs = () => {
                 'Certification et agrément nécessaires',
             ],
             formation: 'Formation en tourisme, Certificat de guide',
-            demand: 'Moyenne à forte 📈',
+            demand: 'moyenne',
+            demandText: 'Moyenne à forte',
+            demandIcon: <IconTrendUp size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Agences de voyage, ONG, indépendant',
         },
         {
@@ -239,7 +339,9 @@ const MetiersPorteurs = () => {
                 'Agrément obligatoire pour exercer',
             ],
             formation: 'Licence Transport Logistique, Formation en douane',
-            demand: 'Très élevée 🔥',
+            demand: 'très-elevee',
+            demandText: 'Très élevée',
+            demandIcon: <IconFire size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Sociétés de transit, cabinets de courtage, indépendant',
         },
         {
@@ -256,7 +358,9 @@ const MetiersPorteurs = () => {
                 'Gestion de stock et logistique pharmaceutique',
             ],
             formation: 'Doctorat Pharmacie, Spécialisation',
-            demand: 'Forte 💪',
+            demand: 'forte',
+            demandText: 'Forte',
+            demandIcon: <IconStrong size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'Hôpitaux publics, ONG, grossistes répartiteurs',
         },
         {
@@ -273,7 +377,9 @@ const MetiersPorteurs = () => {
                 'Créneaux porteurs : plastique, déchets électroniques, biodéchets',
             ],
             formation: 'Licence Environnement, Formation en gestion des déchets',
-            demand: 'Élevée 📈',
+            demand: 'elevee',
+            demandText: 'Élevée',
+            demandIcon: <IconTrendUp size={14} style={{ marginRight: '4px' }} />,
             opportunities: 'ONG, entreprises de recyclage, collectivités locales',
         },
     ];
@@ -283,6 +389,20 @@ const MetiersPorteurs = () => {
 
     const toggleExpand = (id) => {
         setExpandedCard(expandedCard === id ? null : id);
+    };
+
+    // Fonction pour obtenir le style du badge en fonction du niveau de demande
+    const getDemandBadgeStyle = (demand) => {
+        switch(demand) {
+            case 'très-elevee':
+                return { background: '#e76f51', color: 'white' };
+            case 'elevee':
+                return { background: '#f4a261', color: 'white' };
+            case 'forte':
+                return { background: '#2a9d8f', color: 'white' };
+            default:
+                return { background: '#e9c46a', color: '#1a2a3a' };
+        }
     };
 
     return (
@@ -300,16 +420,16 @@ const MetiersPorteurs = () => {
                     </p>
                     <div className="hero-stats">
                         <div className="stat">
-                            <span className="stat-number">7%</span>
-                            <span className="stat-label">Croissance PIB 2026</span>
+                            <span className="stats-numbers">7%</span>
+                            <span className="stats-labels">Croissance PIB 2026</span>
                         </div>
                         <div className="stat">
-                            <span className="stat-number">8+</span>
-                            <span className="stat-label">Secteurs porteurs</span>
+                            <span className="stats-numbers">8+</span>
+                            <span className="stats-labels">Secteurs porteurs</span>
                         </div>
                         <div className="stat">
-                            <span className="stat-number">13</span>
-                            <span className="stat-label">Métiers en demande</span>
+                            <span className="stats-numbers ">13</span>
+                            <span className="stats-labels">Métiers en demande</span>
                         </div>
                     </div>
                 </div>
@@ -346,7 +466,13 @@ const MetiersPorteurs = () => {
                                     <div className="card-icon">{job.icon}</div>
                                     <div className="card-title-section">
                                         <h3 className="job-title">{job.title}</h3>
-                                        <span className="demand-badge">{job.demand}</span>
+                                        <span 
+                                            className="demand-badge"
+                                            style={getDemandBadgeStyle(job.demand)}
+                                        >
+                                            {job.demandIcon}
+                                            {job.demandText}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -356,7 +482,10 @@ const MetiersPorteurs = () => {
                                     className={`card-details ${expandedCard === job.id ? 'visible' : ''}`}
                                 >
                                     <div className="details-section">
-                                        <h4>📌 Ce qu'il faut savoir</h4>
+                                        <h4>
+                                            <FaInfoCircle style={{ marginRight: '8px' }} />
+                                            Ce qu'il faut savoir
+                                        </h4>
                                         <ul className="importance-list">
                                             {job.importance.map((point, idx) => (
                                                 <li key={idx}>{point}</li>
@@ -366,11 +495,17 @@ const MetiersPorteurs = () => {
 
                                     <div className="info-grid">
                                         <div className="info-item">
-                                            <span className="info-label">🎓 Formations</span>
+                                            <span className="info-label">
+                                                <FaGraduationCap style={{ marginRight: '6px' }} />
+                                                Formations
+                                            </span>
                                             <span className="info-value">{job.formation}</span>
                                         </div>
                                         <div className="info-item">
-                                            <span className="info-label">🏢 Débouchés</span>
+                                            <span className="info-label">
+                                                <FaBuilding style={{ marginRight: '6px' }} />
+                                                Débouchés
+                                            </span>
                                             <span className="info-value">{job.opportunities}</span>
                                         </div>
                                     </div>
@@ -387,7 +522,10 @@ const MetiersPorteurs = () => {
 
             <section className="formation-section">
                 <div className="formation-container">
-                    <h2 className="formation-title">🎯 Comment se former ?</h2>
+                    <h2 className="formation-title">
+                        <IconTarget size={24} style={{ marginRight: '10px' }} />
+                        Comment se former ?
+                    </h2>
                     <div className="formation-grid">
                         <div className="formation-card">
                             <div className="formation-icon">
@@ -430,7 +568,10 @@ const MetiersPorteurs = () => {
             <section className="conseil-section">
                 <div className="conseil-container">
                     <div className="conseil-content">
-                        <span className="conseil-badge">💡 Conseil pratique</span>
+                        <span className="conseil-badge">
+                            <FaChalkboardTeacher style={{ marginRight: '6px' }} />
+                            Conseil pratique
+                        </span>
                         <h2>Privilégiez l'alternance</h2>
                         <p>
                             Les recruteurs recherchent avant tout des candidats{' '}
@@ -440,17 +581,23 @@ const MetiersPorteurs = () => {
                         </p>
                         <div className="conseil-tips">
                             <div className="tip">
-                                <span className="tip-icon">🎯</span>
+                                <span className="tip-icon">
+                                    <IconTarget size={14} />
+                                </span>
                                 <span>
                                     Choisissez une filière en phase avec les besoins du marché
                                 </span>
                             </div>
                             <div className="tip">
-                                <span className="tip-icon">🌐</span>
+                                <span className="tip-icon">
+                                    <FaGlobe size={14} />
+                                </span>
                                 <span>Développez votre réseau professionnel dès la formation</span>
                             </div>
                             <div className="tip">
-                                <span className="tip-icon">📜</span>
+                                <span className="tip-icon">
+                                    <FaCertificate size={14} />
+                                </span>
                                 <span>
                                     Obtenez des certifications reconnues (ISO, langues, sécurité)
                                 </span>

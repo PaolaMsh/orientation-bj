@@ -1,10 +1,8 @@
-// Au début de votre fichier bourses-aides.jsx, remplacez tous les imports par :
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-// Import des icônes solid (gratuites)
 import {
     faGraduationCap,
     faGlobeAfrica,
@@ -57,7 +55,6 @@ import {
     faHandHoldingHeart,
 } from '@fortawesome/free-solid-svg-icons';
 
-// Import des icônes de marques
 import {
     faFacebook,
     faTwitter,
@@ -66,7 +63,6 @@ import {
     faCcVisa,
 } from '@fortawesome/free-brands-svg-icons';
 
-// Import du CSS
 import '../styles/bourses-aides.css';
 
 const Scholarships = () => {
@@ -661,17 +657,7 @@ const Scholarships = () => {
         },
     ];
 
-    // Statistiques
-    const stats = [
-        { icon: faGraduationCap, value: '5000+', label: 'Bourses disponibles' },
-        { icon: faGlobeAfrica, value: '50+', label: "Pays d'accueil" },
-        { icon: faUsers, value: '10000+', label: 'Étudiants aidés' },
-        { icon: faEuroSign, value: '€50M+', label: 'Financements' },
-        { icon: faPalette, value: '100+', label: 'Bourses artistiques' },
-        { icon: faHandsHelping, value: '15', label: 'Partenaires Bénin' },
-    ];
-
-    // Conseils pour les candidatures
+    
     const tips = [
         {
             title: 'Préparez votre dossier tôt',
@@ -793,20 +779,7 @@ const Scholarships = () => {
                                 Nombreuses bourses en partenariat avec le Bénin !
                             </strong>
                         </p>
-                        <div className="hero-stats">
-                            {stats.map((stat, index) => (
-                                <div key={index} className="stat-card">
-                                    <div className="stat-icon">
-                                        <FontAwesomeIcon icon={stat.icon} />
-                                    </div>
-                                    <div className="stat-info">
-                                        <span className="stat-value">{stat.value}</span>
-                                        <span className="stat-label">{stat.label}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                                           </div>
                 </div>
                 <div className="hero-wave">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120">
@@ -976,21 +949,7 @@ const Scholarships = () => {
                                         <span className="university">{scholarship.university}</span>
                                     </div>
 
-                                    <div className="card-stats">
-                                        <div className="stat">
-                                            <FontAwesomeIcon icon={faGraduationCap} />
-                                            <span>{scholarship.level}</span>
-                                        </div>
-                                        <div className="stat">
-                                            <FontAwesomeIcon icon={faMoneyBillWave} />
-                                            <span>{scholarship.amount}</span>
-                                        </div>
-                                        <div className="stat">
-                                            <FontAwesomeIcon icon={faClock} />
-                                            <span>{scholarship.duration}</span>
-                                        </div>
-                                    </div>
-
+                                    
                                     <div className="rating">
                                         <div className="stars">
                                             {[...Array(5)].map((_, i) => (
@@ -1170,7 +1129,6 @@ const Scholarships = () => {
                 </div>
             </div>
 
-            {/* Benin Special Section */}
             <div className="benin-special-section">
                 <div className="container">
                     <div className="benin-special-content">
@@ -1186,25 +1144,11 @@ const Scholarships = () => {
                             opportunités uniques pour étudier à l'étranger dans des conditions
                             optimales.
                         </p>
-                        <div className="benin-stats">
-                            <div className="benin-stat">
-                                <span className="stat-number">15+</span>
-                                <span className="stat-label">Pays partenaires</span>
-                            </div>
-                            <div className="benin-stat">
-                                <span className="stat-number">500+</span>
-                                <span className="stat-label">Bourses/an</span>
-                            </div>
-                            <div className="benin-stat">
-                                <span className="stat-number">50+</span>
-                                <span className="stat-label">Domaine artistiques</span>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
 
-            {/* Tips Section */}
             <div className="tips-section">
                 <div className="container">
                     <div className="section-header">
@@ -1225,7 +1169,6 @@ const Scholarships = () => {
                 </div>
             </div>
 
-            {/* CTA Section */}
             <div className="cta-section">
                 <div className="container">
                     <div className="cta-content">
@@ -1246,7 +1189,6 @@ const Scholarships = () => {
                 </div>
             </div>
 
-            {/* Floating Action Button */}
             <button className="fab" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 <FontAwesomeIcon icon={faChevronUp} />
             </button>
