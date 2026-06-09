@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/authContext';
-
 import Home from './pages/home';
 import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
@@ -28,8 +27,9 @@ const ProtectedRoute = ({ children }) => {
     const isAuth = !!token;  //
 
     if (!isAuth) {
-        return <Navigate to="/login" replace />;
+         return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
     }
+
 
     return children;
 };

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
 
-// --- Small presentational pieces (single responsibility) ---
 const EmotionSvgs = {
     sad: (
         <svg
@@ -140,8 +139,7 @@ const ProgressHeader = ({
     return (
         <div className="test-header">
             <div className="logo-section">
-                <span className="logo-icon">🎯</span>
-                <span className="logo-text">RIASEC Profiler</span>
+                <span className="logos-text">RIASEC Profiler</span>
             </div>
             <div className="progress-section">
                 <div className="phase-indicator">

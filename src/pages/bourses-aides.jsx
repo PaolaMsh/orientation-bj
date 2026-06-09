@@ -12,11 +12,7 @@ import {
     faClock,
     faSearch,
     faFilter,
-    faHeart,
-    faShare,
     faBookmark,
-    faEuroSign,
-    faDollarSign,
     faMapMarkerAlt,
     faUniversity,
     faAward,
@@ -28,67 +24,34 @@ import {
     faStar,
     faStarHalfAlt,
     faUsers,
-    faBriefcase,
-    faHome,
-    faChartLine,
     faInfoCircle,
     faChevronDown,
     faChevronUp,
-    faPassport,
     faPalette,
-    faMusic,
-    faFilm,
-    faBook,
-    faLaptopCode,
-    faSeedling,
-    faHandsHelping,
-    faChalkboardTeacher,
-    faMask,
-    faPaintbrush,
-    faCamera,
-    faGuitar,
-    faDrum,
-    faFeather,
-    faBrush,
-    faMicrophoneAlt,
-    faCompactDisc,
-    faHandHoldingHeart,
+    faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 
-import {
-    faFacebook,
-    faTwitter,
-    faWhatsapp,
-    faLinkedin,
-    faCcVisa,
-} from '@fortawesome/free-brands-svg-icons';
-
 import '../styles/bourses-aides.css';
+import { bourseService } from '../services/bourseService';
+import { saveScholarship } from './parcours'; 
 
 const Scholarships = () => {
-    // États pour les données
     const [scholarships, setScholarships] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // États pour les filtres
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCountry, setSelectedCountry] = useState('all');
     const [selectedLevel, setSelectedLevel] = useState('all');
-    const [selectedType, setSelectedType] = useState('all');
     const [showFilters, setShowFilters] = useState(false);
     const [expandedCard, setExpandedCard] = useState(null);
-    const [activeTab, setActiveTab] = useState('all');
-
-    // États pour les options des filtres
     const [countries, setCountries] = useState(['all']);
     const [levels, setLevels] = useState(['all']);
-    const [types, setTypes] = useState(['all']);
-
-    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalResults, setTotalResults] = useState(0);
+    const [savedMessage, setSavedMessage] = useState(null);
+
+    const itemsPerPage = 12;
 
     const tips = [
         {
@@ -111,91 +74,134 @@ const Scholarships = () => {
             description: 'TOEFL, IELTS, DELF/DALF, etc.',
             icon: faLanguage,
         },
-        
     ];
 
-    // Récupérer toutes les bourses depuis l'API
+    // Fonction pour mapper les données vers le format attendu par saveScholarship
+    const mapScholarshipForSaving = (scholarship) => {
+        return {
+            id: scholarship.id,
+            title: scholarship.title,
+            description: scholarship.description,
+            country: scholarship.country,
+            university: scholarship.university,
+            type: scholarship.type,
+            level: scholarship.level,
+            deadline: scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('fr-FR') : 'Non spécifiée',
+            amount: scholarship.amount,
+            status: getStatus(scholarship.deadline),
+            link: scholarship.applyUrl,
+            benefits: scholarship.coverage || [],
+            conditions: scholarship.requirements || [],
+            fields: scholarship.fields || [],
+            savedAt: new Date().toISOString()
+        };
+    };
+
+    // Déterminer le statut (ouvert/fermé)
+    const getStatus = (deadline) => {
+        if (!deadline) return 'ouvert';
+        const deadlineDate = new Date(deadline);
+        const today = new Date();
+        return deadlineDate > today ? 'ouvert' : 'fermé';
+    };
+
+    // Fonction pour mapper les données API vers le format attendu par le composant
+    const mapScholarshipData = (apiScholarship) => {
+        return {
+            id: apiScholarship.id,
+            title: apiScholarship.title,
+            description: apiScholarship.description,
+            country: apiScholarship.country,
+            university: apiScholarship.provider || apiScholarship.universities?.[0]?.name || 'Non spécifié',
+            type: apiScholarship.fundingType === 'FULL' ? 'Bourse complète' : 
+                   apiScholarship.fundingType === 'PARTIAL' ? 'Bourse partielle' : 'Bourse',
+            level: apiScholarship.level,
+            deadline: apiScholarship.applicationCloseAt,
+            amount: apiScholarship.amountLabel || 
+                    (apiScholarship.fundingType === 'FULL' ? 'Bourse complète' : 'Bourse partielle'),
+            coverage: apiScholarship.benefits || [],
+            requirements: apiScholarship.conditions || [],
+            languages: apiScholarship.requiredDocuments?.languageRequirement ? 
+                       [apiScholarship.requiredDocuments.languageRequirement] : ['Non spécifié'],
+            fields: apiScholarship.field ? [apiScholarship.field] : [],
+            rating: 4.5, 
+            applications: apiScholarship.seats || 0,
+            applyUrl: apiScholarship.applicationUrl,
+            officialUrl: apiScholarship.applicationUrl,
+            beninPartnership: apiScholarship.country === 'Bénin' || apiScholarship.provider?.includes('Bénin'),
+            artistic: apiScholarship.field?.toLowerCase().includes('art') || false,
+        };
+    };
+
+    // Fonction pour sauvegarder une bourse
+    const handleSaveScholarship = (scholarship, e) => {
+        e.stopPropagation();
+        
+        const scholarshipToSave = mapScholarshipForSaving(scholarship);
+        const saved = saveScholarship(scholarshipToSave);
+        
+        if (saved) {
+            setSavedMessage({ id: scholarship.id, text: '✓ Bourse enregistrée !', type: 'success' });
+            setTimeout(() => setSavedMessage(null), 3000);
+        } else {
+            setSavedMessage({ id: scholarship.id, text: 'ℹ️ Déjà dans vos favoris', type: 'info' });
+            setTimeout(() => setSavedMessage(null), 3000);
+        }
+    };
+
+    // Récupérer toutes les bourses
     const fetchAllScholarships = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            // Utiliser l'endpoint /api/v1/scholarships
-            const response = await api.get('/scholarships');
-
-            // Si la réponse est un tableau direct
-            let allScholarships = Array.isArray(response.data)
-                ? response.data
-                : response.data.data || [];
-
-            // Appliquer les filtres côté frontend (car l'API ne supporte pas les filtres)
-            let filtered = [...allScholarships];
-
-            // Filtre par recherche
+            const data = await bourseService.getAllScholarships();
+            let allScholarships = Array.isArray(data) ? data : data.data || [];
+            
+            let mappedScholarships = allScholarships.map(mapScholarshipData);
+            
+            const uniqueCountries = [...new Set(mappedScholarships.map(s => s.country).filter(Boolean))];
+            const uniqueLevels = [...new Set(mappedScholarships.map(s => s.level).filter(Boolean))];
+            
+            setCountries(['all', ...uniqueCountries]);
+            setLevels(['all', ...uniqueLevels]);
+            
+            let filtered = [...mappedScholarships];
+            
             if (searchTerm) {
-                filtered = filtered.filter(
-                    (s) =>
-                        s.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        s.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        s.university?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (s.fields &&
-                            s.fields.some((f) =>
-                                f.toLowerCase().includes(searchTerm.toLowerCase()),
-                            )),
+                filtered = filtered.filter(s =>
+                    s.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    s.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    s.university?.toLowerCase().includes(searchTerm.toLowerCase())
                 );
             }
-
-            // Filtre par pays
+            
             if (selectedCountry !== 'all') {
-                filtered = filtered.filter((s) => s.country === selectedCountry);
+                filtered = filtered.filter(s => s.country === selectedCountry);
             }
-
-            // Filtre par niveau
+            
             if (selectedLevel !== 'all') {
-                filtered = filtered.filter((s) => s.level === selectedLevel);
+                filtered = filtered.filter(s => s.level === selectedLevel);
             }
-
-            // Filtre par type
-            if (selectedType !== 'all') {
-                filtered = filtered.filter((s) => s.type === selectedType);
-            }
-
-            // Filtre par onglet
-            if (activeTab === 'benin') {
-                filtered = filtered.filter((s) => s.beninPartnership === true);
-            }
-            if (activeTab === 'artistic') {
-                filtered = filtered.filter((s) => s.artistic === true);
-            }
-            if (activeTab === 'full') {
-                filtered = filtered.filter((s) => s.amount === 'Complet');
-            }
-            if (activeTab === 'deadline') {
-                filtered = filtered.filter((s) => {
-                    const daysLeft = getDaysLeft(s.deadline);
-                    return daysLeft <= 30 && daysLeft > 0;
-                });
-            }
-
-            // Pagination manuelle
-            const start = (currentPage - 1) * 12;
-            const end = start + 12;
-            const paginatedData = filtered.slice(start, end);
-
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedData = filtered.slice(start, start + itemsPerPage);
+            
             setScholarships(paginatedData);
             setTotalResults(filtered.length);
-            setTotalPages(Math.ceil(filtered.length / 12));
+            setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+            
         } catch (err) {
             console.error('Erreur:', err);
-            setError(err.response?.data?.message || err.message);
+            setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    // Recherche avec l'endpoint /api/v1/scholarships/search
-    const searchScholarships = async () => {
-        if (!searchTerm) {
+    // Recherche
+    const searchScholarships = async (query) => {
+        if (!query?.trim()) {
             fetchAllScholarships();
             return;
         }
@@ -204,48 +210,25 @@ const Scholarships = () => {
         setError(null);
 
         try {
-            const response = await api.get('/scholarships/search', {
-                params: { q: searchTerm },
-            });
-
-            let results = Array.isArray(response.data) ? response.data : response.data.data || [];
-
-            // Appliquer les autres filtres sur les résultats de recherche
-            let filtered = [...results];
-
+            const results = await bourseService.searchScholarships(query);
+            let data = Array.isArray(results) ? results : results.data || [];
+            let mappedResults = data.map(mapScholarshipData);
+            
+            let filtered = [...mappedResults];
+            
             if (selectedCountry !== 'all') {
-                filtered = filtered.filter((s) => s.country === selectedCountry);
+                filtered = filtered.filter(s => s.country === selectedCountry);
             }
             if (selectedLevel !== 'all') {
-                filtered = filtered.filter((s) => s.level === selectedLevel);
+                filtered = filtered.filter(s => s.level === selectedLevel);
             }
-            if (selectedType !== 'all') {
-                filtered = filtered.filter((s) => s.type === selectedType);
-            }
-            if (activeTab === 'benin') {
-                filtered = filtered.filter((s) => s.beninPartnership === true);
-            }
-            if (activeTab === 'artistic') {
-                filtered = filtered.filter((s) => s.artistic === true);
-            }
-            if (activeTab === 'full') {
-                filtered = filtered.filter((s) => s.amount === 'Complet');
-            }
-            if (activeTab === 'deadline') {
-                filtered = filtered.filter((s) => {
-                    const daysLeft = getDaysLeft(s.deadline);
-                    return daysLeft <= 30 && daysLeft > 0;
-                });
-            }
-
-            // Pagination
-            const start = (currentPage - 1) * 12;
-            const end = start + 12;
-            const paginatedData = filtered.slice(start, end);
-
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedData = filtered.slice(start, start + itemsPerPage);
+            
             setScholarships(paginatedData);
             setTotalResults(filtered.length);
-            setTotalPages(Math.ceil(filtered.length / 12));
+            setTotalPages(Math.ceil(filtered.length / itemsPerPage));
         } catch (err) {
             console.error('Erreur recherche:', err);
             fetchAllScholarships();
@@ -254,64 +237,39 @@ const Scholarships = () => {
         }
     };
 
-    // Récupérer les options des filtres depuis les données
-    const fetchFilterOptions = async () => {
-        try {
-            const response = await api.get('/scholarships');
-            let data = Array.isArray(response.data) ? response.data : response.data.data || [];
-
-            const uniqueCountries = [...new Set(data.map((s) => s.country).filter(Boolean))];
-            const uniqueLevels = [...new Set(data.map((s) => s.level).filter(Boolean))];
-            const uniqueTypes = [...new Set(data.map((s) => s.type).filter(Boolean))];
-
-            setCountries(['all', ...uniqueCountries]);
-            setLevels(['all', ...uniqueLevels]);
-            setTypes(['all', ...uniqueTypes]);
-        } catch (err) {
-            console.error('Erreur chargement filtres:', err);
-        }
-    };
-
-    // Récupérer une bourse spécifique par ID
-    const fetchScholarshipById = async (id) => {
-        try {
-            const response = await api.get(`/scholarships/${id}`);
-            return response.data;
-        } catch (err) {
-            console.error('Erreur:', err);
-            return null;
-        }
-    };
-
-    // Formater la date
     const formatDate = (dateString) => {
         if (!dateString) return 'Date non définie';
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         return new Date(dateString).toLocaleDateString('fr-FR', options);
     };
 
-    // Effets
+    const getDaysLeft = (deadline) => {
+        if (!deadline) return 0;
+        const today = new Date();
+        const deadlineDate = new Date(deadline);
+        const diffTime = deadlineDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? diffDays : 0;
+    };
+
     useEffect(() => {
         if (searchTerm) {
-            searchScholarships();
+            searchScholarships(searchTerm);
         } else {
             fetchAllScholarships();
         }
-    }, [searchTerm, selectedCountry, selectedLevel, selectedType, activeTab, currentPage]);
-
-    useEffect(() => {
-        fetchFilterOptions();
-    }, []);
+    }, [searchTerm, selectedCountry, selectedLevel, currentPage]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, selectedCountry, selectedLevel, selectedType, activeTab]);
+    }, [searchTerm, selectedCountry, selectedLevel]);
 
-    if (loading && scholarships.length === 0) {
+    // Loader simple
+    if (loading) {
         return (
             <div className="scholarships-page">
                 <div className="loading-container">
-                    <div className="spinner"></div>
+                    <div className="simple-loader"></div>
                     <p>Chargement des bourses...</p>
                 </div>
             </div>
@@ -325,7 +283,7 @@ const Scholarships = () => {
                     <FontAwesomeIcon icon={faTimesCircle} />
                     <h3>Erreur de chargement</h3>
                     <p>{error}</p>
-                    <button onClick={() => window.location.reload()}>Réessayer</button>
+                    <button onClick={() => fetchAllScholarships()}>Réessayer</button>
                 </div>
             </div>
         );
@@ -347,10 +305,6 @@ const Scholarships = () => {
                             Découvrez les meilleures opportunités de bourses pour étudier à
                             l'étranger. Financez vos études universitaires et réalisez votre rêve de
                             mobilité internationale.
-                            <strong className="benin-highlight">
-                                {' '}
-                                Nombreuses bourses en partenariat avec le Bénin !
-                            </strong>
                         </p>
                     </div>
                 </div>
@@ -373,7 +327,7 @@ const Scholarships = () => {
                             <FontAwesomeIcon icon={faSearch} className="search-icon" />
                             <input
                                 type="text"
-                                placeholder="Rechercher une bourse, un pays, une université, un domaine ..."
+                                placeholder="Rechercher une bourse, un pays, une université..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -416,54 +370,50 @@ const Scholarships = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="filter-group">
-                                <label>Type de bourse</label>
-                                <select
-                                    value={selectedType}
-                                    onChange={(e) => setSelectedType(e.target.value)}
-                                >
-                                    {types.map((type) => (
-                                        <option key={type} value={type}>
-                                            {type === 'all' ? 'Tous les types' : type}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
                         </div>
                     )}
-
-                                    </div>
+                </div>
             </div>
 
             {/* Scholarships Grid */}
             <div className="scholarships-section">
                 <div className="container">
                     <div className="results-info">
-                        <span>{totalResults} bourses trouvées</span>
-                        
-                        {loading && <span className="loading-badge">Chargement...</span>}
+                        <span>{totalResults} bourse{totalResults > 1 ? 's' : ''} trouvée{totalResults > 1 ? 's' : ''}</span>
                     </div>
 
                     <div className="scholarships-grid">
                         {scholarships.map((scholarship) => (
                             <div
                                 key={scholarship.id}
-                                className={`scholarship-card ${expandedCard === scholarship.id ? 'expanded' : ''} ${scholarship.beninPartnership ? 'benin-partnership' : ''} ${scholarship.artistic ? 'artistic-card' : ''}`}
+                                className={`scholarship-card ${expandedCard === scholarship.id ? 'expanded' : ''}`}
                             >
                                 <div className="card-header">
                                     <div className="card-badge">
-                                        <FontAwesomeIcon
-                                            icon={scholarship.artistic ? faPalette : faAward}
-                                        />
+                                        <FontAwesomeIcon icon={faAward} />
                                         <span>{scholarship.type || 'Bourse'}</span>
                                     </div>
+                                    <button 
+                                        className="save-btn"
+                                        onClick={(e) => handleSaveScholarship(scholarship, e)}
+                                        title="Enregistrer cette bourse"
+                                    >
+                                        <FontAwesomeIcon icon={faBookmark} />
+                                        <span>Enregistrer</span>
+                                    </button>
                                 </div>
+
+                                {savedMessage && savedMessage.id === scholarship.id && (
+                                    <div className={`save-message ${savedMessage.type}`}>
+                                        {savedMessage.text}
+                                    </div>
+                                )}
 
                                 <div className="card-content">
                                     <h3>{scholarship.title}</h3>
                                     <div className="location">
                                         <FontAwesomeIcon icon={faMapMarkerAlt} />
-                                        <span>{scholarship.country}</span>
+                                        <span>{scholarship.country || 'Non spécifié'}</span>
                                         <span className="university">{scholarship.university}</span>
                                     </div>
 
@@ -473,9 +423,9 @@ const Scholarships = () => {
                                                 <FontAwesomeIcon
                                                     key={i}
                                                     icon={
-                                                        i < Math.floor(scholarship.rating || 0)
+                                                        i < Math.floor(scholarship.rating || 4.5)
                                                             ? faStar
-                                                            : i < (scholarship.rating || 0)
+                                                            : i < (scholarship.rating || 4.5)
                                                               ? faStarHalfAlt
                                                               : faStar
                                                     }
@@ -483,164 +433,139 @@ const Scholarships = () => {
                                                 />
                                             ))}
                                             <span className="rating-value">
-                                                {scholarship.rating || 'Nouveau'}
+                                                {scholarship.rating || 4.5}
                                             </span>
                                         </div>
                                         <span className="applications">
                                             <FontAwesomeIcon icon={faUsers} />
-                                            {scholarship.applications || 0} candidatures
+                                            {scholarship.applications || 'N/A'} places
                                         </span>
                                     </div>
 
-                                    <p className="description">{scholarship.description}</p>
+                                    <p className="description">
+                                        {scholarship.description?.substring(0, 150)}...
+                                    </p>
 
-                                    <div className="fields-preview">
-                                        {(scholarship.fields || []).slice(0, 3).map((field, i) => (
-                                            <span key={i} className="field-preview-tag">
-                                                {field}
-                                            </span>
-                                        ))}
-                                        {(scholarship.fields || []).length > 3 && (
-                                            <span className="field-preview-tag more">
-                                                +{(scholarship.fields || []).length - 3}
-                                            </span>
-                                        )}
-                                    </div>
+                                    {scholarship.fields && scholarship.fields.length > 0 && (
+                                        <div className="fields-preview">
+                                            {scholarship.fields.slice(0, 3).map((field, i) => (
+                                                <span key={i} className="field-preview-tag">
+                                                    {field}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
 
-                                    <div className="deadline">
-                                        <div
-                                            className={`deadline-badge ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}
-                                        >
-                                            <FontAwesomeIcon icon={faCalendarAlt} />
-                                            <span>
-                                                Date limite: {formatDate(scholarship.deadline)}
-                                            </span>
+                                    {scholarship.deadline && (
+                                        <div className="deadline">
+                                            <div className={`deadline-badge ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}>
+                                                <FontAwesomeIcon icon={faCalendarAlt} />
+                                                <span>
+                                                    Date limite: {formatDate(scholarship.deadline)}
+                                                </span>
+                                            </div>
+                                            <div className="days-left">
+                                                <span className={`days ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}>
+                                                    {getDaysLeft(scholarship.deadline)} jours restants
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="days-left">
-                                            <span
-                                                className={`days ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}
-                                            >
-                                                {getDaysLeft(scholarship.deadline)} jours restants
-                                            </span>
-                                        </div>
-                                    </div>
+                                    )}
 
                                     <div className="card-footer">
                                         <button
                                             className="details-btn"
-                                            onClick={() =>
-                                                setExpandedCard(
-                                                    expandedCard === scholarship.id
-                                                        ? null
-                                                        : scholarship.id,
-                                                )
-                                            }
+                                            onClick={() => setExpandedCard(expandedCard === scholarship.id ? null : scholarship.id)}
                                         >
-                                            {expandedCard === scholarship.id
-                                                ? 'Voir moins'
-                                                : 'Voir les détails'}
-                                            <FontAwesomeIcon
-                                                icon={
-                                                    expandedCard === scholarship.id
-                                                        ? faChevronUp
-                                                        : faChevronDown
-                                                }
-                                            />
+                                            {expandedCard === scholarship.id ? 'Voir moins' : 'Voir les détails'}
+                                            <FontAwesomeIcon icon={expandedCard === scholarship.id ? faChevronUp : faChevronDown} />
                                         </button>
-                                        <button
-                                            className="apply-btn"
-                                            onClick={() =>
-                                                window.open(scholarship.applyUrl || '#', '_blank')
-                                            }
-                                        >
-                                            Postuler
-                                            <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                        </button>
+                                        {scholarship.applyUrl && (
+                                            <button
+                                                className="apply-btn"
+                                                onClick={() => window.open(scholarship.applyUrl, '_blank')}
+                                            >
+                                                Postuler
+                                                <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
                                 {expandedCard === scholarship.id && (
                                     <div className="card-expanded slide-down">
-                                        <div className="expanded-section">
-                                            <h4>
-                                                <FontAwesomeIcon icon={faCheckCircle} />
-                                                Couverture de la bourse
-                                            </h4>
-                                            <ul>
-                                                {(scholarship.coverage || []).map((item, i) => (
-                                                    <li key={i}>
-                                                        <FontAwesomeIcon
-                                                            icon={faCheckCircle}
-                                                            className="check-icon"
-                                                        />
-                                                        {item}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <div className="expanded-section">
-                                            <h4>
-                                                <FontAwesomeIcon icon={faFileAlt} />
-                                                Conditions d'éligibilité
-                                            </h4>
-                                            <ul>
-                                                {(scholarship.requirements || []).map((req, i) => (
-                                                    <li key={i}>
-                                                        <FontAwesomeIcon
-                                                            icon={faCheckCircle}
-                                                            className="check-icon"
-                                                        />
-                                                        {req}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <div className="expanded-section">
-                                            <h4>
-                                                <FontAwesomeIcon icon={faLanguage} />
-                                                Langues requises
-                                            </h4>
-                                            <div className="languages">
-                                                {(scholarship.languages || []).map((lang, i) => (
-                                                    <span key={i} className="language-tag">
-                                                        {lang}
-                                                    </span>
-                                                ))}
+                                        {scholarship.coverage && scholarship.coverage.length > 0 && (
+                                            <div className="expanded-section">
+                                                <h4>
+                                                    <FontAwesomeIcon icon={faCheckCircle} />
+                                                    Avantages de la bourse
+                                                </h4>
+                                                <ul>
+                                                    {scholarship.coverage.map((item, i) => (
+                                                        <li key={i}>
+                                                            <FontAwesomeIcon icon={faCheckCircle} className="check-icon" />
+                                                            {item}
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </div>
-                                        </div>
+                                        )}
 
-                                        <div className="expanded-section">
-                                            <h4>
-                                                <FontAwesomeIcon icon={faUniversity} />
-                                                Domaines d'études
-                                            </h4>
-                                            <div className="fields">
-                                                {(scholarship.fields || []).map((field, i) => (
-                                                    <span key={i} className="field-tag">
-                                                        {field}
-                                                    </span>
-                                                ))}
+                                        {scholarship.requirements && scholarship.requirements.length > 0 && (
+                                            <div className="expanded-section">
+                                                <h4>
+                                                    <FontAwesomeIcon icon={faFileAlt} />
+                                                    Conditions d'éligibilité
+                                                </h4>
+                                                <ul>
+                                                    {scholarship.requirements.map((req, i) => (
+                                                        <li key={i}>
+                                                            <FontAwesomeIcon icon={faCheckCircle} className="check-icon" />
+                                                            {req}
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </div>
-                                        </div>
+                                        )}
+
+                                        {scholarship.languages && scholarship.languages.length > 0 && (
+                                            <div className="expanded-section">
+                                                <h4>
+                                                    <FontAwesomeIcon icon={faLanguage} />
+                                                    Langues requises
+                                                </h4>
+                                                <div className="languages">
+                                                    {scholarship.languages.map((lang, i) => (
+                                                        <span key={i} className="language-tag">{lang}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {scholarship.fields && scholarship.fields.length > 0 && (
+                                            <div className="expanded-section">
+                                                <h4>
+                                                    <FontAwesomeIcon icon={faUniversity} />
+                                                    Domaines d'études
+                                                </h4>
+                                                <div className="fields">
+                                                    {scholarship.fields.map((field, i) => (
+                                                        <span key={i} className="field-tag">{field}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="expanded-actions">
-                                            <button
-                                                className="btn-primary"
-                                                onClick={() =>
-                                                    window.open(
-                                                        scholarship.officialUrl || '#',
-                                                        '_blank',
-                                                    )
-                                                }
-                                            >
-                                                <FontAwesomeIcon icon={faFileAlt} />
-                                                Site officiel
-                                            </button>
-                                            <button className="btn-secondary">
+                                            {scholarship.officialUrl && (
+                                                <button className="btn-primary" onClick={() => window.open(scholarship.officialUrl, '_blank')}>
+                                                    <FontAwesomeIcon icon={faFileAlt} />
+                                                    Site officiel
+                                                </button>
+                                            )}
+                                            <button className="btn-secondary" onClick={() => setExpandedCard(null)}>
                                                 <FontAwesomeIcon icon={faInfoCircle} />
-                                                Guide de candidature
+                                                Fermer
                                             </button>
                                         </div>
                                     </div>
@@ -659,42 +584,15 @@ const Scholarships = () => {
 
                     {totalPages > 1 && (
                         <div className="pagination">
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                            >
+                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
                                 Précédent
                             </button>
-                            <span>
-                                Page {currentPage} / {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
+                            <span>Page {currentPage} / {totalPages}</span>
+                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
                                 Suivant
                             </button>
                         </div>
                     )}
-                </div>
-            </div>
-
-            <div className="benin-special-section">
-                <div className="container">
-                    <div className="benin-special-content">
-                        <div className="benin-flag">
-                            <span className="flag-stripe green"></span>
-                            <span className="flag-stripe yellow"></span>
-                            <span className="flag-stripe red"></span>
-                        </div>
-                        <h2>Opportunités spéciales pour les étudiants béninois</h2>
-                        <p>
-                            Le Bénin a développé des partenariats stratégiques avec plusieurs pays
-                            pour offrir des bourses d'excellence à ses étudiants. Profitez de ces
-                            opportunités uniques pour étudier à l'étranger dans des conditions
-                            optimales.
-                        </p>
-                    </div>
                 </div>
             </div>
 
@@ -716,28 +614,6 @@ const Scholarships = () => {
                     </div>
                 </div>
             </div>
-
-            <div className="cta-section">
-                <div className="container">
-                    <div className="cta-content">
-                        <h2>Prêt à commencer votre voyage académique ?</h2>
-                        <p>
-                            Inscrivez-vous pour recevoir les dernières opportunités de bourses
-                            directement dans votre boîte mail
-                        </p>
-                        <div className="cta-form">
-                            <input type="email" placeholder="Votre adresse email" />
-                            <button>S'abonner aux alertes</button>
-                        </div>
-                        <div className="cta-note">
-                            <FontAwesomeIcon icon={faInfoCircle} />
-                            <span>Recevez des alertes personnalisées selon votre profil</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-           
         </div>
     );
 };

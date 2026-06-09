@@ -45,12 +45,12 @@
     font-size: 1.8rem;
 }
 
-.logo-text {
+.logos-text {
     font-size: 1.3rem;
     font-weight: 700;
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
+    color: #667eea;
     
 }
 

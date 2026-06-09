@@ -30,26 +30,21 @@ const Home = () => {
             try {
                 setLoading(true);
 
-                // Récupérer les universités (3 premières)
                 const uniData = await universityService.getAllUniversities();
                 setUniversities(uniData.slice(0, 3));
 
-                // Récupérer les programmes populaires
                 const programsData = await programService.getPopularPrograms();
                 setPopularPrograms(programsData);
 
-                // Récupérer les bénéfices depuis l'API
                 const benefitsResponse = await api.get('/benefits');
                 setBenefits(benefitsResponse.data);
 
-                // Récupérer les témoignages depuis l'API
                 const testimonialsResponse = await api.get('/testimonials');
                 setTestimonials(testimonialsResponse.data);
             } catch (error) {
                 console.error('Erreur chargement home:', error);
                 setError('Impossible de charger les données');
 
-                // Données par défaut en cas d'erreur
                 setUniversities([
                     {
                         id: 1,
@@ -58,7 +53,7 @@ const Home = () => {
                         rating: 4.8,
                         students: 4000,
                         programs: 25,
-                        image: '/ESGIS.jpeg',
+                        image: '/ESGIS.webp',
                     },
                     {
                         id: 2,

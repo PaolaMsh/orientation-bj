@@ -818,10 +818,10 @@ export default function EspacePersonnel() {
                                             </div>
                                             <div className="scholarship-footer">
                                                 <button className="btn-view" onClick={() => window.open(scholarship.link, '_blank')}>
-                                                    Voir les détails <IconArrowRight />
+                                                    Voir les détails
                                                 </button>
                                                 <button className="btn-remove" onClick={() => handleRemoveScholarship(scholarship.id)}>
-                                                    <IconTrash /> Retirer
+                                                     Retirer
                                                 </button>
                                             </div>
                                         </div>
