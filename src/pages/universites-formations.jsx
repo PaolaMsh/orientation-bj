@@ -53,7 +53,6 @@ const UniversitiesPage = () => {
 
     const performSearch = async (query) => {
         if (!query.trim()) {
-            // Si recherche vide, revenir à la liste complète
             setFilteredUniversities(universities);
             return;
         }
@@ -61,7 +60,6 @@ const UniversitiesPage = () => {
         try {
             setSearching(true);
             const results = await universityService.searchUniversities(query);
-            // Adapter les URLs des images pour les résultats de recherche
             const resultsWithCorrectImages = results.map((uni) => ({
                 ...uni,
                 image:
@@ -82,17 +80,15 @@ const UniversitiesPage = () => {
         }
     };
 
-    // Gestionnaire de changement avec debounce pour éviter trop d'appels API
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if (searchTerm.trim() !== '') {
                 performSearch(searchTerm);
             } else {
-                // Si le terme est vide, afficher toutes les universités
                 setFilteredUniversities(universities);
                 setShowAll(false);
             }
-        }, 500); // Attendre 500ms après la dernière frappe
+        }, 500); 
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, universities]);

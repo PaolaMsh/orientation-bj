@@ -113,7 +113,6 @@ const RegisterPage = () => {
         special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     };
 
-    // Vérifier si au moins un critère n'est pas rempli
     const hasInvalidCriteria = () => {
         if (!password) return false;
         return (
@@ -196,7 +195,6 @@ const RegisterPage = () => {
                             </span>
                         </div>
 
-                        {/* Afficher les critères uniquement si le mot de passe n'est pas valide */}
                         {password && !isPasswordValid() && (
                             <div className="password-strength">
                                 <p className="strength-title">Le mot de passe doit contenir :</p>

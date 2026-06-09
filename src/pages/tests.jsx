@@ -74,7 +74,6 @@ const PHASE2_SECTIONS = [
 
 const BATCH_SIZE = 6;
 
-// Composant Spinner réutilisable
 const Spinner = ({ size = 40, color = '#6246E5' }) => (
     <div className="spinner-container" style={{ textAlign: 'center', padding: '50px' }}>
         <div
@@ -89,7 +88,6 @@ const Spinner = ({ size = 40, color = '#6246E5' }) => (
     </div>
 );
 
-// Loader simplifié sans texte
 const Loader = () => (
     <div className="loader" style={{ textAlign: 'center', padding: '50px' }}>
         <div className="spinner"></div>
@@ -526,21 +524,17 @@ const Test = () => {
                     sessionData.sessionToken,
                     sessionData.assessmentId,
                 );
-                // 🔥 VÉRIFICATION : Si le test est terminé, on en crée un nouveau
                 if (progressData.status === 'COMPLETED') {
                     console.log("⚠️ Test déjà terminé, création d'un nouveau...");
 
-                    // Nettoyer l'ancien
                     localStorage.removeItem('session_token');
                     localStorage.removeItem('assessment_id');
 
-                    // Créer une nouvelle session
                     const newSession = await initializeSession();
                     if (newSession) {
                         setSessionToken(newSession.sessionToken);
                         setAssessmentId(newSession.assessmentId);
 
-                        // Recharger la progression
                         const newProgress = await resolveProgress(
                             newSession.sessionToken,
                             newSession.assessmentId,

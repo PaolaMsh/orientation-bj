@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import '../styles/metiers-porteurs.css';
-// Import des icônes SVG
 import {
     FaClipboardList,
     FaTractor,
@@ -46,7 +45,6 @@ import {
 import { GiFarmer, GiFruitTree, GiFrozenBlock, GiBarn } from 'react-icons/gi';
 import { MdConstruction, MdSecurity, MdHotel, MdLocalHospital } from 'react-icons/md';
 
-// Composant pour l'icône feu (🔥)
 const IconFire = ({ size = 14, style = {} }) => (
     <svg
         width={size}
@@ -63,7 +61,6 @@ const IconFire = ({ size = 14, style = {} }) => (
     </svg>
 );
 
-// Composant pour l'icône croissance (📈)
 const IconTrendUp = ({ size = 14, style = {} }) => (
     <svg
         width={size}
@@ -81,7 +78,6 @@ const IconTrendUp = ({ size = 14, style = {} }) => (
     </svg>
 );
 
-// Composant pour l'icône muscle/fort (💪)
 const IconStrong = ({ size = 14, style = {} }) => (
     <svg
         width={size}
@@ -100,7 +96,6 @@ const IconStrong = ({ size = 14, style = {} }) => (
     </svg>
 );
 
-// Composant pour l'icône cible (🎯)
 const IconTarget = ({ size = 20, style = {} }) => (
     <svg
         width={size}
@@ -391,7 +386,6 @@ const MetiersPorteurs = () => {
         setExpandedCard(expandedCard === id ? null : id);
     };
 
-    // Fonction pour obtenir le style du badge en fonction du niveau de demande
     const getDemandBadgeStyle = (demand) => {
         switch(demand) {
             case 'très-elevee':
@@ -453,7 +447,6 @@ const MetiersPorteurs = () => {
                 </div>
             </section>
 
-            {/* Jobs Grid */}
             <section className="jobs-section">
                 <div className="jobs-container">
                     <div className="jobs-grid">
