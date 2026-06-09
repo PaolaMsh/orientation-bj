@@ -688,7 +688,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* RAPPORTS PDF */}
                     {activeMenu === 'reports' && (
                         <div className="reports-content">
                             <div className="section-header">
@@ -737,7 +736,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* SUIVI ÉVOLUTION */}
                     {activeMenu === 'evolution' && (
                         <div className="evolution-content">
                             <h2><IconTrendUp /> Évolution de vos performances</h2>
@@ -784,7 +782,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* BOURSES ENREGISTRÉES */}
                     {activeMenu === 'scholarships' && (
                         <div className="scholarships-content">
                             <div className="section-header">
@@ -837,7 +834,6 @@ export default function EspacePersonnel() {
                         </div>
                     )}
 
-                    {/* MON PROFIL */}
                     {activeMenu === 'profile' && (
                         <div className="profile-content">
                             <div className="section-header">
@@ -890,7 +886,6 @@ export default function EspacePersonnel() {
     );
 }
 
-// Fonctions globales exportées
 export const saveTestResultGlobal = (testResult) => {
     sessionStorage.setItem('pendingTestResult', JSON.stringify(testResult));
     window.dispatchEvent(new CustomEvent('newTestResult', { detail: { testResult } }));
