@@ -53,7 +53,7 @@ const Home = () => {
                         rating: 4.8,
                         students: 4000,
                         programs: 25,
-                        image: '/ESGIS.webp',
+                        image: '/ESGIS.jpeg',
                     },
                     {
                         id: 2,

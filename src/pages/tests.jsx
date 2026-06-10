@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
+import { saveTestResult, savePdfReport } from '../services/testService';
+
 
 const EmotionSvgs = {
     sad: (
@@ -618,6 +620,37 @@ const Test = () => {
                 </div>
             </div>
         );
+
+        const handleTestComplete = (testResults) => {
+    // Sauvegarder le test
+    const testResult = {
+        title: testResults.title || "Test d'évaluation",
+        score: testResults.score,
+        type: testResults.type || 'Général',
+        code: testResults.code || '',
+        fullReport: {
+            questions: testResults.questions,
+            answers: testResults.answers,
+            score: testResults.score,
+            completedAt: new Date().toISOString()
+        }
+    };
+    
+    const savedTest = saveTestResult(testResult);
+    
+    // Sauvegarder un rapport
+    const report = {
+        title: `Rapport ${testResult.title} - ${new Date().toLocaleDateString()}`,
+        type: testResult.type,
+        testId: savedTest.id,
+        content: testResult.fullReport
+    };
+    
+    savePdfReport(report);
+    
+    // Rediriger vers l'espace personnel
+    navigate('/parcours');
+};
 
     return (
         <div className="test-page">

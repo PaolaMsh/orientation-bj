@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBookmark, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
+import { saveTestResult, savePdfReport } from '../services/testService';
 
 const IconDoc = () => (
     <svg
@@ -86,19 +89,6 @@ const IconUsers = ({ size = 16 }) => (
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 00-3-3.87" />
         <path d="M16 3.13a4 4 0 010 7.75" />
-    </svg>
-);
-
-const IconPhone = ({ size = 16 }) => (
-    <svg
-        width={size}
-        height={size}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
-        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.12 1.22 2 2 0 012.1 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-.45a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
     </svg>
 );
 
@@ -240,7 +230,7 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
         <>
             <div className="ria-def-card">
                 <div className="ria-def-title">
-                    <IconInfo /> Définition &amp; caractéristiques
+                    <IconInfo /> Définition & caractéristiques
                 </div>
                 <p className="ria-def-text">{def.text}</p>
                 <p className="ria-def-traits">
@@ -272,7 +262,7 @@ function GenericTab({ axisKey, axisLabel, score, recommendations }) {
 
             <div className="ria-def-card">
                 <div className="ria-reco-title">
-                    <IconGrid /> Formations &amp; métiers recommandés
+                    <IconGrid /> Formations & métiers recommandés
                 </div>
                 <div className="ria-reco-grid">
                     <div>
@@ -352,19 +342,11 @@ function RadarChart({ scores }) {
         maxR = 130;
     const axes = [
         { label: 'Realiste (R)', angle: -90, value: scores?.REALISTIC || 0 },
-        {
-            label: 'Investigateur (I)',
-            angle: -30,
-            value: scores?.INVESTIGATIVE || 0,
-        },
+        { label: 'Investigateur (I)', angle: -30, value: scores?.INVESTIGATIVE || 0 },
         { label: 'Artistique (A)', angle: 30, value: scores?.ARTISTIC || 0 },
         { label: 'Social (S)', angle: 90, value: scores?.SOCIAL || 0 },
         { label: 'Entreprenant (E)', angle: 150, value: scores?.ENTERPRISING || 0 },
-        {
-            label: 'Conventionnel (C)',
-            angle: 210,
-            value: scores?.CONVENTIONAL || 0,
-        },
+        { label: 'Conventionnel (C)', angle: 210, value: scores?.CONVENTIONAL || 0 },
     ];
 
     const toRad = (d) => (d * Math.PI) / 180;
@@ -423,7 +405,6 @@ function RadarChart({ scores }) {
     });
 
     const dataPoints = pts(axes.map((a) => polar(a.angle, (a.value / 100) * maxR)));
-
     const dots = axes.map((a, i) => {
         const p = polar(a.angle, (a.value / 100) * maxR);
         return (
@@ -461,6 +442,8 @@ export default function Orientations() {
     const [activeTab, setActiveTab] = useState('investigative');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     const [data, setData] = useState({
         scores: null,
         recommendationsByAxis: null,
@@ -469,6 +452,78 @@ export default function Orientations() {
         assessmentInfo: null,
         behavioral: null,
     });
+
+    const handleSaveReport = () => {
+        setSaving(true);
+
+        const scores = data.scores || MOCK_SCORES;
+        const riasecCode =
+            data.assessmentInfo?.code ||
+            Object.entries(scores)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([key]) => key[0])
+                .join('');
+
+        const behavioralData = data.behavioral || {
+            pointsForts: [
+                {
+                    title: 'Curiosité intellectuelle',
+                    description:
+                        'Vous aimez résoudre des problèmes complexes et apprendre par vous-même.',
+                },
+                {
+                    title: 'Pragmatisme',
+                    description: "Capacité à passer à l'action et à manipuler des outils concrets.",
+                },
+            ],
+            axesAmelioration: [
+                {
+                    title: 'Travail collaboratif',
+                    description: 'Développer la collaboration en équipe.',
+                },
+            ],
+        };
+
+        const testResult = {
+            title: "Test RIASEC - Rapport d'orientation",
+            score: Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 6),
+            type: 'RIASEC',
+            code: riasecCode,
+            fullReport: {
+                scores: scores,
+                code: riasecCode,
+                recommendations: data.recommendationsByAxis,
+                completedAt: new Date().toISOString(),
+                assessmentId: assessmentId || localStorage.getItem('assessment_id'),
+                behavioral: behavioralData,
+                assessmentInfo: data.assessmentInfo,
+            },
+        };
+
+        const savedTest = saveTestResult(testResult);
+        console.log('✅ Test sauvegardé:', savedTest);
+
+        const report = {
+            title: `Rapport RIASEC - ${new Date().toLocaleDateString()}`,
+            type: 'RIASEC',
+            testId: savedTest.id,
+            content: {
+                scores: scores,
+                code: riasecCode,
+                recommendations: data.recommendationsByAxis,
+                behavioral: behavioralData,
+                assessmentInfo: data.assessmentInfo,
+            },
+        };
+
+        savePdfReport(report);
+        console.log('✅ Rapport sauvegardé');
+
+        setSaving(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+    };
 
     const fetchCompleteReport = async (id) => {
         setLoading(true);
@@ -511,8 +566,11 @@ export default function Orientations() {
             }
 
             const phase2Scores = resultData.phase2Scores || {};
-            const convertScore = (value) => Math.round((value / 20) * 100);
-
+            const convertScore = (value) => {
+                const numValue = Number(value) || 0;
+                let calculated = Math.round((numValue / 20) * 100);
+                return Math.min(calculated, 100);
+            };
             const scores = {
                 REALISTIC: convertScore(phase2Scores.R || 0),
                 INVESTIGATIVE: convertScore(phase2Scores.I || 0),
@@ -578,26 +636,6 @@ export default function Orientations() {
                 },
             });
 
-            const testResult = {
-                title: 'Test RIASEC complet',
-                score: Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 6),
-                type: 'RIASEC',
-                code: riasecCode,
-                fullReport: {
-                    scores: scores,
-                    code: riasecCode,
-                    recommendations: recommendationsData,
-                    completedAt: new Date().toISOString(),
-                    assessmentId: id,
-                },
-            };
-
-            const existingTests = localStorage.getItem('testHistory');
-            let tests = existingTests ? JSON.parse(existingTests) : [];
-            tests.unshift(testResult);
-            localStorage.setItem('testHistory', JSON.stringify(tests));
-
-            console.log('✅ Test sauvegardé');
             setError(null);
         } catch (err) {
             console.error('❌ Erreur fetchCompleteReport:', err);
@@ -750,20 +788,27 @@ export default function Orientations() {
 
     const { scores, recommendationsByAxis, assessmentInfo } = data;
     const finalScores = scores || MOCK_SCORES;
+
     return (
         <div className="ria-body">
             <div className="ria-container">
+                {saveSuccess && (
+                    <div className="save-success-message">
+                        ✅ Rapport enregistré avec succès dans votre espace personnel !
+                    </div>
+                )}
+
                 <div className="ria-page-header">
                     <div className="ria-page-header-icon">
                         <IconBarChart />
                     </div>
-                    <h1>Explorateur de carrieres &mdash; Axes RIASEC</h1>
+                    <h1>Explorateur de carrieres — Axes RIASEC</h1>
                     <span className="ria-dominant-badge">dominants détectés</span>
                 </div>
 
                 <div className="ria-card ria-header-card">
                     <div className="orientations-header">
-                        <h1>🎯 Mon rapport d'orientation RIASEC</h1>
+                        <h1> Mon rapport d'orientation RIASEC</h1>
                         <p className="report-date">
                             Test effectué le{' '}
                             {assessmentInfo?.completedAt
@@ -855,7 +900,6 @@ export default function Orientations() {
                         <div className="ria-group-title teal">
                             <span className="dot" /> Points forts identifies
                         </div>
-
                         {behavioralData.pointsForts?.map((point, index) => (
                             <div className="ria-obs-item" key={index}>
                                 <div className="ria-obs-icon-box teal">
@@ -874,7 +918,6 @@ export default function Orientations() {
                         <div className="ria-group-title amber">
                             <span className="dot" /> Axes d'amelioration
                         </div>
-
                         {behavioralData.axesAmelioration?.length > 0 ? (
                             behavioralData.axesAmelioration.map((axe, index) => (
                                 <div className="ria-obs-item" key={index}>
@@ -897,7 +940,6 @@ export default function Orientations() {
                                 </div>
                             </div>
                         )}
-
                         <div className="ria-behavioral-note">
                             <IconInfo />
                             <span>Analyse basee sur vos reponses au questionnaire RIASEC.</span>
@@ -910,32 +952,29 @@ export default function Orientations() {
                         <span className="ria-section-label-icon">
                             <IconHome />
                         </span>
-                        <h2>3. Profil utilisateur &mdash; Hexagramme RIASEC</h2>
+                        <h2>3. Profil utilisateur — Hexagramme RIASEC</h2>
                     </div>
                     <div className="ria-card">
                         <RadarChart scores={finalScores} />
-
                         <div className="ria-dominantes-title">Votre carte des dominantes</div>
                         <div className="ria-dominante-tags">
                             {dominantScores.map(([key, val], idx) => {
-                                let colorClass = 'teal';
-                                if (idx === 1) colorClass = 'gray';
-                                if (idx === 2) colorClass = 'amber';
+                                let colorClass = idx === 0 ? 'teal' : idx === 1 ? 'gray' : 'amber';
                                 let icon = <IconSearch size={13} />;
-                                let label = key.charAt(0) + key.slice(1).toLowerCase();
-                                if (key === 'REALISTIC') {
-                                    icon = <IconWrench size={13} />;
-                                    label = 'Realiste';
-                                }
-                                if (key === 'ENTERPRISING') {
-                                    icon = <IconTrend />;
-                                    label = 'Entreprenant';
-                                }
-                                if (key === 'INVESTIGATIVE') label = 'Investigateur';
-                                if (key === 'SOCIAL') label = 'Social';
-                                if (key === 'ARTISTIC') label = 'Artistique';
-                                if (key === 'CONVENTIONAL') label = 'Conventionnel';
-
+                                let label =
+                                    key === 'REALISTIC'
+                                        ? 'Realiste'
+                                        : key === 'ENTERPRISING'
+                                          ? 'Entreprenant'
+                                          : key === 'INVESTIGATIVE'
+                                            ? 'Investigateur'
+                                            : key === 'SOCIAL'
+                                              ? 'Social'
+                                              : key === 'ARTISTIC'
+                                                ? 'Artistique'
+                                                : 'Conventionnel';
+                                if (key === 'REALISTIC') icon = <IconWrench size={13} />;
+                                if (key === 'ENTERPRISING') icon = <IconTrend />;
                                 return (
                                     <span key={key} className={`ria-dominante-tag ${colorClass}`}>
                                         {icon} {label} ({val})
@@ -943,7 +982,6 @@ export default function Orientations() {
                                 );
                             })}
                         </div>
-
                         <p className="ria-profile-desc">
                             Votre profil met en evidence une forte appetence pour la{' '}
                             <strong>recherche, l'analyse</strong> et les activites
@@ -992,11 +1030,13 @@ export default function Orientations() {
                     <button className="button" onClick={() => navigate('/tests')}>
                         Nouveau test
                     </button>
-
                     <button className="button" onClick={handlePrint}>
                         Imprimer
                     </button>
-
+                    <button className="button" onClick={handleSaveReport} disabled={saving}>
+                        <FontAwesomeIcon icon={saving ? faSpinner : faBookmark} spin={saving} />
+                        {saving ? 'Enregistrement...' : 'Enregistrer le rapport'}
+                    </button>
                     <button className="button" onClick={() => navigate('/universites-formations')}>
                         Voir les écoles
                     </button>
