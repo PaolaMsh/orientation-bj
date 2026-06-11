@@ -684,10 +684,6 @@ export default function Orientations() {
         loadData();
     }, [assessmentId]);
 
-    const handlePrint = () => {
-        window.print();
-    };
-
     const getDominantScores = () => {
         const scores = data.scores || MOCK_SCORES;
         if (!scores) return [];
@@ -718,6 +714,42 @@ export default function Orientations() {
     const topAxes = getTopAxes();
     const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
     const code = dominantScores.map(([key]) => key[0]).join('');
+    // Ajouter dans Orientations.jsx la fonction pour générer la treasure map
+
+    const generateTreasureMap = async () => {
+        const assessmentIdToUse = assessmentId || localStorage.getItem('assessment_id');
+        const sessionToken = localStorage.getItem('session_token');
+
+        if (!sessionToken) {
+            console.warn('No session token found');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await api.post('/treasure-map', {
+                sessionToken,
+                assessmentId: assessmentIdToUse,
+                generatePdf: false,
+            });
+
+            if (response.data?.shareToken) {
+                // Afficher un lien pour partager
+                const shareUrl = `${window.location.origin}/share/${response.data.shareToken}`;
+                console.log('Treasure map shareable:', shareUrl);
+                alert(`Carte générée ! Partagez-la : ${shareUrl}`);
+            }
+        } catch (error) {
+            console.error('Error generating treasure map:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Ajouter un bouton dans le rendu
+    <button className="button" onClick={generateTreasureMap}>
+        Générer ma carte 🗺️
+    </button>;
 
     useEffect(() => {
         if (topAxes.length > 0 && activeTab === 'investigative') {
@@ -1030,11 +1062,7 @@ export default function Orientations() {
                     <button className="button" onClick={() => navigate('/tests')}>
                         Nouveau test
                     </button>
-                    <button className="button" onClick={handlePrint}>
-                        Imprimer
-                    </button>
                     <button className="button" onClick={handleSaveReport} disabled={saving}>
-                        <FontAwesomeIcon icon={saving ? faSpinner : faBookmark} spin={saving} />
                         {saving ? 'Enregistrement...' : 'Enregistrer le rapport'}
                     </button>
                     <button className="button" onClick={() => navigate('/universites-formations')}>

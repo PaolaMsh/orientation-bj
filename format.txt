@@ -1,0 +1,1078 @@
+{
+    "id": "cmq5h19mp00030dpcfgw1warr",
+    "email": "paolmetinhoue@gmail.com",
+    "firstName": "Paola",
+    "lastName": "METINHOUE",
+    "displayName": null,
+    "bio": null,
+    "createdAt": "2026-06-08T17:14:54.337Z",
+    "gamification": {
+        "totalXp": 100,
+        "level": 2
+    },
+    "badges": [
+        {
+            "id": 17,
+            "code": "TEST_COMPLETED",
+            "name": "Orientation",
+            "description": "Tu as obtenu ton profil complet.",
+            "emoji": "flag",
+            "rarity": "EPIC",
+            "pointsValue": 50,
+            "unlockedAt": "2026-06-11T16:23:31.598Z"
+        },
+        {
+            "id": 16,
+            "code": "PHASE2_COMPLETED",
+            "name": "Analyste",
+            "description": "Tu as termine la phase 2 du test.",
+            "emoji": "brain",
+            "rarity": "RARE",
+            "pointsValue": 30,
+            "unlockedAt": "2026-06-11T16:22:36.060Z"
+        },
+        {
+            "id": 15,
+            "code": "PHASE1_COMPLETED",
+            "name": "Explorateur",
+            "description": "Tu as termine la phase 1 du test.",
+            "emoji": "compass",
+            "rarity": "COMMON",
+            "pointsValue": 20,
+            "unlockedAt": "2026-06-11T16:22:05.064Z"
+        }
+    ],
+    "sessions": [
+        {
+            "id": "1f437f38-c7a2-45c9-98ef-f792a16f5d0e",
+            "sessionToken": "a514a7c5-46a0-4097-ad0b-29966a5df67c",
+            "shareToken": "bd3af69e-4264-4213-ab57-5cff2ae98c7c",
+            "createdAt": "2026-06-11T16:21:17.616Z",
+            "assessments": [
+                {
+                    "id": "b0fdd14d-588c-49ce-b61e-d018619c108d",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "CRS",
+                    "phase2Code": "CRE",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:21:17.624Z",
+                    "completedAt": "2026-06-11T16:23:30.272Z"
+                }
+            ]
+        },
+        {
+            "id": "3966f1ba-3ddb-4cac-8e5a-4d52dfb194bb",
+            "sessionToken": "c2f25112-c843-48bf-9642-dd4cefe90bb8",
+            "shareToken": "39da4946-6ece-42fa-a8d8-e2eaaf1adbe2",
+            "createdAt": "2026-06-11T16:21:17.615Z",
+            "assessments": [
+                {
+                    "id": "3fcc9d8c-0b54-46e0-9d2c-c669183bb93d",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:21:17.626Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "9b319d30-7113-4b9c-8f28-510a724bab7e",
+            "sessionToken": "9527ab2a-8fea-4c8f-a58c-0f04a993d37f",
+            "shareToken": "fbe86f44-1971-4639-ad16-b4b715599760",
+            "createdAt": "2026-06-11T16:21:17.614Z",
+            "assessments": [
+                {
+                    "id": "78f4d97b-da4c-4916-9514-1aa0803bc823",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:21:17.623Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "1a3d57b4-8c08-426f-8ea6-84eab5739919",
+            "sessionToken": "20f03561-ec19-49d3-858f-8f3f21072ce9",
+            "shareToken": "22999774-3418-42d9-8953-cac7783b4c35",
+            "createdAt": "2026-06-11T16:15:56.955Z",
+            "assessments": [
+                {
+                    "id": "0efcc036-0115-4201-b91f-b5b497f97529",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "REI",
+                    "phase2Code": "CRA",
+                    "consistencyLevel": "MOYENNE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:15:56.963Z",
+                    "completedAt": "2026-06-11T16:18:26.767Z"
+                }
+            ]
+        },
+        {
+            "id": "2d94f03c-4f44-451c-a0da-edc76070d243",
+            "sessionToken": "9134191b-1eb4-47b4-a4a9-c46382f174be",
+            "shareToken": "0b36a436-eb7a-4628-954c-e1bbec0237e6",
+            "createdAt": "2026-06-11T16:15:56.683Z",
+            "assessments": [
+                {
+                    "id": "34252ba5-7d30-4cf1-9a55-a131bb45f114",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:15:56.692Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "76698eb9-85d2-45f8-b278-83264e654ab0",
+            "sessionToken": "c3455e27-3d80-422a-bb6f-b812f285fbad",
+            "shareToken": "18724a0d-e5d8-410e-a7c4-5589ba47f1c5",
+            "createdAt": "2026-06-11T16:12:57.416Z",
+            "assessments": [
+                {
+                    "id": "96391048-9681-444a-bae6-30dffebdb5d2",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "IAS",
+                    "phase2Code": "CAR",
+                    "consistencyLevel": "MOYENNE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:12:57.424Z",
+                    "completedAt": "2026-06-11T16:15:29.300Z"
+                }
+            ]
+        },
+        {
+            "id": "a65ce335-d210-4d37-8331-a456f8744a24",
+            "sessionToken": "9c289e89-b8dd-4a46-b91d-f9f6638683dd",
+            "shareToken": "ee9f8dae-f0a3-4f5b-a36f-4fb4d8d5f09c",
+            "createdAt": "2026-06-11T16:12:57.415Z",
+            "assessments": [
+                {
+                    "id": "1281c385-4451-4035-8be2-37eea0b76719",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T16:12:57.423Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "a9f3c35d-6e00-4f4c-9e37-643908165bb8",
+            "sessionToken": "1c069abe-725a-4d84-80d9-5f763d1b6551",
+            "shareToken": "b53b61bc-2f05-4f34-bb37-1ee734dc1461",
+            "createdAt": "2026-06-11T15:40:37.831Z",
+            "assessments": [
+                {
+                    "id": "baf33b3d-f3fe-460d-bec1-96eac5354d54",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RAS",
+                    "phase2Code": "RAS",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T15:40:37.839Z",
+                    "completedAt": "2026-06-11T15:43:01.038Z"
+                }
+            ]
+        },
+        {
+            "id": "dd1d7360-b764-4b6a-a6e2-a188c2c5ed6d",
+            "sessionToken": "dc502103-791a-4694-966f-0c808e7dc589",
+            "shareToken": "d711cd8a-39e8-4ce2-b36c-9e3c9f7695f5",
+            "createdAt": "2026-06-11T15:40:37.830Z",
+            "assessments": [
+                {
+                    "id": "8070202a-56d1-4828-a669-b9b55d73e52e",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T15:40:37.838Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "9c7881b2-f2b7-4ab3-bf71-d49847ae6fa1",
+            "sessionToken": "16e12a8f-8897-4c1b-9fdb-30c5e2247d18",
+            "shareToken": "69f8e3b2-afbc-4c28-bcb3-3792b612719d",
+            "createdAt": "2026-06-11T15:03:09.682Z",
+            "assessments": [
+                {
+                    "id": "f1e8cae1-bbb0-4a87-af7a-6496d16f8961",
+                    "type": "PHASE1",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "ARE",
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T15:03:09.694Z",
+                    "completedAt": "2026-06-11T15:07:25.551Z"
+                }
+            ]
+        },
+        {
+            "id": "b50850d9-0710-4c32-8cd4-2a44c585689e",
+            "sessionToken": "8d5e083c-0902-4432-91fd-05e4a596988d",
+            "shareToken": "5cb02a81-04cd-48a6-a349-b3adb5f4d1f9",
+            "createdAt": "2026-06-11T15:03:09.074Z",
+            "assessments": [
+                {
+                    "id": "ee064778-6e20-4099-991a-1cf159ac14e5",
+                    "type": "PHASE1",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T15:03:09.087Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "ed95d1e6-5bd6-46f3-9b12-9d2fd1718a46",
+            "sessionToken": "d083579a-e1c3-4f5c-8c03-1147ada5f77d",
+            "shareToken": "d7fa1d40-50bd-4035-a713-ce5602b1fe40",
+            "createdAt": "2026-06-11T15:02:59.949Z",
+            "assessments": [
+                {
+                    "id": "d8bde484-6192-4f20-9a80-0bb39fb0a7a3",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T15:02:59.961Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "14dacdbf-13d6-4299-ad16-c947aad465b7",
+            "sessionToken": "7b24b6b7-86a0-4547-9634-e99a34d7e35c",
+            "shareToken": "8bde0cd0-4823-4fd6-8400-11b6aa187880",
+            "createdAt": "2026-06-11T15:02:59.948Z",
+            "assessments": [
+                {
+                    "id": "eadfa53b-49a7-4c89-b8fa-e53c3074bdd8",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T15:02:59.960Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "658f7ff4-61a8-4328-afc7-4241f5c5898f",
+            "sessionToken": "1d219d71-8ff3-4f1c-a305-6a5b053b5666",
+            "shareToken": "fd282fe9-7402-4654-a42a-38a5a7f9856a",
+            "createdAt": "2026-06-11T14:35:39.258Z",
+            "assessments": [
+                {
+                    "id": "0b487a01-4d1a-4186-bbc3-76d80e7d439e",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 10,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T14:35:39.261Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "84629c41-9c63-44b4-ab49-e05928b8f0ff",
+            "sessionToken": "f6ffbfbe-121d-47cf-81db-a222358f3f39",
+            "shareToken": "c842d483-3468-4e3f-813e-39408fcbd026",
+            "createdAt": "2026-06-11T14:35:39.048Z",
+            "assessments": [
+                {
+                    "id": "648990fc-59f2-4556-b47e-c9a887d15e5b",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T14:35:39.052Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "ff66c560-999b-4b1b-8ace-ecf2f9b7c5ee",
+            "sessionToken": "fd9dc285-fc39-418d-87e1-e9d2402ef42c",
+            "shareToken": "fc8fa7b6-e4e6-4b89-9ec0-1df6c4b09884",
+            "createdAt": "2026-06-11T14:35:39.046Z",
+            "assessments": [
+                {
+                    "id": "3eab50a3-0c7d-4ad8-94e0-e7490c67532f",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T14:35:39.050Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "6d312cf1-c287-4d97-ac7f-735b7d4d5f4b",
+            "sessionToken": "0b5289c1-dd8d-46d5-b77a-a4c2a2538e12",
+            "shareToken": "9e4c7ef9-a6e0-4791-b2cc-180e81614b05",
+            "createdAt": "2026-06-11T14:31:58.342Z",
+            "assessments": [
+                {
+                    "id": "8d873a05-e9ed-4638-892f-e0db6afa2d14",
+                    "type": "PHASE1",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "SRA",
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T14:31:58.346Z",
+                    "completedAt": "2026-06-11T14:33:28.231Z"
+                }
+            ]
+        },
+        {
+            "id": "66db58c4-8ebb-4f71-ac6c-4a21c8651ead",
+            "sessionToken": "51885530-2c2f-48e4-9f00-dc82a32a21a6",
+            "shareToken": "d65c1ed6-7b4d-4e4d-978b-07e5d47fb582",
+            "createdAt": "2026-06-11T14:31:58.341Z",
+            "assessments": [
+                {
+                    "id": "beb1c1f3-e6fb-4f74-8d74-f686eb5eaa99",
+                    "type": "PHASE1",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-11T14:31:58.345Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "4222d5fa-b7f6-46e7-81a5-03ecda103711",
+            "sessionToken": "0231e2a2-d8e5-4eca-bbc9-c078ab0d00bc",
+            "shareToken": "603bde7e-680a-4f5e-9cc3-542c64f2da45",
+            "createdAt": "2026-06-10T20:29:19.889Z",
+            "assessments": [
+                {
+                    "id": "cf4b36c0-77ca-4eac-8075-35a297bbeb0c",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RAC",
+                    "phase2Code": "CRI",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T20:29:19.893Z",
+                    "completedAt": "2026-06-10T20:33:50.804Z"
+                }
+            ]
+        },
+        {
+            "id": "629b2698-beeb-47f1-a9c5-953fb2a52c10",
+            "sessionToken": "53652ea0-175e-436c-bffe-759f9a3f79c4",
+            "shareToken": "d9864bdd-c3d4-4b45-a199-c08199116512",
+            "createdAt": "2026-06-10T20:29:19.889Z",
+            "assessments": [
+                {
+                    "id": "8d9d2d94-99ca-4c5f-b3fa-128a9157cb65",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T20:29:19.893Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "e5da8a31-e41b-4184-aa9d-8613783f89e3",
+            "sessionToken": "624aac27-60af-49b8-8b55-d57752b3fd87",
+            "shareToken": "ac7f4608-5ba0-498d-b45d-bf40725952c9",
+            "createdAt": "2026-06-10T17:21:36.699Z",
+            "assessments": [
+                {
+                    "id": "175dc6b2-1f14-4415-8646-c0acc591ca2d",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T17:21:36.703Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "062a6bc4-4ffa-458e-876f-f3e8b11fcee3",
+            "sessionToken": "23b0759c-c7b4-40c7-8bf3-7b0e0cd2148f",
+            "shareToken": "d1c166a6-91aa-4f69-a5b1-6e5e9f8560ba",
+            "createdAt": "2026-06-10T17:21:36.699Z",
+            "assessments": [
+                {
+                    "id": "9aa56e67-2bd0-4d08-ac84-8fe5f7254a31",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RSC",
+                    "phase2Code": "IRC",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T17:21:36.703Z",
+                    "completedAt": "2026-06-10T17:24:14.795Z"
+                }
+            ]
+        },
+        {
+            "id": "d92abddd-5963-4eb3-b3ca-7b0ed0a78bfd",
+            "sessionToken": "662153c8-3551-41e7-982f-70bdf1a8ecbd",
+            "shareToken": "b3396b5e-8c5e-442d-a112-49f8f059dd15",
+            "createdAt": "2026-06-10T17:03:38.510Z",
+            "assessments": [
+                {
+                    "id": "f76fbef0-5297-4715-b3c1-4ec91bbcc1b6",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RIC",
+                    "phase2Code": "ESR",
+                    "consistencyLevel": "MOYENNE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T17:03:38.514Z",
+                    "completedAt": "2026-06-10T17:08:36.751Z"
+                }
+            ]
+        },
+        {
+            "id": "a2a92a74-f127-4348-8194-2ee781943476",
+            "sessionToken": "07f37ad4-1d09-42ac-ba05-31fd203c8340",
+            "shareToken": "0fa80cb8-e1e3-49b8-b27d-a51735e15da0",
+            "createdAt": "2026-06-10T17:03:38.509Z",
+            "assessments": [
+                {
+                    "id": "82cfa671-254f-416c-9f76-34180bb4da61",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T17:03:38.513Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "845fbcc2-bf85-4e1b-bfda-7b8bae0a43ce",
+            "sessionToken": "1537f6c7-e37d-46ec-bd5e-9f4d572ac80f",
+            "shareToken": "24019715-4a82-40f6-98eb-6ffb6bf53f6d",
+            "createdAt": "2026-06-10T16:13:19.584Z",
+            "assessments": [
+                {
+                    "id": "13f22f0b-c04b-4fbd-ae2f-2474ad661ec5",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T16:13:19.588Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "d7d352e7-f41b-4303-86f2-9bf2dc0ca231",
+            "sessionToken": "f03dd433-a90c-4884-94c6-c7e77a6d9643",
+            "shareToken": "053ea9a6-d45d-4802-b598-1a28a12c86a5",
+            "createdAt": "2026-06-10T16:13:19.584Z",
+            "assessments": [
+                {
+                    "id": "31ae2cbb-02fd-4d3a-9159-4a5ce57a8294",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RAC",
+                    "phase2Code": "CRA",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T16:13:19.587Z",
+                    "completedAt": "2026-06-10T16:17:26.140Z"
+                }
+            ]
+        },
+        {
+            "id": "7ad72e3a-7f9b-41f5-be25-b2834c6763b9",
+            "sessionToken": "21d803ea-5225-4a5a-8328-2b0929b88802",
+            "shareToken": "65549c3f-ba96-4ac9-9d6c-1969b5b25a41",
+            "createdAt": "2026-06-10T15:41:31.762Z",
+            "assessments": [
+                {
+                    "id": "3f6ead96-159e-45a2-80b9-858b31e80082",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "SRC",
+                    "phase2Code": "IAC",
+                    "consistencyLevel": "MOYENNE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T15:41:31.765Z",
+                    "completedAt": "2026-06-10T15:50:09.911Z"
+                }
+            ]
+        },
+        {
+            "id": "191e1e28-0bc3-4ccb-b3d2-aac3960e8df2",
+            "sessionToken": "ad88ffe0-d6dd-41ff-96dd-f436569d9d99",
+            "shareToken": "4087d213-2e14-47a7-94b6-ee94b2931832",
+            "createdAt": "2026-06-10T15:41:31.755Z",
+            "assessments": [
+                {
+                    "id": "74cb94c1-e43c-4e5c-8914-4f041051a5ab",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-10T15:41:31.759Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "8f17cc93-93db-4d38-8740-65894aa84676",
+            "sessionToken": "5548aa03-ce3f-4e99-a505-6284e8745684",
+            "shareToken": "706d4326-d86b-41b9-8616-679c0f13cea3",
+            "createdAt": "2026-06-09T21:19:03.488Z",
+            "assessments": [
+                {
+                    "id": "0e176eef-01a1-4643-a2ad-bad7ca861a92",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T21:19:03.492Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "eceba4e8-cf47-4794-8d2a-100d246311fb",
+            "sessionToken": "cb802b29-5c21-4e43-bea5-a687451b72c1",
+            "shareToken": "716810db-f968-483c-94cd-ef3f32a0b46e",
+            "createdAt": "2026-06-09T21:19:03.488Z",
+            "assessments": [
+                {
+                    "id": "1a699a8a-d587-453a-9fc8-3634ed43dc69",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RIA",
+                    "phase2Code": "RAE",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T21:19:03.493Z",
+                    "completedAt": "2026-06-09T21:23:38.092Z"
+                }
+            ]
+        },
+        {
+            "id": "528909ce-1042-4446-90b3-f9aa0c7acd73",
+            "sessionToken": "cd8a4cc2-8dd9-4602-95f3-450918a87e01",
+            "shareToken": "685c72c6-9750-4f17-b4ec-ea344d39b3c8",
+            "createdAt": "2026-06-09T16:11:46.915Z",
+            "assessments": [
+                {
+                    "id": "275ea5a4-53d1-4ca8-8cb5-d6344c8f5638",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:11:46.918Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "7d68d598-1d60-4600-ba9d-9843a5739152",
+            "sessionToken": "9ff20839-8e4d-45fa-b064-285780c9d93d",
+            "shareToken": "3475e93b-a6b7-4b73-a2e7-8a1559e07a7e",
+            "createdAt": "2026-06-09T16:11:46.910Z",
+            "assessments": [
+                {
+                    "id": "c3467100-5d47-4eab-b6eb-05484c090bfb",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:11:46.914Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "14b06c89-5730-4586-8b57-84d602871494",
+            "sessionToken": "5396e396-e5d4-40f0-89e1-abd4ea221c81",
+            "shareToken": "e164cb4d-a573-4596-8888-51a2e4e03037",
+            "createdAt": "2026-06-09T16:11:46.608Z",
+            "assessments": [
+                {
+                    "id": "be4842a2-5436-4f1c-a3c9-97a275453cb5",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:11:46.611Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "eb982f2b-5ba3-4e6b-824f-95ae0c9568d1",
+            "sessionToken": "48863027-c3f6-4f38-8e63-7873abec1d07",
+            "shareToken": "242b66d0-97c1-46e3-bfe4-446ef8679eb1",
+            "createdAt": "2026-06-09T16:11:46.604Z",
+            "assessments": [
+                {
+                    "id": "3ceb161b-4767-4a45-986a-1e10f4afaa2f",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:11:46.607Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "489209f5-f016-487e-8da8-ce2a37272aa3",
+            "sessionToken": "886fe4f1-d707-4961-8685-eaf0536ec7d7",
+            "shareToken": "35471aed-6422-4c8b-8049-c36d529697e2",
+            "createdAt": "2026-06-09T16:11:46.294Z",
+            "assessments": [
+                {
+                    "id": "bd35b116-a1cd-40e3-9f3d-4d2764330790",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:11:46.297Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "0d0a0bc1-c374-448f-8bd8-934ec9e617d7",
+            "sessionToken": "4e7ae4f2-85ad-4f6d-9b3c-0ab7aa3473b6",
+            "shareToken": "61e5ab85-dc0f-4b8d-9715-a6b411ca00fb",
+            "createdAt": "2026-06-09T16:07:36.951Z",
+            "assessments": [
+                {
+                    "id": "4ddaa306-2fa2-4ac5-9631-4653ee4f8631",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "RIA",
+                    "phase2Code": "ARI",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:07:36.955Z",
+                    "completedAt": "2026-06-09T16:09:48.957Z"
+                }
+            ]
+        },
+        {
+            "id": "b005af0e-02c9-4c9b-92f6-6b7a62be6c36",
+            "sessionToken": "a1cdf978-cb40-4ec3-a39b-4d0847374db0",
+            "shareToken": "dcfc8ea5-f7cd-43d1-8a47-63b2219a1ec6",
+            "createdAt": "2026-06-09T16:07:36.951Z",
+            "assessments": [
+                {
+                    "id": "58658f83-adf2-4fdd-b0ff-457d8f0c990b",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T16:07:36.954Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "56e5bff0-bfd8-4be9-be5e-3143d8f7435f",
+            "sessionToken": "4e100a11-ce71-4251-84cb-832fd61d22dd",
+            "shareToken": "b39120fc-21c1-4775-a888-2ea0c8a94dba",
+            "createdAt": "2026-06-09T15:53:10.559Z",
+            "assessments": [
+                {
+                    "id": "9c71e234-e228-4c3b-aa74-8fd83446abd3",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T15:53:10.564Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "74b7f585-3cd2-4a2e-bd01-80e0acab0661",
+            "sessionToken": "eef8d2ff-76c0-43b2-abef-b9aa7cea5c55",
+            "shareToken": "44967b47-d615-4c9f-9d13-9a76ba662fb3",
+            "createdAt": "2026-06-09T15:53:10.558Z",
+            "assessments": [
+                {
+                    "id": "898e247a-8cc4-4b12-bc64-acf8db2724ad",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T15:53:10.563Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "7c6ce128-13fe-4dde-b987-baa6a9bb5a5a",
+            "sessionToken": "3c688055-6a39-4e6e-981b-24e53388cd4b",
+            "shareToken": "97f180ee-2257-4a7e-8ba2-f92068e32d85",
+            "createdAt": "2026-06-09T15:26:09.519Z",
+            "assessments": [
+                {
+                    "id": "272bc43c-1d32-477c-ab2b-6ab22ef24361",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T15:26:09.523Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "84d7d598-68a0-4638-b8b7-dd8c86991977",
+            "sessionToken": "3e2461f6-cea5-4b9b-b0dd-9bde4f6bd05b",
+            "shareToken": "d2d9b2f4-d34d-4a03-8564-92d91cded659",
+            "createdAt": "2026-06-09T15:26:09.515Z",
+            "assessments": [
+                {
+                    "id": "7b4dac49-12b2-460e-89ec-b492efe1408f",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "SRA",
+                    "phase2Code": "CRA",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T15:26:09.521Z",
+                    "completedAt": "2026-06-09T15:29:48.365Z"
+                }
+            ]
+        },
+        {
+            "id": "b1e83c3e-bc26-4c91-b8b0-665fbf361d32",
+            "sessionToken": "d73bbf21-aa85-4bbd-8e7d-7e189794c815",
+            "shareToken": "7ae82d26-56dc-46f7-bac3-42ad68c4d572",
+            "createdAt": "2026-06-09T15:09:18.297Z",
+            "assessments": [
+                {
+                    "id": "915e2665-db76-47db-8d3f-ef7fecc7686f",
+                    "type": "FULL",
+                    "status": "COMPLETED",
+                    "completionPercentage": 100,
+                    "phase1Code": "ISC",
+                    "phase2Code": "CAS",
+                    "consistencyLevel": "FORTE",
+                    "hasResult": true,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T15:09:18.300Z",
+                    "completedAt": "2026-06-09T15:11:36.659Z"
+                }
+            ]
+        },
+        {
+            "id": "f26d17c0-adff-4211-be27-cb7ec1517a2e",
+            "sessionToken": "41dcbba6-c374-42b5-ba4c-027a9ed9cc43",
+            "shareToken": "5a966100-0985-4cca-83a1-e4bdc0f7e5b9",
+            "createdAt": "2026-06-09T15:09:16.968Z",
+            "assessments": [
+                {
+                    "id": "fde298e8-99f4-4270-b14d-28cc9e06077a",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T15:09:16.972Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "65d6c1fd-dc96-44b8-b87b-79032e264356",
+            "sessionToken": "617be0e4-a624-4b42-98eb-d3d1116b8e4f",
+            "shareToken": "8f8d35f5-0504-49d0-af40-1308ae5d0869",
+            "createdAt": "2026-06-09T12:01:27.790Z",
+            "assessments": [
+                {
+                    "id": "a4697753-4058-4935-a48f-e3f7edb4b9ca",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T12:01:27.795Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "79aeb9ec-a897-4e9c-85e8-837203a3c71b",
+            "sessionToken": "0a602bde-8509-4076-b1d9-eaaf9ff376ae",
+            "shareToken": "e2963dcd-d020-4874-9270-6b7fb889ea56",
+            "createdAt": "2026-06-09T12:01:27.789Z",
+            "assessments": [
+                {
+                    "id": "12e87d38-acb9-4fc2-9dad-2b29c5a86709",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T12:01:27.794Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "16cd3bdb-ec71-4b3d-a51f-7fee0039338d",
+            "sessionToken": "8f29eef1-dad3-485c-9456-a0bd7ebfef41",
+            "shareToken": "2fb79717-af88-41d6-b84b-8ccb7e7a6498",
+            "createdAt": "2026-06-09T07:59:05.242Z",
+            "assessments": [
+                {
+                    "id": "3e8cdf62-dca9-46c7-8a40-675a66fd6561",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T07:59:05.249Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "96622dac-2aea-4ab2-be9d-c6e0d414b95c",
+            "sessionToken": "f1e87f43-0743-4397-9856-5141def022f3",
+            "shareToken": "79e0f049-5cf6-4f48-b3b6-9c97dc7e0c17",
+            "createdAt": "2026-06-09T07:59:05.241Z",
+            "assessments": [
+                {
+                    "id": "5be38245-1412-4a15-849f-86d8a6b1183a",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-09T07:59:05.248Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "a717e50a-7755-4d0f-976f-1324bb63c22b",
+            "sessionToken": "5fc8ddb7-b158-43c2-9d5e-03d27cf6e1b9",
+            "shareToken": "b0e828d5-dc33-4a83-a509-15a1f3e9ef3b",
+            "createdAt": "2026-06-08T17:34:57.193Z",
+            "assessments": [
+                {
+                    "id": "18ba79ae-411e-42a3-87a9-77de24da6fe8",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-08T17:34:57.196Z",
+                    "completedAt": null
+                }
+            ]
+        },
+        {
+            "id": "ba5c51f4-e3bb-4090-ae4c-f4934a806d16",
+            "sessionToken": "e4f8a35f-ba91-4adf-b5d8-af788aed7f16",
+            "shareToken": "0d20f426-6b5c-4959-b169-b7d361e947a2",
+            "createdAt": "2026-06-08T17:34:57.192Z",
+            "assessments": [
+                {
+                    "id": "e84b4134-7f04-438a-a702-e1d4a3cf3dd8",
+                    "type": "FULL",
+                    "status": "IN_PROGRESS",
+                    "completionPercentage": 0,
+                    "phase1Code": null,
+                    "phase2Code": null,
+                    "consistencyLevel": null,
+                    "hasResult": false,
+                    "hasTreasureMap": false,
+                    "startedAt": "2026-06-08T17:34:57.196Z",
+                    "completedAt": null
+                }
+            ]
+        }
+    ],
+    "totalAssessments": 49,
+    "completedAssessments": 15
+}

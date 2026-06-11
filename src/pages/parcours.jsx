@@ -2,46 +2,27 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/parcours.css';
 import { jsPDF } from 'jspdf';
+// import { syncUserData, onStoreUpdate, getTestHistory, getSavedScholarships, getOrientationReports } from '../utils/store';
+import api from '../services/api';
 
 // ============ ICONES SVG ============
 
 const IconUser = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
         <circle cx="12" cy="7" r="4" />
     </svg>
 );
 
 const IconHistory = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" />
         <polyline points="12 6 12 12 16 14" />
     </svg>
 );
 
 const IconFile = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
         <polyline points="14 2 14 8 20 8" />
         <line x1="16" y1="13" x2="8" y2="13" />
@@ -50,28 +31,14 @@ const IconFile = () => (
 );
 
 const IconTrendUp = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
         <polyline points="17 6 23 6 23 12" />
     </svg>
 );
 
 const IconDashboard = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1" />
         <rect x="14" y="3" width="7" height="7" rx="1" />
         <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -80,14 +47,7 @@ const IconDashboard = () => (
 );
 
 const IconDownload = () => (
-    <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
         <polyline points="7 10 12 15 17 10" />
         <line x1="12" y1="15" x2="12" y2="3" />
@@ -95,28 +55,14 @@ const IconDownload = () => (
 );
 
 const IconEye = () => (
-    <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
         <circle cx="12" cy="12" r="3" />
     </svg>
 );
 
 const IconCalendar = () => (
-    <svg
-        width="14"
-        height="14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
         <line x1="16" y1="2" x2="16" y2="6" />
         <line x1="8" y1="2" x2="8" y2="6" />
@@ -125,40 +71,19 @@ const IconCalendar = () => (
 );
 
 const IconScholarship = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
     </svg>
 );
 
 const IconEdit = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M17 3l4 4L7 21H3v-4L17 3z" />
     </svg>
 );
 
 const IconTarget = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" />
         <circle cx="12" cy="12" r="6" />
         <circle cx="12" cy="12" r="2" />
@@ -166,27 +91,13 @@ const IconTarget = () => (
 );
 
 const IconCheck = () => (
-    <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <polyline points="20 6 9 17 4 12" />
     </svg>
 );
 
 const IconChart = () => (
-    <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <line x1="18" y1="20" x2="18" y2="10" />
         <line x1="12" y1="20" x2="12" y2="4" />
         <line x1="6" y1="20" x2="6" y2="14" />
@@ -194,14 +105,7 @@ const IconChart = () => (
 );
 
 const IconTrophy = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M6 3h12v3c0 3.5-2.5 6-6 6s-6-2.5-6-6V3z" />
         <path d="M8 12v3c0 1.5 1.5 3 4 3s4-1.5 4-3v-3" />
         <line x1="12" y1="18" x2="12" y2="21" />
@@ -210,14 +114,7 @@ const IconTrophy = () => (
 );
 
 const IconLightbulb = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M9.5 19.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-1.5h-5z" />
         <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6v3h8v-3c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z" />
         <line x1="9" y1="16" x2="15" y2="16" />
@@ -225,14 +122,7 @@ const IconLightbulb = () => (
 );
 
 const IconClipboard = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="9" y="2" width="6" height="4" rx="1" />
         <path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2" />
         <line x1="9" y1="12" x2="15" y2="12" />
@@ -241,14 +131,7 @@ const IconClipboard = () => (
 );
 
 const IconPackage = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
         <polyline points="3.29 7 12 12 20.71 7" />
         <line x1="12" y1="22" x2="12" y2="12" />
@@ -256,14 +139,7 @@ const IconPackage = () => (
 );
 
 const IconHelpCircle = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" />
         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
         <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -271,28 +147,14 @@ const IconHelpCircle = () => (
 );
 
 const IconMail = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="2" y="4" width="20" height="16" rx="2" />
         <polyline points="22 7 12 13 2 7" />
     </svg>
 );
 
 const IconTrash = () => (
-    <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <polyline points="3 6 5 6 21 6" />
         <path d="M8 6V4h8v2" />
         <line x1="10" y1="11" x2="10" y2="17" />
@@ -300,43 +162,20 @@ const IconTrash = () => (
     </svg>
 );
 
-const IconCode = () => (
-    <svg
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
-        <polyline points="16 18 22 12 16 6" />
-        <polyline points="8 6 2 12 8 18" />
-    </svg>
-);
-
 const IconOpen = () => (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: '4px' }}>
         <circle cx="6" cy="6" r="5" fill="#22c55e" />
-        <circle cx="6" cy="6" r="5" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
     </svg>
 );
 
 const IconClosed = () => (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: '4px' }}>
         <circle cx="6" cy="6" r="5" fill="#ef4444" />
-        <circle cx="6" cy="6" r="5" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
     </svg>
 );
 
 const IconPrinter = () => (
-    <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M6 9V3h12v6" />
         <path d="M6 21H4a2 2 0 01-2-2v-6a2 2 0 012-2h16a2 2 0 012 2v6a2 2 0 01-2 2h-2" />
         <path d="M18 15v6H6v-6" />
@@ -345,42 +184,21 @@ const IconPrinter = () => (
 );
 
 const IconPlus = () => (
-    <svg
-        width="14"
-        height="14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
 );
 
 const IconArrowRight = () => (
-    <svg
-        width="14"
-        height="14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <line x1="5" y1="12" x2="19" y2="12" />
         <polyline points="12 5 19 12 12 19" />
     </svg>
 );
 
 const IconBuilding = () => (
-    <svg
-        width="14"
-        height="14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
         <line x1="9" y1="7" x2="15" y2="7" />
         <line x1="9" y1="12" x2="15" y2="12" />
@@ -411,6 +229,10 @@ export default function EspacePersonnel() {
         progression: [],
     });
 
+    // Nouveaux states pour l'API
+    const [userProfile, setUserProfile] = useState(null);
+    const [syncLoading, setSyncLoading] = useState(false);
+
     const updateEvolutionData = useCallback((tests) => {
         const completedTests = tests.filter((t) => t.status === 'completed');
         const completedCount = completedTests.length;
@@ -422,18 +244,8 @@ export default function EspacePersonnel() {
         const bestScore = completedCount > 0 ? Math.max(...completedTests.map((t) => t.score)) : 0;
 
         const months = [
-            'Jan',
-            'Fév',
-            'Mar',
-            'Avr',
-            'Mai',
-            'Juin',
-            'Juil',
-            'Aoû',
-            'Sep',
-            'Oct',
-            'Nov',
-            'Déc',
+            'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
+            'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
         ];
         const currentMonthIndex = new Date().getMonth();
         const lastThreeMonths = months.slice(
@@ -455,12 +267,69 @@ export default function EspacePersonnel() {
         });
     }, []);
 
-    useEffect(() => {
-        loadUserData();
-        loadTestHistory();
-        loadPdfReports();
-        loadSavedScholarships();
-    }, []);
+    // Fonction pour synchroniser avec l'API
+    const syncWithAPI = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        setSyncLoading(true);
+        try {
+            // Récupérer les infos utilisateur
+            const userResponse = await api.get('/users/me');
+            if (userResponse.data) {
+                setUserInfo(prev => ({
+                    ...prev,
+                    name: userResponse.data.name || prev.name,
+                    email: userResponse.data.email || prev.email,
+                    phone: userResponse.data.phone || prev.phone,
+                    location: userResponse.data.location || prev.location,
+                }));
+                setUserProfile(userResponse.data);
+            }
+
+            // Récupérer l'historique des tests depuis l'API
+            const historyResponse = await api.get('/users/me/history');
+            if (historyResponse.data?.assessments) {
+                const apiTests = historyResponse.data.assessments.map(assessment => ({
+                    id: assessment.id,
+                    title: `Test RIASEC - ${new Date(assessment.createdAt).toLocaleDateString()}`,
+                    date: new Date(assessment.createdAt).toLocaleDateString('fr-FR'),
+                    score: assessment.progress?.completionPercentage || 0,
+                    type: 'RIASEC',
+                    code: assessment.results?.riasecCode || '',
+                    status: assessment.status === 'COMPLETED' ? 'completed' : 'in_progress',
+                    assessmentId: assessment.id,
+                    fullReport: assessment.results || {},
+                }));
+
+                // Fusionner avec les tests locaux
+                const localTests = getTestHistory();
+                const mergedTests = [...apiTests, ...localTests.filter(t => !apiTests.some(at => at.id === t.id))];
+                setTestHistory(mergedTests);
+                updateEvolutionData(mergedTests);
+            }
+
+            // Récupérer les bourses sauvegardées depuis l'API
+            try {
+                const savedResponse = await api.get('/users/me/saved-scholarships');
+                if (savedResponse.data) {
+                    setSavedScholarships(savedResponse.data);
+                    localStorage.setItem('savedScholarships', JSON.stringify(savedResponse.data));
+                }
+            } catch (err) {
+                console.warn('Could not fetch saved scholarships from API:', err);
+                loadSavedScholarships();
+            }
+
+        } catch (error) {
+            console.error('Sync error:', error);
+            // En cas d'erreur, utiliser les données locales
+            loadTestHistory();
+            loadSavedScholarships();
+        } finally {
+            setSyncLoading(false);
+        }
+    }, [updateEvolutionData]);
 
     const loadUserData = () => {
         const storedUser = localStorage.getItem('user');
@@ -469,7 +338,7 @@ export default function EspacePersonnel() {
                 const user = JSON.parse(storedUser);
                 setUserInfo((prev) => ({ ...prev, ...user }));
                 setEditFormData(user);
-            } catch (e) {}
+            } catch (e) { }
         } else {
             setEditFormData(userInfo);
         }
@@ -482,7 +351,7 @@ export default function EspacePersonnel() {
                 const tests = JSON.parse(storedTests);
                 setTestHistory(tests);
                 updateEvolutionData(tests);
-            } catch (e) {}
+            } catch (e) { }
         } else {
             setTestHistory([]);
             updateEvolutionData([]);
@@ -495,7 +364,7 @@ export default function EspacePersonnel() {
             try {
                 const reports = JSON.parse(storedReports);
                 setPdfReports(reports);
-            } catch (e) {}
+            } catch (e) { }
         }
     };
 
@@ -505,7 +374,7 @@ export default function EspacePersonnel() {
             try {
                 const scholarships = JSON.parse(stored);
                 setSavedScholarships(scholarships);
-            } catch (e) {}
+            } catch (e) { }
         }
     };
 
@@ -598,7 +467,7 @@ export default function EspacePersonnel() {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text(" Mon rapport d'orientation RIASEC", 20, 28);
+        doc.text("Mon rapport d'orientation RIASEC", 20, 28);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.text(`Test effectué le: ${report.date}`, 20, 42);
@@ -623,7 +492,7 @@ export default function EspacePersonnel() {
             yPosition += 15;
         }
 
-        // === SECTION 1: Résumé du test ===
+        // SECTION 1: Résumé du test
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
@@ -701,7 +570,7 @@ export default function EspacePersonnel() {
         });
         yPosition += 5;
 
-        // === SECTION 2: Points forts et axes d'amélioration ===
+        // SECTION 2: Points forts et axes d'amélioration
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
@@ -725,19 +594,12 @@ export default function EspacePersonnel() {
                 doc.setFont('helvetica', 'bold');
                 doc.text(`${point.title}:`, 25, yPosition);
                 doc.setFont('helvetica', 'normal');
-                const desc =
-                    point.description.length > 80
-                        ? point.description.substring(0, 77) + '...'
-                        : point.description;
+                const desc = point.description.length > 80 ? point.description.substring(0, 77) + '...' : point.description;
                 doc.text(desc, 25, yPosition + 5);
                 yPosition += 12;
             });
         } else {
-            doc.text(
-                'Curiosité intellectuelle: Vous aimez résoudre des problèmes complexes.',
-                25,
-                yPosition,
-            );
+            doc.text('Curiosité intellectuelle: Vous aimez résoudre des problèmes complexes.', 25, yPosition);
             yPosition += 6;
             doc.text("Pragmatisme: Capacité à passer à l'action.", 25, yPosition);
             yPosition += 10;
@@ -757,10 +619,7 @@ export default function EspacePersonnel() {
                 doc.setFont('helvetica', 'bold');
                 doc.text(`${axe.title}:`, 25, yPosition);
                 doc.setFont('helvetica', 'normal');
-                const desc =
-                    axe.description.length > 80
-                        ? axe.description.substring(0, 77) + '...'
-                        : axe.description;
+                const desc = axe.description.length > 80 ? axe.description.substring(0, 77) + '...' : axe.description;
                 doc.text(desc, 25, yPosition + 5);
                 yPosition += 12;
             });
@@ -770,7 +629,7 @@ export default function EspacePersonnel() {
         }
         yPosition += 5;
 
-        // === SECTION 3: Recommandations ===
+        // SECTION 3: Recommandations
         if (recommendations && Object.keys(recommendations).length > 0) {
             if (yPosition > 250) {
                 doc.addPage();
@@ -898,20 +757,113 @@ export default function EspacePersonnel() {
         alert(`Téléchargement de ${pdfReports.length} rapport(s) en cours...`);
     };
 
+    // Fonction pour charger un test spécifique depuis l'API
+    const loadAssessmentDetails = useCallback(async (assessmentId) => {
+        try {
+            const response = await api.get(`/users/me/assessments/${assessmentId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error loading assessment:', error);
+            return null;
+        }
+    }, []);
+
+    // Fonction pour charger les recommandations d'un test
+    const loadRecommendations = useCallback(async (assessmentId, limit = 6) => {
+        try {
+            const response = await api.get(`/users/me/assessments/${assessmentId}/recommendations`, {
+                params: { limit }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error loading recommendations:', error);
+            return null;
+        }
+    }, []);
+
+    // Mettre à jour la fonction handleResumeTest
     const handleResumeTest = (test) => {
-        if (test.type === 'RIASEC') {
+        if (test.assessmentId) {
+            navigate(`/orientations/${test.assessmentId}`);
+        } else if (test.type === 'RIASEC') {
             navigate('/orientations');
         } else {
             navigate('/tests');
         }
     };
 
-    const handleRemoveScholarship = (id) => {
-        const updated = savedScholarships.filter((s) => s.id !== id);
-        setSavedScholarships(updated);
-        localStorage.setItem('savedScholarships', JSON.stringify(updated));
-        alert('Bourse retirée des favoris');
+    // Mettre à jour la fonction handleRemoveScholarship pour utiliser l'API
+    const handleRemoveScholarship = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                await api.delete(`/users/me/saved-scholarships/${id}`);
+            }
+            const updated = savedScholarships.filter((s) => s.id !== id);
+            setSavedScholarships(updated);
+            localStorage.setItem('savedScholarships', JSON.stringify(updated));
+            alert('Bourse retirée des favoris');
+        } catch (error) {
+            console.error('Error removing scholarship:', error);
+            const updated = savedScholarships.filter((s) => s.id !== id);
+            setSavedScholarships(updated);
+            localStorage.setItem('savedScholarships', JSON.stringify(updated));
+            alert('Bourse retirée des favoris');
+        }
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            syncWithAPI();
+        } else {
+            loadUserData();
+            loadTestHistory();
+            loadPdfReports();
+            loadSavedScholarships();
+        }
+    }, [syncWithAPI]);
+
+    const saveTestResultGlobal = useCallback((testResult) => {
+        sessionStorage.setItem('pendingTestResult', JSON.stringify(testResult));
+        window.dispatchEvent(new CustomEvent('newTestResult', { detail: { testResult } }));
+
+        const storedTests = localStorage.getItem('testHistory');
+        let tests = storedTests ? JSON.parse(storedTests) : [];
+
+        const newTest = {
+            id: Date.now(),
+            title: testResult.title || "Test d'orientation",
+            date: new Date().toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+            }),
+            score: testResult.score,
+            type: testResult.type || 'RIASEC',
+            code: testResult.code || '',
+            status: 'completed',
+            fullReport: testResult.fullReport || {},
+        };
+
+        tests.unshift(newTest);
+        localStorage.setItem('testHistory', JSON.stringify(tests));
+        updateEvolutionData(tests);
+    }, [updateEvolutionData]);
+
+    const saveScholarshipGlobal = useCallback((scholarship) => {
+        const stored = localStorage.getItem('savedScholarships');
+        let savedList = stored ? JSON.parse(stored) : [];
+
+        if (!savedList.some((s) => s.id === scholarship.id)) {
+            const newList = [...savedList, scholarship];
+            localStorage.setItem('savedScholarships', JSON.stringify(newList));
+            setSavedScholarships(newList);
+            window.dispatchEvent(new CustomEvent('newScholarshipSaved', { detail: { scholarship } }));
+            return true;
+        }
+        return false;
+    }, []);
 
     useEffect(() => {
         const handleNewTestResult = (event) => {
@@ -928,7 +880,7 @@ export default function EspacePersonnel() {
                 const testResult = JSON.parse(pendingTest);
                 saveTestResult(testResult);
                 sessionStorage.removeItem('pendingTestResult');
-            } catch (e) {}
+            } catch (e) { }
         }
 
         return () => {
@@ -1013,10 +965,7 @@ export default function EspacePersonnel() {
                     <div className="stat-badge">
                         <span className="stat-number">
                             {evolutionData.totalTests > 0
-                                ? Math.round(
-                                      (evolutionData.testsCompleted / evolutionData.totalTests) *
-                                          100,
-                                  )
+                                ? Math.round((evolutionData.testsCompleted / evolutionData.totalTests) * 100)
                                 : 0}
                             %
                         </span>
@@ -1066,7 +1015,7 @@ export default function EspacePersonnel() {
                             </h2>
 
                             <div className="progress-card">
-                                <h3> Progression globale</h3>
+                                <h3>📊 Progression globale</h3>
                                 <div className="progress-bar-container">
                                     <div
                                         className="progress-bar"
@@ -1087,7 +1036,7 @@ export default function EspacePersonnel() {
                             </div>
 
                             <div className="last-test-card">
-                                <h3> Dernier test réalisé</h3>
+                                <h3>🎯 Dernier test réalisé</h3>
                                 {lastTest ? (
                                     <div className="test-result">
                                         <div className="test-info">
@@ -1131,6 +1080,7 @@ export default function EspacePersonnel() {
                                     <IconPlus /> Nouveau test
                                 </button>
                             </div>
+                            {syncLoading && <p className="sync-message">Synchronisation en cours...</p>}
                             <div className="tests-list">
                                 {testHistory.length === 0 ? (
                                     <div className="empty-state">
@@ -1279,9 +1229,7 @@ export default function EspacePersonnel() {
                                                 className="chart-bar"
                                                 style={{
                                                     height: item.score ? `${item.score}%` : '0%',
-                                                    backgroundColor: item.score
-                                                        ? '#3347df'
-                                                        : '#e5e7eb',
+                                                    backgroundColor: item.score ? '#3347df' : '#e5e7eb',
                                                 }}
                                             >
                                                 {item.score && (
@@ -1308,9 +1256,7 @@ export default function EspacePersonnel() {
                                         <IconChart />
                                     </div>
                                     <div>
-                                        <div className="stat-number">
-                                            {evolutionData.averageScore}
-                                        </div>
+                                        <div className="stat-number">{evolutionData.averageScore}</div>
                                         <div className="stat-label">Moyenne générale</div>
                                     </div>
                                 </div>
@@ -1319,9 +1265,7 @@ export default function EspacePersonnel() {
                                         <IconCheck />
                                     </div>
                                     <div>
-                                        <div className="stat-number">
-                                            {evolutionData.testsCompleted}
-                                        </div>
+                                        <div className="stat-number">{evolutionData.testsCompleted}</div>
                                         <div className="stat-label">Tests complétés</div>
                                     </div>
                                 </div>
@@ -1356,14 +1300,8 @@ export default function EspacePersonnel() {
                                                 <span
                                                     className={`scholarship-status ${scholarship.status === 'ouvert' ? 'open' : 'closed'}`}
                                                 >
-                                                    {scholarship.status === 'ouvert' ? (
-                                                        <IconOpen />
-                                                    ) : (
-                                                        <IconClosed />
-                                                    )}
-                                                    {scholarship.status === 'ouvert'
-                                                        ? 'Ouvert'
-                                                        : 'Fermé'}
+                                                    {scholarship.status === 'ouvert' ? <IconOpen /> : <IconClosed />}
+                                                    {scholarship.status === 'ouvert' ? 'Ouvert' : 'Fermé'}
                                                 </span>
                                             </div>
                                             <div className="scholarship-body">
@@ -1373,8 +1311,7 @@ export default function EspacePersonnel() {
                                                 <div className="scholarship-details">
                                                     <span>
                                                         <IconScholarship />{' '}
-                                                        {scholarship.amount ||
-                                                            'Montant non spécifié'}
+                                                        {scholarship.amount || 'Montant non spécifié'}
                                                     </span>
                                                     <span>
                                                         <IconCalendar />{' '}
@@ -1390,16 +1327,14 @@ export default function EspacePersonnel() {
                                                 <button
                                                     className="btn-view"
                                                     onClick={() =>
-                                                        window.open(scholarship.link, '_blank')
+                                                        window.open(scholarship.link || scholarship.applyUrl, '_blank')
                                                     }
                                                 >
                                                     Voir les détails
                                                 </button>
                                                 <button
                                                     className="btn-remove"
-                                                    onClick={() =>
-                                                        handleRemoveScholarship(scholarship.id)
-                                                    }
+                                                    onClick={() => handleRemoveScholarship(scholarship.id)}
                                                 >
                                                     Retirer
                                                 </button>
@@ -1414,8 +1349,7 @@ export default function EspacePersonnel() {
                                         <IconChart /> Résumé
                                     </h3>
                                     <p>
-                                        Vous avez {savedScholarships.length} bourse(s)
-                                        enregistrée(s).
+                                        Vous avez {savedScholarships.length} bourse(s) enregistrée(s).
                                     </p>
                                 </div>
                             )}
@@ -1430,10 +1364,7 @@ export default function EspacePersonnel() {
                                     <IconUser /> Informations personnelles
                                 </h2>
                                 {!isEditingProfile && (
-                                    <button
-                                        className="edit-profile-btn"
-                                        onClick={handleEditProfile}
-                                    >
+                                    <button className="edit-profile-btn" onClick={handleEditProfile}>
                                         <IconEdit /> Modifier
                                     </button>
                                 )}
@@ -1482,16 +1413,10 @@ export default function EspacePersonnel() {
                                             />
                                         </div>
                                         <div className="profile-actions editing-actions">
-                                            <button
-                                                className="save-profile-btn"
-                                                onClick={handleSaveProfile}
-                                            >
+                                            <button className="save-profile-btn" onClick={handleSaveProfile}>
                                                 Enregistrer
                                             </button>
-                                            <button
-                                                className="cancel-edit-btn"
-                                                onClick={handleCancelEdit}
-                                            >
+                                            <button className="cancel-edit-btn" onClick={handleCancelEdit}>
                                                 Annuler
                                             </button>
                                         </div>
@@ -1500,39 +1425,19 @@ export default function EspacePersonnel() {
                                     <>
                                         <div className="form-group">
                                             <label>Nom complet</label>
-                                            <input
-                                                type="text"
-                                                value={userInfo.name}
-                                                readOnly
-                                                disabled
-                                            />
+                                            <input type="text" value={userInfo.name} readOnly disabled />
                                         </div>
                                         <div className="form-group">
                                             <label>Email</label>
-                                            <input
-                                                type="email"
-                                                value={userInfo.email}
-                                                readOnly
-                                                disabled
-                                            />
+                                            <input type="email" value={userInfo.email} readOnly disabled />
                                         </div>
                                         <div className="form-group">
                                             <label>Téléphone</label>
-                                            <input
-                                                type="tel"
-                                                value={userInfo.phone}
-                                                readOnly
-                                                disabled
-                                            />
+                                            <input type="tel" value={userInfo.phone} readOnly disabled />
                                         </div>
                                         <div className="form-group">
                                             <label>Ville</label>
-                                            <input
-                                                type="text"
-                                                value={userInfo.location}
-                                                readOnly
-                                                disabled
-                                            />
+                                            <input type="text" value={userInfo.location} readOnly disabled />
                                         </div>
                                     </>
                                 )}
@@ -1544,42 +1449,3 @@ export default function EspacePersonnel() {
         </div>
     );
 }
-
-export const saveTestResultGlobal = (testResult) => {
-    sessionStorage.setItem('pendingTestResult', JSON.stringify(testResult));
-    window.dispatchEvent(new CustomEvent('newTestResult', { detail: { testResult } }));
-
-    const storedTests = localStorage.getItem('testHistory');
-    let tests = storedTests ? JSON.parse(storedTests) : [];
-
-    const newTest = {
-        id: Date.now(),
-        title: testResult.title || "Test d'orientation",
-        date: new Date().toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-        }),
-        score: testResult.score,
-        type: testResult.type || 'RIASEC',
-        code: testResult.code || '',
-        status: 'completed',
-        fullReport: testResult.fullReport || {},
-    };
-
-    tests.unshift(newTest);
-    localStorage.setItem('testHistory', JSON.stringify(tests));
-};
-
-export const saveScholarship = (scholarship) => {
-    const stored = localStorage.getItem('savedScholarships');
-    let savedList = stored ? JSON.parse(stored) : [];
-
-    if (!savedList.some((s) => s.id === scholarship.id)) {
-        const newList = [...savedList, scholarship];
-        localStorage.setItem('savedScholarships', JSON.stringify(newList));
-        window.dispatchEvent(new CustomEvent('newScholarshipSaved', { detail: { scholarship } }));
-        return true;
-    }
-    return false;
-};

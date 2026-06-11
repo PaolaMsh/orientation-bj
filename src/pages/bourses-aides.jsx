@@ -33,7 +33,7 @@ import {
 
 import '../styles/bourses-aides.css';
 import { bourseService } from '../services/bourseService';
-import { saveScholarship } from './parcours'; 
+import { saveScholarship } from '../utils/store'; // Correction de l'import
 
 const Scholarships = () => {
     const [scholarships, setScholarships] = useState([]);
@@ -89,7 +89,7 @@ const Scholarships = () => {
             deadline: scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('fr-FR') : 'Non spécifiée',
             amount: scholarship.amount,
             status: getStatus(scholarship.deadline),
-            link: scholarship.applyUrl,
+            link: scholarship.applyUrl || scholarship.officialUrl,
             benefits: scholarship.coverage || [],
             conditions: scholarship.requirements || [],
             fields: scholarship.fields || [],
@@ -133,18 +133,45 @@ const Scholarships = () => {
         };
     };
 
-    // Fonction pour sauvegarder une bourse
-    const handleSaveScholarship = (scholarship, e) => {
+    // Fonction unique pour sauvegarder une bourse
+    const handleSaveScholarship = async (scholarship, e) => {
         e.stopPropagation();
         
-        const scholarshipToSave = mapScholarshipForSaving(scholarship);
-        const saved = saveScholarship(scholarshipToSave);
-        
-        if (saved) {
-            setSavedMessage({ id: scholarship.id, text: '✓ Bourse enregistrée !', type: 'success' });
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Sauvegarde via API si token disponible
+            if (token) {
+                try {
+                    await api.post('/users/me/saved-scholarships', {
+                        scholarshipId: scholarship.id,
+                        scholarshipData: scholarship
+                    });
+                } catch (apiError) {
+                    console.warn('API save failed, using local storage:', apiError);
+                }
+            }
+            
+            // Sauvegarde locale
+            const scholarshipToSave = mapScholarshipForSaving(scholarship);
+            const saved = saveScholarship(scholarshipToSave);
+            
+            if (saved) {
+                setSavedMessage({ id: scholarship.id, text: '✓ Bourse enregistrée !', type: 'success' });
+            } else {
+                setSavedMessage({ id: scholarship.id, text: 'ℹ️ Déjà dans vos favoris', type: 'info' });
+            }
             setTimeout(() => setSavedMessage(null), 3000);
-        } else {
-            setSavedMessage({ id: scholarship.id, text: 'ℹ️ Déjà dans vos favoris', type: 'info' });
+        } catch (error) {
+            console.error('Error saving scholarship:', error);
+            // Fallback local uniquement
+            const scholarshipToSave = mapScholarshipForSaving(scholarship);
+            const saved = saveScholarship(scholarshipToSave);
+            if (saved) {
+                setSavedMessage({ id: scholarship.id, text: '✓ Bourse enregistrée !', type: 'success' });
+            } else {
+                setSavedMessage({ id: scholarship.id, text: 'ℹ️ Déjà dans vos favoris', type: 'info' });
+            }
             setTimeout(() => setSavedMessage(null), 3000);
         }
     };
