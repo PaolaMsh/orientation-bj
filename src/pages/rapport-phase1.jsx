@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/orientations.css';
+import { recommendationService } from '../services/recommendationServe';
 import api from '../services/api';
-import '../styles/orientations.css';
 
 const IconInfo = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="16" x2="12" y2="12" />
         <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -20,28 +13,14 @@ const IconInfo = () => (
 );
 
 const IconSearch = ({ size = 20 }) => (
-    <svg
-        width={size}
-        height={size}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
 );
 
 const IconGrid = ({ size = 18 }) => (
-    <svg
-        width={size}
-        height={size}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1" />
         <rect x="14" y="3" width="7" height="7" rx="1" />
         <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -50,18 +29,15 @@ const IconGrid = ({ size = 18 }) => (
 );
 
 const IconHome = ({ size = 20 }) => (
-    <svg
-        width={size}
-        height={size}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
         <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
 );
+
+const handlePrint = () => {
+        window.print();
+    };
 
 function RapportPhase1() {
     const navigate = useNavigate();
@@ -69,6 +45,11 @@ function RapportPhase1() {
     const [rapportData, setRapportData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [recommendations, setRecommendations] = useState({
+        formations: [],
+        metiers: [],
+        ecoles: []
+    });
 
     useEffect(() => {
         const fetchRapport = async () => {
@@ -76,20 +57,20 @@ function RapportPhase1() {
                 const stateResults = location.state?.phaseResults;
                 if (stateResults) {
                     setRapportData(stateResults);
+                    await fetchRecommendations(stateResults.assessmentId);
                     return;
                 }
 
                 const storedReport = localStorage.getItem('phase1_report_data');
                 if (storedReport) {
-                    setRapportData(JSON.parse(storedReport));
+                    const parsed = JSON.parse(storedReport);
+                    setRapportData(parsed);
+                    await fetchRecommendations(parsed.assessmentId);
                     return;
                 }
 
                 const assessmentId = location.state?.assessmentId || localStorage.getItem('assessment_id');
-                const sessionToken =
-                    location.state?.sessionToken ||
-                    localStorage.getItem('phase_1_session_token') ||
-                    localStorage.getItem('session_token');
+                const sessionToken = location.state?.sessionToken || localStorage.getItem('session_token');
 
                 if (!assessmentId) {
                     setError('Identifiant de test non trouvé');
@@ -101,15 +82,13 @@ function RapportPhase1() {
                     response = await api.get(`/results/by-assessment/${assessmentId}`);
                 } catch (byAssessmentErr) {
                     response = await api.get('/results/phase1', {
-                        params: {
-                            assessmentId,
-                            sessionToken,
-                        },
+                        params: { assessmentId, sessionToken },
                     });
                 }
 
                 const data = response?.data;
                 setRapportData(data);
+                await fetchRecommendations(assessmentId);
             } catch (err) {
                 console.error('Erreur lors du chargement du rapport:', err);
                 setError(err.message || 'Erreur lors du chargement du rapport');
@@ -117,6 +96,42 @@ function RapportPhase1() {
                 setLoading(false);
             }
         };
+
+        const fetchRecommendations = async (assessmentId) => {
+    try {
+        // Récupérer le code RIASEC de la Phase 1
+        const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
+        const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
+        
+        console.log('Code RIASEC Phase 1:', phase1Code);
+        console.log('Première lettre (axe dominant):', leadingLetter);
+        
+        // Appeler le service avec le code RIASEC pour filtrer
+        const recoData = await recommendationService.getRiasecRecommendations(assessmentId, leadingLetter);
+        console.log('Recommandations pour l\'axe', leadingLetter, ':', recoData);
+        
+        // Extraire les recommandations pour l'axe dominant
+        const axisMapping = {
+            'R': 'REALISTIC',
+            'I': 'INVESTIGATIVE',
+            'A': 'ARTISTIC',
+            'S': 'SOCIAL',
+            'E': 'ENTERPRISING',
+            'C': 'CONVENTIONAL'
+        };
+        const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
+        
+        const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
+        
+        setRecommendations({
+            formations: axisRecos.formations || [],
+            metiers: axisRecos.metiers || [],
+            ecoles: axisRecos.ecoles || []
+        });
+    } catch (err) {
+        console.error('Erreur chargement recommandations:', err);
+    }
+};
 
         fetchRapport();
     }, [location.state]);
@@ -139,9 +154,8 @@ function RapportPhase1() {
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <button onClick={() => navigate('/tests-orientations')} className="btn">
-                            Retour 
-                        </button>
+                        <p>Erreur: {error}</p>
+                        <button onClick={() => navigate('/tests-orientations')} className="button">Retour</button>
                     </div>
                 </div>
             </div>
@@ -154,9 +168,7 @@ function RapportPhase1() {
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <p>Aucune donnée disponible</p>
-                        <button onClick={() => navigate('/tests-orientations')} className="btn">
-                            Retour 
-                        </button>
+                        <button onClick={() => navigate('/tests-orientations')} className="button">Retour</button>
                     </div>
                 </div>
             </div>
@@ -178,6 +190,7 @@ function RapportPhase1() {
         ...fallbackAxis,
         score: 100,
     };
+
     const definitions = {
         REALISTIC: {
             text: "L'axe Réaliste valorise l'action concrète, la manipulation d'outils, les travaux manuels et techniques. Vous préférez les tâches tangibles, pratiques et bien définies.",
@@ -206,25 +219,20 @@ function RapportPhase1() {
     };
 
     const def = definitions[primaryAxis.code] || definitions.INVESTIGATIVE;
-    const recommendations = rapportData.recommendations || {};
 
     return (
         <div className="ori-page">
             <div className="ori-wrapper">
-                {/* Header */}
                 <div className="ori-header">
                     <div className="ori-header-content">
                         <div className="ori-logo-section">
-                            <span className="ori-logo-icon">🎯</span>
                             <div>
                                 <h1 style={{ marginTop: '5rem' }} className='orientations-header'>Votre Rapport - Phase 1</h1>
                             </div>
                         </div>
-                       
                     </div>
                 </div>
 
-                {/* Profil Principal */}
                 <div className="ria-section-header">
                     <h2 className="ria-section-title">Votre Profil Dominant</h2>
                 </div>
@@ -234,7 +242,6 @@ function RapportPhase1() {
                     <div className="ria-hero-value">{primaryAxis.score || 0}/100</div>
                 </div>
 
-                {/* Définition et caractéristiques */}
                 <div className="ria-def-card">
                     <div className="ria-def-title">
                         <IconInfo /> Définition &amp; caractéristiques
@@ -245,7 +252,6 @@ function RapportPhase1() {
                     </p>
                 </div>
 
-                {/* Interprétation */}
                 <div className="ria-interp-card">
                     <div className="ria-interp-title">
                         <IconSearch size={16} /> Interprétation personnalisée
@@ -268,7 +274,6 @@ function RapportPhase1() {
                     </p>
                 </div>
 
-                {/* Recommandations */}
                 <div className="ria-def-card">
                     <div className="ria-reco-title">
                         <IconGrid /> Formations &amp; métiers recommandés
@@ -277,40 +282,50 @@ function RapportPhase1() {
                         <div>
                             <div className="ria-reco-col-label">Formations</div>
                             <div className="ria-chip-list">
-                                {recommendations.formations?.length > 0 ? (
+                                {recommendations.formations.length > 0 ? (
                                     recommendations.formations.map((f, i) => (
-                                        <span key={i} className="ria-chip">
-                                            {f}
-                                        </span>
+                                        <span key={i} className="ria-chip">{f}</span>
                                     ))
                                 ) : (
-                                    <span className="ria-chip">Aucune formation disponible</span>
+                                    <span className="ria-chip">Chargement des formations...</span>
                                 )}
                             </div>
                         </div>
                         <div>
                             <div className="ria-reco-col-label">Métiers</div>
                             <div className="ria-chip-list">
-                                {recommendations.metiers?.length > 0 ? (
+                                {recommendations.metiers.length > 0 ? (
                                     recommendations.metiers.map((m, i) => (
-                                        <span key={i} className="ria-chip">
-                                            {m}
-                                        </span>
+                                        <span key={i} className="ria-chip">{m}</span>
                                     ))
                                 ) : (
-                                    <span className="ria-chip">Aucun métier disponible</span>
+                                    <span className="ria-chip">Chargement des métiers...</span>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="ria-reco-col-label">Écoles</div>
+                            <div className="ria-chip-list">
+                                {recommendations.ecoles.length > 0 ? (
+                                    recommendations.ecoles.map((e, i) => (
+                                        <span key={i} className="ria-chip">{e}</span>
+                                    ))
+                                ) : (
+                                    <span className="ria-chip">Chargement des écoles...</span>
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Bouton de retour */}
-                 <div className="Buttons">
-                    <button className="button" onClick={() => navigate('/tests')}>
+                <div className="Buttons">
+                    <button className="button" onClick={() => navigate('/tests-orientations')}>
                         Nouveau test
                     </button>
 
+                     <button className="button" onClick={handlePrint}>
+                        Imprimer
+                    </button>
                 </div>
             </div>
         </div>

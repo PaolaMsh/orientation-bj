@@ -93,8 +93,7 @@ const ProgressHeader = ({
     return (
         <div className="test-header">
             <div className="logo-section">
-                <span className="logo-icon">🎯</span>
-                <span className="logo-text">RIASEC Profiler</span>
+                <span className="logos-text">RIASEC Profiler</span>
             </div>
             <div className="progress-section">
                 <div className="phase-indicator">
@@ -609,10 +608,7 @@ const PhaseTest = () => {
                     </div>
                 )}
 
-                <div className="page-indicator-header">
-                    <span>Questions - {currentBatch.length}</span>
-                    {allAnswered && <span className="page-complete-badge">✓ Complété !</span>}
-                </div>
+                
 
                 {loadingBatch ? (
                     <Spinner size={30} />
@@ -661,12 +657,12 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
             <div className="phase-result-page">
                 <div className="phase-result-container">
                     <div className="phase-result-header">
-                        <h1>🌱 Résultat de la Phase 1 - Amorçage</h1>
+                        <h1> Résultat de la Phase 1 - Amorçage</h1>
                         <p>Voici votre profil de personnalité basé sur vos réponses</p>
                     </div>
 
                     <div className="result-card">
-                        <h3>🎯 Votre code de profil</h3>
+                        <h3>Votre code de profil</h3>
                         <div className="profile-code-display">
                             <span className="code-badge-large">
                                 {results?.phase1Code || results?.code || 'PEN'}
@@ -679,7 +675,7 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
                     </div>
 
                     <div className="result-card">
-                        <h3>⭐ Vos traits dominants</h3>
+                        <h3> Vos traits dominants</h3>
                         <div className="traits-list">
                             {(
                                 results?.traits || [
@@ -714,7 +710,6 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
         );
     }
 
-    // Phases 2, 3, 4 - Résultats RIASEC complets
     const scores = results?.phase2Scores ||
         results?.scores || { I: 88, E: 72, S: 78, R: 65, A: 55, C: 45 };
     const code = results?.phase2Code || results?.code || 'IES';
@@ -753,7 +748,7 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
                 </div>
 
                 <div className="result-card">
-                    <h3>🎯 Votre code RIASEC</h3>
+                    <h3> Votre code RIASEC</h3>
                     <div className="riasec-code-display">
                         {code.split('').map((letter, i) => (
                             <span

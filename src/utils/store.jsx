@@ -7,6 +7,7 @@ const KEYS = {
   savedScholarships: 'savedScholarships',
   orientationReports: 'orientationReports',
   assessmentId:      'assessment_id',
+  sessionToken:      'session_token',
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ export function saveTestResult(testResult) {
     code:       testResult.code || '',
     status:     'completed',
     fullReport: testResult.fullReport || {},
+    assessmentId: testResult.assessmentId || null, // Lien avec l'API
   };
 
   const tests = [newTest, ...read(KEYS.testHistory)];
@@ -48,6 +50,7 @@ export function saveTestResult(testResult) {
     size:    `${(Math.random() * 3 + 1).toFixed(1)} Mo`,
     type:    newTest.type.toLowerCase(),
     testId:  newTest.id,
+    assessmentId: testResult.assessmentId || null,
     content: newTest.fullReport,
   };
   write(KEYS.pdfReports, [newReport, ...reports]);
@@ -139,6 +142,50 @@ export function removeScholarship(id) {
 
 export function getSavedScholarships() {
   return read(KEYS.savedScholarships);
+}
+
+// ─── Synchronisation avec l'API ────────────────────────────────────────────
+
+export async function syncUserData(token) {
+  if (!token) return null;
+  
+  const API_BASE = 'https://api-orientation-production.up.railway.app/api/v1';
+  
+  try {
+    // Récupérer les infos utilisateur
+    const userResponse = await fetch(`${API_BASE}/users/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const userData = await userResponse.json();
+    
+    // Récupérer l'historique complet
+    const historyResponse = await fetch(`${API_BASE}/users/me/history`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const historyData = await historyResponse.json();
+    
+    // Mettre à jour le localStorage avec les données de l'API
+    if (historyData?.assessments) {
+      const apiTests = historyData.assessments.map(assessment => ({
+        id: assessment.id,
+        title: `Test RIASEC - ${new Date(assessment.createdAt).toLocaleDateString()}`,
+        date: new Date(assessment.createdAt).toLocaleDateString('fr-FR'),
+        score: assessment.progress?.completionPercentage || 0,
+        type: 'RIASEC',
+        code: assessment.results?.riasecCode || '',
+        status: assessment.status === 'COMPLETED' ? 'completed' : 'in_progress',
+        assessmentId: assessment.id,
+        fullReport: assessment.results || {},
+      }));
+      
+      write(KEYS.testHistory, apiTests);
+    }
+    
+    return { userData, historyData };
+  } catch (error) {
+    console.error('Sync error:', error);
+    return null;
+  }
 }
 
 // ─── Listener helper ────────────────────────────────────────────────────────
