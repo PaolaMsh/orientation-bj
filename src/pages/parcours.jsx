@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/parcours.css';
 import { jsPDF } from 'jspdf';
-// import { syncUserData, onStoreUpdate, getTestHistory, getSavedScholarships, getOrientationReports } from '../utils/store';
+import '../styles/parcours.css';
 import api from '../services/api';
-
-// ============ ICONES SVG ============
 
 const IconUser = () => (
     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -82,14 +79,6 @@ const IconEdit = () => (
     </svg>
 );
 
-const IconTarget = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="6" />
-        <circle cx="12" cy="12" r="2" />
-    </svg>
-);
-
 const IconCheck = () => (
     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <polyline points="20 6 9 17 4 12" />
@@ -113,879 +102,380 @@ const IconTrophy = () => (
     </svg>
 );
 
-const IconLightbulb = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M9.5 19.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-1.5h-5z" />
-        <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6v3h8v-3c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z" />
-        <line x1="9" y1="16" x2="15" y2="16" />
+const IconLoader = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" opacity="0.2" />
+        <path d="M22 12a10 10 0 0 0-10-10" />
     </svg>
 );
 
-const IconClipboard = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <rect x="9" y="2" width="6" height="4" rx="1" />
-        <path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2" />
-        <line x1="9" y1="12" x2="15" y2="12" />
-        <line x1="9" y1="16" x2="13" y2="16" />
-    </svg>
-);
+const MENU_ITEMS = [
+    { id: 'dashboard', label: 'Tableau de bord', icon: <IconDashboard /> },
+    { id: 'tests', label: 'Mes tests', icon: <IconHistory /> },
+    { id: 'reports', label: 'Rapports', icon: <IconFile /> },
+    { id: 'badges', label: 'Badges', icon: <IconTrophy /> },
+    { id: 'profile', label: 'Profil', icon: <IconUser /> },
+];
 
-const IconPackage = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-        <polyline points="3.29 7 12 12 20.71 7" />
-        <line x1="12" y1="22" x2="12" y2="12" />
-    </svg>
-);
+const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
-const IconHelpCircle = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-        <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-);
+const AXIS_LABELS = {
+    REALISTIC: 'Réaliste',
+    INVESTIGATIVE: 'Investigateur',
+    ARTISTIC: 'Artistique',
+    SOCIAL: 'Social',
+    ENTERPRISING: 'Entreprenant',
+    CONVENTIONAL: 'Conventionnel',
+};
 
-const IconMail = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <polyline points="22 7 12 13 2 7" />
-    </svg>
-);
+const STATUS_LABELS = {
+    completed: 'Terminé',
+    in_progress: 'En cours',
+    abandoned: 'Abandonné',
+    unknown: 'Inconnu',
+};
 
-const IconTrash = () => (
-    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <polyline points="3 6 5 6 21 6" />
-        <path d="M8 6V4h8v2" />
-        <line x1="10" y1="11" x2="10" y2="17" />
-        <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
-);
+function formatDate(value) {
+    if (!value) return 'Date inconnue';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Date inconnue';
+    return date.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
 
-const IconOpen = () => (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: '4px' }}>
-        <circle cx="6" cy="6" r="5" fill="#22c55e" />
-    </svg>
-);
+function normalizeStatus(status) {
+    const normalized = String(status || '').toLowerCase();
+    if (normalized === 'completed') return 'completed';
+    if (normalized === 'in_progress') return 'in_progress';
+    if (normalized === 'abandoned') return 'abandoned';
+    return 'unknown';
+}
 
-const IconClosed = () => (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: '4px' }}>
-        <circle cx="6" cy="6" r="5" fill="#ef4444" />
-    </svg>
-);
+function buildAssessmentTitle(assessment) {
+    const type = String(assessment?.type || 'RIASEC').toUpperCase();
+    if (type === 'FULL') return 'Test complet';
+    if (type === 'PHASE1') return 'Test Phase 1';
+    return `Test ${type}`;
+}
 
-const IconPrinter = () => (
-    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M6 9V3h12v6" />
-        <path d="M6 21H4a2 2 0 01-2-2v-6a2 2 0 012-2h16a2 2 0 012 2v6a2 2 0 01-2 2h-2" />
-        <path d="M18 15v6H6v-6" />
-        <rect x="8" y="11" width="8" height="2" />
-    </svg>
-);
+function buildAssessmentCode(assessment) {
+    return assessment?.phase2Code || assessment?.phase1Code || assessment?.code || '';
+}
 
-const IconPlus = () => (
-    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-);
+function flattenAssessments(historyData) {
+    const sessions = Array.isArray(historyData?.sessions) ? historyData.sessions : [];
+    const directAssessments = Array.isArray(historyData?.assessments) ? historyData.assessments : [];
 
-const IconArrowRight = () => (
-    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <line x1="5" y1="12" x2="19" y2="12" />
-        <polyline points="12 5 19 12 12 19" />
-    </svg>
-);
+    const sessionAssessments = sessions.flatMap((session) => {
+        const assessments = Array.isArray(session.assessments) ? session.assessments : [];
+        return assessments.map((assessment) => ({
+            id: assessment.id,
+            assessmentId: assessment.id,
+            sessionToken: session.sessionToken || null,
+            shareToken: session.shareToken || null,
+            type: assessment.type || 'RIASEC',
+            title: buildAssessmentTitle(assessment),
+            date: formatDate(assessment.completedAt || assessment.startedAt || session.createdAt),
+            completedAt: assessment.completedAt || null,
+            startedAt: assessment.startedAt || null,
+            status: normalizeStatus(assessment.status),
+            score: Number(assessment.completionPercentage ?? 0),
+            completionPercentage: Number(assessment.completionPercentage ?? 0),
+            phase1Code: assessment.phase1Code || null,
+            phase2Code: assessment.phase2Code || null,
+            code: buildAssessmentCode(assessment),
+            consistencyLevel: assessment.consistencyLevel || null,
+            hasResult: Boolean(assessment.hasResult),
+            hasTreasureMap: Boolean(assessment.hasTreasureMap),
+            raw: assessment,
+        }));
+    });
 
-const IconBuilding = () => (
-    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-        <line x1="9" y1="7" x2="15" y2="7" />
-        <line x1="9" y1="12" x2="15" y2="12" />
-        <line x1="9" y1="17" x2="13" y2="17" />
-    </svg>
-);
+    const directList = directAssessments.map((assessment) => ({
+        id: assessment.id,
+        assessmentId: assessment.id,
+        sessionToken: historyData?.sessionToken || null,
+        shareToken: historyData?.shareToken || null,
+        type: assessment.type || 'RIASEC',
+        title: buildAssessmentTitle(assessment),
+        date: formatDate(assessment.completedAt || assessment.startedAt || historyData?.createdAt),
+        completedAt: assessment.completedAt || null,
+        startedAt: assessment.startedAt || null,
+        status: normalizeStatus(assessment.status),
+        score: Number(assessment.completionPercentage ?? 0),
+        completionPercentage: Number(assessment.completionPercentage ?? 0),
+        phase1Code: assessment.phase1Code || null,
+        phase2Code: assessment.phase2Code || null,
+        code: buildAssessmentCode(assessment),
+        consistencyLevel: assessment.consistencyLevel || null,
+        hasResult: Boolean(assessment.hasResult),
+        hasTreasureMap: Boolean(assessment.hasTreasureMap),
+        raw: assessment,
+    }));
+
+    const combined = sessionAssessments.length > 0 ? sessionAssessments : directList;
+
+    return combined.sort((left, right) => {
+        const leftDate = new Date(left.completedAt || left.startedAt || 0).getTime();
+        const rightDate = new Date(right.completedAt || right.startedAt || 0).getTime();
+        return rightDate - leftDate;
+    });
+}
+
+function buildEvolution(assessments) {
+    const completed = assessments.filter((assessment) => assessment.status === 'completed');
+    const averageScore =
+        completed.length > 0
+            ? Math.round(
+                  completed.reduce(
+                      (sum, assessment) => sum + Number(assessment.completionPercentage || 0),
+                      0,
+                  ) / completed.length,
+              )
+            : 0;
+    const bestScore =
+        completed.length > 0
+            ? Math.max(...completed.map((assessment) => Number(assessment.completionPercentage || 0)))
+            : 0;
+    const currentMonth = new Date().getMonth();
+    const months = Array.from({ length: 4 }, (_, index) => MONTHS[Math.max(0, currentMonth - 3 + index)]);
+
+    const progression = months.map((month) => {
+        const match = completed.find((assessment) => {
+            const date = new Date(assessment.completedAt || assessment.startedAt || '');
+            if (Number.isNaN(date.getTime())) return false;
+            return MONTHS[date.getMonth()] === month;
+        });
+
+        return {
+            month,
+            score: match ? Number(match.completionPercentage || 0) : null,
+        };
+    });
+
+    return {
+        testsCompleted: completed.length,
+        totalTests: assessments.length,
+        averageScore,
+        bestScore,
+        progression,
+    };
+}
+
+function getBadgeLabel(rarity) {
+    const normalized = String(rarity || '').toUpperCase();
+    if (normalized === 'EPIC') return 'Epic';
+    if (normalized === 'RARE') return 'Rare';
+    if (normalized === 'UNCOMMON') return 'Uncommon';
+    return 'Commun';
+}
 
 export default function EspacePersonnel() {
     const navigate = useNavigate();
     const [activeMenu, setActiveMenu] = useState('dashboard');
-    const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [editFormData, setEditFormData] = useState({});
-    const [userInfo, setUserInfo] = useState({
-        name: 'Koffi Amoussou',
-        email: 'koffi.amoussou@email.bj',
-        phone: '+229 97 12 34 56',
-        location: 'Cotonou',
-    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [savingPdfId, setSavingPdfId] = useState(null);
+    const [historyData, setHistoryData] = useState(null);
 
-    const [testHistory, setTestHistory] = useState([]);
-    const [pdfReports, setPdfReports] = useState([]);
-    const [savedScholarships, setSavedScholarships] = useState([]);
-    const [evolutionData, setEvolutionData] = useState({
-        testsCompleted: 0,
-        totalTests: 0,
-        averageScore: 0,
-        bestScore: 0,
-        progression: [],
-    });
+    const assessments = useMemo(() => flattenAssessments(historyData), [historyData]);
+    const evolutionData = useMemo(() => buildEvolution(assessments), [assessments]);
+    const badges = Array.isArray(historyData?.badges) ? historyData.badges : [];
+    const gamification = historyData?.gamification || {};
 
-    // Nouveaux states pour l'API
-    const [userProfile, setUserProfile] = useState(null);
-    const [syncLoading, setSyncLoading] = useState(false);
+    const userInfo = useMemo(() => {
+        const firstName = historyData?.firstName || '';
+        const lastName = historyData?.lastName || '';
+        const displayName =
+            historyData?.displayName || [firstName, lastName].filter(Boolean).join(' ').trim();
 
-    const updateEvolutionData = useCallback((tests) => {
-        const completedTests = tests.filter((t) => t.status === 'completed');
-        const completedCount = completedTests.length;
-        const totalCount = tests.length;
-        const avgScore =
-            completedCount > 0
-                ? Math.round(completedTests.reduce((sum, t) => sum + t.score, 0) / completedCount)
-                : 0;
-        const bestScore = completedCount > 0 ? Math.max(...completedTests.map((t) => t.score)) : 0;
+        return {
+            name: displayName || historyData?.email || 'Utilisateur',
+            email: historyData?.email || '',
+            bio: historyData?.bio || null,
+        };
+    }, [historyData]);
 
-        const months = [
-            'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-            'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
-        ];
-        const currentMonthIndex = new Date().getMonth();
-        const lastThreeMonths = months.slice(
-            Math.max(0, currentMonthIndex - 2),
-            currentMonthIndex + 1,
-        );
+    const completedAssessments = assessments.filter((assessment) => assessment.status === 'completed');
+    const inProgressAssessments = assessments.filter((assessment) => assessment.status === 'in_progress');
+    const latestAssessment = assessments[0] || null;
 
-        const progression = lastThreeMonths.map((month) => {
-            const testInMonth = completedTests.find((t) => t.date && t.date.includes(month));
-            return { month: month, score: testInMonth ? testInMonth.score : null };
-        });
+    const loadHistory = useCallback(async () => {
+        setLoading(true);
+        setError('');
 
-        setEvolutionData({
-            testsCompleted: completedCount,
-            totalTests: totalCount,
-            averageScore: avgScore,
-            bestScore: bestScore,
-            progression: progression,
-        });
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => {
+            controller.abort();
+        }, 8000);
+
+        try {
+            const response = await api.get('/users/me/history', {
+                signal: controller.signal,
+            });
+            setHistoryData(response.data || null);
+        } catch (apiError) {
+            console.error('Erreur chargement historique:', apiError);
+            if (apiError.name === 'CanceledError' || apiError.code === 'ERR_CANCELED') {
+                setError("Le chargement a pris trop de temps. Réessayez dans quelques instants.");
+            } else {
+                setError(
+                    apiError.response?.data?.message ||
+                        "Impossible de charger votre espace personnel. Vérifiez votre connexion.",
+                );
+            }
+        } finally {
+            window.clearTimeout(timeoutId);
+            setLoading(false);
+        }
     }, []);
 
-    // Fonction pour synchroniser avec l'API
-    const syncWithAPI = useCallback(async () => {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+    useEffect(() => {
+        loadHistory();
+    }, [loadHistory]);
 
-        setSyncLoading(true);
-        try {
-            // Récupérer les infos utilisateur
-            const userResponse = await api.get('/users/me');
-            if (userResponse.data) {
-                setUserInfo(prev => ({
-                    ...prev,
-                    name: userResponse.data.name || prev.name,
-                    email: userResponse.data.email || prev.email,
-                    phone: userResponse.data.phone || prev.phone,
-                    location: userResponse.data.location || prev.location,
-                }));
-                setUserProfile(userResponse.data);
-            }
+    const exportAssessmentPdf = useCallback(
+        async (assessment) => {
+            if (!assessment) return;
 
-            // Récupérer l'historique des tests depuis l'API
-            const historyResponse = await api.get('/users/me/history');
-            if (historyResponse.data?.assessments) {
-                const apiTests = historyResponse.data.assessments.map(assessment => ({
-                    id: assessment.id,
-                    title: `Test RIASEC - ${new Date(assessment.createdAt).toLocaleDateString()}`,
-                    date: new Date(assessment.createdAt).toLocaleDateString('fr-FR'),
-                    score: assessment.progress?.completionPercentage || 0,
-                    type: 'RIASEC',
-                    code: assessment.results?.riasecCode || '',
-                    status: assessment.status === 'COMPLETED' ? 'completed' : 'in_progress',
-                    assessmentId: assessment.id,
-                    fullReport: assessment.results || {},
-                }));
+            setSavingPdfId(assessment.id);
 
-                // Fusionner avec les tests locaux
-                const localTests = getTestHistory();
-                const mergedTests = [...apiTests, ...localTests.filter(t => !apiTests.some(at => at.id === t.id))];
-                setTestHistory(mergedTests);
-                updateEvolutionData(mergedTests);
-            }
-
-            // Récupérer les bourses sauvegardées depuis l'API
             try {
-                const savedResponse = await api.get('/users/me/saved-scholarships');
-                if (savedResponse.data) {
-                    setSavedScholarships(savedResponse.data);
-                    localStorage.setItem('savedScholarships', JSON.stringify(savedResponse.data));
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4',
+                });
+
+                const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
+                const code = assessment.code || 'N/A';
+
+                pdf.setFillColor(51, 71, 223);
+                pdf.rect(0, 0, 210, 42, 'F');
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFontSize(20);
+                pdf.text(title, 20, 20);
+                pdf.setFontSize(10);
+                pdf.text(`Date: ${assessment.date}`, 20, 31);
+
+                pdf.setTextColor(17, 24, 39);
+                pdf.setFontSize(14);
+                pdf.text(`Code: ${code}`, 20, 55);
+                pdf.setFontSize(11);
+                pdf.text(`Statut: ${STATUS_LABELS[assessment.status] || assessment.status}`, 20, 65);
+                pdf.text(`Coherence: ${assessment.consistencyLevel || 'Non renseignée'}`, 20, 73);
+                pdf.text(`Completion: ${assessment.completionPercentage}%`, 20, 81);
+
+                pdf.setFontSize(12);
+                pdf.text('Sources du rapport', 20, 97);
+                pdf.setFontSize(10);
+                pdf.text(
+                    `Session: ${assessment.sessionToken || 'non disponible'}`,
+                    20,
+                    106,
+                );
+                pdf.text(`Assessment ID: ${assessment.assessmentId}`, 20, 114);
+
+                if (assessment.hasTreasureMap) {
+                    pdf.text('Carte au trésor disponible.', 20, 126);
                 }
-            } catch (err) {
-                console.warn('Could not fetch saved scholarships from API:', err);
-                loadSavedScholarships();
+
+                pdf.save(`${title.replace(/\s/g, '_')}_${assessment.assessmentId}.pdf`);
+            } finally {
+                setSavingPdfId(null);
             }
-
-        } catch (error) {
-            console.error('Sync error:', error);
-            // En cas d'erreur, utiliser les données locales
-            loadTestHistory();
-            loadSavedScholarships();
-        } finally {
-            setSyncLoading(false);
-        }
-    }, [updateEvolutionData]);
-
-    const loadUserData = () => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                const user = JSON.parse(storedUser);
-                setUserInfo((prev) => ({ ...prev, ...user }));
-                setEditFormData(user);
-            } catch (e) { }
-        } else {
-            setEditFormData(userInfo);
-        }
-    };
-
-    const loadTestHistory = () => {
-        const storedTests = localStorage.getItem('testHistory');
-        if (storedTests) {
-            try {
-                const tests = JSON.parse(storedTests);
-                setTestHistory(tests);
-                updateEvolutionData(tests);
-            } catch (e) { }
-        } else {
-            setTestHistory([]);
-            updateEvolutionData([]);
-        }
-    };
-
-    const loadPdfReports = () => {
-        const storedReports = localStorage.getItem('pdfReports');
-        if (storedReports) {
-            try {
-                const reports = JSON.parse(storedReports);
-                setPdfReports(reports);
-            } catch (e) { }
-        }
-    };
-
-    const loadSavedScholarships = () => {
-        const stored = localStorage.getItem('savedScholarships');
-        if (stored) {
-            try {
-                const scholarships = JSON.parse(stored);
-                setSavedScholarships(scholarships);
-            } catch (e) { }
-        }
-    };
-
-    const saveTestResult = useCallback(
-        (testResult) => {
-            const newTest = {
-                id: Date.now(),
-                title: testResult.title || "Test d'orientation",
-                date: new Date().toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                }),
-                score: testResult.score,
-                type: testResult.type || 'RIASEC',
-                code: testResult.code || '',
-                status: 'completed',
-                fullReport: testResult.fullReport || {},
-            };
-
-            setTestHistory((prevHistory) => {
-                const updatedHistory = [newTest, ...prevHistory];
-                localStorage.setItem('testHistory', JSON.stringify(updatedHistory));
-                updateEvolutionData(updatedHistory);
-                return updatedHistory;
-            });
-
-            setPdfReports((prevReports) => {
-                const newReport = {
-                    id: Date.now(),
-                    title: `Rapport ${newTest.type} - ${newTest.date}`,
-                    date: newTest.date,
-                    size: `${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 9)} Mo`,
-                    type: newTest.type.toLowerCase(),
-                    testId: newTest.id,
-                    content: newTest.fullReport,
-                };
-                const updatedReports = [newReport, ...prevReports];
-                localStorage.setItem('pdfReports', JSON.stringify(updatedReports));
-                return updatedReports;
-            });
-
-            return newTest;
         },
-        [updateEvolutionData],
+        [],
     );
 
-    const handleEditProfile = () => {
-        setIsEditingProfile(true);
-        setEditFormData({ ...userInfo });
-    };
+    const openAssessment = useCallback(
+        (assessment) => {
+            if (!assessment) return;
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setEditFormData((prev) => ({ ...prev, [name]: value }));
-    };
+            if (assessment.type === 'PHASE1') {
+                navigate('/rapport-phase1', {
+                    state: {
+                        assessmentId: assessment.assessmentId,
+                        sessionToken: assessment.sessionToken,
+                    },
+                });
+                return;
+            }
 
-    const handleSaveProfile = () => {
-        if (!editFormData.name || !editFormData.email) {
-            alert('Veuillez remplir les champs obligatoires (nom et email)');
-            return;
-        }
-        setUserInfo(editFormData);
-        localStorage.setItem('user', JSON.stringify(editFormData));
-        setIsEditingProfile(false);
-        alert('Profil mis à jour avec succès !');
-    };
+            navigate('/orientations', {
+                state: {
+                    assessmentId: assessment.assessmentId,
+                    sessionToken: assessment.sessionToken,
+                },
+            });
+        },
+        [navigate],
+    );
 
-    const handleCancelEdit = () => {
-        setIsEditingProfile(false);
-        setEditFormData(userInfo);
-    };
+    const resumeAssessment = useCallback(() => {
+        navigate('/tests-orientations');
+    }, [navigate]);
 
-    // Générer un PDF complet
-    const generatePDF = (report, isDownload = true) => {
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4',
-        });
-
-        const primaryColor = [51, 71, 223];
-        const textColor = [55, 65, 81];
-
-        let yPosition = 20;
-
-        // En-tête
-        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.rect(0, 0, 210, 50, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text("Mon rapport d'orientation RIASEC", 20, 28);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Test effectué le: ${report.date}`, 20, 42);
-        yPosition = 65;
-
-        const content = report.content || {};
-        const scores = content.scores || {};
-        const code = content.code || '';
-        const recommendations = content.recommendations || {};
-        const behavioral = content.behavioral || {};
-        const assessmentInfo = content.assessmentInfo || {};
-
-        // Code RIASEC
-        if (code) {
-            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.roundedRect(20, yPosition - 5, 60, 10, 5, 5, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Code RIASEC: ${code}`, 25, yPosition + 2);
-            yPosition += 15;
-        }
-
-        // SECTION 1: Résumé du test
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('1. Résumé du test', 20, yPosition);
-        yPosition += 8;
-
-        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(
-            "Test d'intérêts professionnels et de personnalité basé sur la typologie de Holland (RIASEC).",
-            20,
-            yPosition,
+    if (loading) {
+        return (
+            <div className="espace-container">
+                <div className="loading-container">
+                    <div className="simple-loader"></div>
+                    <p>Chargement de votre parcours...</p>
+                </div>
+            </div>
         );
-        yPosition += 6;
-        doc.text(
-            'Objectif : identifier vos affinités naturelles pour guider vos choix de formation et métier.',
-            20,
-            yPosition,
+    }
+
+    if (error) {
+        return (
+            <div className="espace-container">
+                <div className="loading-container">
+                    <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</p>
+                    <button className="new-test-btn" onClick={loadHistory}>
+                        Réessayer
+                    </button>
+                </div>
+            </div>
         );
-        yPosition += 10;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('Statut:', 20, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.text(assessmentInfo.status || 'COMPLETED', 55, yPosition);
-        yPosition += 6;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('Cohérence des réponses:', 20, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.text(assessmentInfo.coherence || 'Élevée', 65, yPosition);
-        yPosition += 12;
-
-        // Axes dominants
-        const axesNames = {
-            REALISTIC: 'Réaliste',
-            INVESTIGATIVE: 'Investigateur',
-            ARTISTIC: 'Artistique',
-            SOCIAL: 'Social',
-            ENTERPRISING: 'Entreprenant',
-            CONVENTIONAL: 'Conventionnel',
-        };
-        const dominantAxes = Object.entries(scores)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3);
-        const dominantText = dominantAxes
-            .map(([key, val]) => `${axesNames[key]}: ${val}/100`)
-            .join(' & ');
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('Axes dominants détectés:', 20, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.text(dominantText, 20, yPosition + 6);
-        yPosition += 18;
-
-        // Scores détaillés
-        doc.setFont('helvetica', 'bold');
-        doc.text('Scores détaillés:', 20, yPosition);
-        yPosition += 6;
-        doc.setFont('helvetica', 'normal');
-
-        const axesList = [
-            { name: 'Réaliste', value: scores.REALISTIC || 0 },
-            { name: 'Investigateur', value: scores.INVESTIGATIVE || 0 },
-            { name: 'Artistique', value: scores.ARTISTIC || 0 },
-            { name: 'Social', value: scores.SOCIAL || 0 },
-            { name: 'Entreprenant', value: scores.ENTERPRISING || 0 },
-            { name: 'Conventionnel', value: scores.CONVENTIONAL || 0 },
-        ];
-
-        axesList.forEach((axis) => {
-            doc.text(`${axis.name}: ${axis.value}/100`, 25, yPosition);
-            yPosition += 5;
-        });
-        yPosition += 5;
-
-        // SECTION 2: Points forts et axes d'amélioration
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('2. Détail & observations', 20, yPosition);
-        yPosition += 8;
-
-        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Points forts identifiés', 20, yPosition);
-        yPosition += 6;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        if (behavioral.pointsForts && behavioral.pointsForts.length > 0) {
-            behavioral.pointsForts.forEach((point, idx) => {
-                if (yPosition > 270) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${point.title}:`, 25, yPosition);
-                doc.setFont('helvetica', 'normal');
-                const desc = point.description.length > 80 ? point.description.substring(0, 77) + '...' : point.description;
-                doc.text(desc, 25, yPosition + 5);
-                yPosition += 12;
-            });
-        } else {
-            doc.text('Curiosité intellectuelle: Vous aimez résoudre des problèmes complexes.', 25, yPosition);
-            yPosition += 6;
-            doc.text("Pragmatisme: Capacité à passer à l'action.", 25, yPosition);
-            yPosition += 10;
-        }
-
-        doc.setFont('helvetica', 'bold');
-        doc.text("Axes d'amélioration", 20, yPosition);
-        yPosition += 6;
-        doc.setFont('helvetica', 'normal');
-
-        if (behavioral.axesAmelioration && behavioral.axesAmelioration.length > 0) {
-            behavioral.axesAmelioration.forEach((axe, idx) => {
-                if (yPosition > 270) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${axe.title}:`, 25, yPosition);
-                doc.setFont('helvetica', 'normal');
-                const desc = axe.description.length > 80 ? axe.description.substring(0, 77) + '...' : axe.description;
-                doc.text(desc, 25, yPosition + 5);
-                yPosition += 12;
-            });
-        } else {
-            doc.text('Travail collaboratif: Développer la collaboration en équipe.', 25, yPosition);
-            yPosition += 10;
-        }
-        yPosition += 5;
-
-        // SECTION 3: Recommandations
-        if (recommendations && Object.keys(recommendations).length > 0) {
-            if (yPosition > 250) {
-                doc.addPage();
-                yPosition = 20;
-            }
-
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text('3. Formations & métiers recommandés', 20, yPosition);
-            yPosition += 10;
-
-            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-
-            // Métiers
-            if (recommendations.careers && recommendations.careers.length > 0) {
-                doc.setFont('helvetica', 'bold');
-                doc.text('Métiers recommandés:', 20, yPosition);
-                yPosition += 6;
-                doc.setFont('helvetica', 'normal');
-                recommendations.careers.slice(0, 15).forEach((career) => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-                    doc.text(`• ${career}`, 25, yPosition);
-                    yPosition += 5;
-                });
-                yPosition += 5;
-            }
-
-            // Formations
-            if (recommendations.formations && recommendations.formations.length > 0) {
-                if (yPosition > 260) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.setFont('helvetica', 'bold');
-                doc.text('Formations recommandées:', 20, yPosition);
-                yPosition += 6;
-                doc.setFont('helvetica', 'normal');
-                recommendations.formations.slice(0, 15).forEach((formation) => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-                    doc.text(`• ${formation}`, 25, yPosition);
-                    yPosition += 5;
-                });
-                yPosition += 5;
-            }
-
-            // Écoles
-            const ecoles = [];
-            if (recommendations.recommendationsByAxis) {
-                Object.values(recommendations.recommendationsByAxis).forEach((reco) => {
-                    if (reco.ecoles && reco.ecoles.length > 0) {
-                        ecoles.push(...reco.ecoles);
-                    }
-                });
-            }
-
-            if (ecoles.length > 0) {
-                if (yPosition > 260) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.setFont('helvetica', 'bold');
-                doc.text('Écoles / Centres de formation:', 20, yPosition);
-                yPosition += 6;
-                doc.setFont('helvetica', 'normal');
-                const uniqueEcoles = [...new Set(ecoles)].slice(0, 10);
-                uniqueEcoles.forEach((ecole) => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-                    doc.text(`• ${ecole}`, 25, yPosition);
-                    yPosition += 5;
-                });
-            }
-        }
-
-        // Pied de page
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setTextColor(156, 163, 175);
-            doc.text(`Rapport d'orientation - Page ${i} sur ${pageCount}`, 105, 287, {
-                align: 'center',
-            });
-        }
-
-        if (isDownload) {
-            doc.save(`${report.title.replace(/\s/g, '_')}.pdf`);
-        } else {
-            const blob = doc.output('blob');
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        }
-    };
-
-    const handleViewReport = (report) => {
-        generatePDF(report, false);
-    };
-
-    const handleDownloadReport = (report) => {
-        generatePDF(report, true);
-    };
-
-    const handleDownloadAllReports = () => {
-        if (pdfReports.length === 0) {
-            alert('Aucun rapport à télécharger.');
-            return;
-        }
-
-        pdfReports.forEach((report, index) => {
-            setTimeout(() => {
-                generatePDF(report, true);
-            }, index * 1000);
-        });
-
-        alert(`Téléchargement de ${pdfReports.length} rapport(s) en cours...`);
-    };
-
-    // Fonction pour charger un test spécifique depuis l'API
-    const loadAssessmentDetails = useCallback(async (assessmentId) => {
-        try {
-            const response = await api.get(`/users/me/assessments/${assessmentId}`);
-            return response.data;
-        } catch (error) {
-            console.error('Error loading assessment:', error);
-            return null;
-        }
-    }, []);
-
-    // Fonction pour charger les recommandations d'un test
-    const loadRecommendations = useCallback(async (assessmentId, limit = 6) => {
-        try {
-            const response = await api.get(`/users/me/assessments/${assessmentId}/recommendations`, {
-                params: { limit }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error loading recommendations:', error);
-            return null;
-        }
-    }, []);
-
-    // Mettre à jour la fonction handleResumeTest
-    const handleResumeTest = (test) => {
-        if (test.assessmentId) {
-            navigate(`/orientations/${test.assessmentId}`);
-        } else if (test.type === 'RIASEC') {
-            navigate('/orientations');
-        } else {
-            navigate('/tests');
-        }
-    };
-
-    // Mettre à jour la fonction handleRemoveScholarship pour utiliser l'API
-    const handleRemoveScholarship = async (id) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (token) {
-                await api.delete(`/users/me/saved-scholarships/${id}`);
-            }
-            const updated = savedScholarships.filter((s) => s.id !== id);
-            setSavedScholarships(updated);
-            localStorage.setItem('savedScholarships', JSON.stringify(updated));
-            alert('Bourse retirée des favoris');
-        } catch (error) {
-            console.error('Error removing scholarship:', error);
-            const updated = savedScholarships.filter((s) => s.id !== id);
-            setSavedScholarships(updated);
-            localStorage.setItem('savedScholarships', JSON.stringify(updated));
-            alert('Bourse retirée des favoris');
-        }
-    };
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            syncWithAPI();
-        } else {
-            loadUserData();
-            loadTestHistory();
-            loadPdfReports();
-            loadSavedScholarships();
-        }
-    }, [syncWithAPI]);
-
-    const saveTestResultGlobal = useCallback((testResult) => {
-        sessionStorage.setItem('pendingTestResult', JSON.stringify(testResult));
-        window.dispatchEvent(new CustomEvent('newTestResult', { detail: { testResult } }));
-
-        const storedTests = localStorage.getItem('testHistory');
-        let tests = storedTests ? JSON.parse(storedTests) : [];
-
-        const newTest = {
-            id: Date.now(),
-            title: testResult.title || "Test d'orientation",
-            date: new Date().toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-            }),
-            score: testResult.score,
-            type: testResult.type || 'RIASEC',
-            code: testResult.code || '',
-            status: 'completed',
-            fullReport: testResult.fullReport || {},
-        };
-
-        tests.unshift(newTest);
-        localStorage.setItem('testHistory', JSON.stringify(tests));
-        updateEvolutionData(tests);
-    }, [updateEvolutionData]);
-
-    const saveScholarshipGlobal = useCallback((scholarship) => {
-        const stored = localStorage.getItem('savedScholarships');
-        let savedList = stored ? JSON.parse(stored) : [];
-
-        if (!savedList.some((s) => s.id === scholarship.id)) {
-            const newList = [...savedList, scholarship];
-            localStorage.setItem('savedScholarships', JSON.stringify(newList));
-            setSavedScholarships(newList);
-            window.dispatchEvent(new CustomEvent('newScholarshipSaved', { detail: { scholarship } }));
-            return true;
-        }
-        return false;
-    }, []);
-
-    useEffect(() => {
-        const handleNewTestResult = (event) => {
-            if (event.detail && event.detail.testResult) {
-                saveTestResult(event.detail.testResult);
-            }
-        };
-
-        window.addEventListener('newTestResult', handleNewTestResult);
-
-        const pendingTest = sessionStorage.getItem('pendingTestResult');
-        if (pendingTest) {
-            try {
-                const testResult = JSON.parse(pendingTest);
-                saveTestResult(testResult);
-                sessionStorage.removeItem('pendingTestResult');
-            } catch (e) { }
-        }
-
-        return () => {
-            window.removeEventListener('newTestResult', handleNewTestResult);
-        };
-    }, [saveTestResult]);
-
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (!document.hidden) {
-                loadTestHistory();
-                loadPdfReports();
-                loadSavedScholarships();
-            }
-        };
-
-        const handleStorageChange = (e) => {
-            if (e.key === 'testHistory') {
-                loadTestHistory();
-            }
-        };
-
-        const handleNewTest = (event) => {
-            if (event.detail && event.detail.testResult) {
-                loadTestHistory();
-                loadPdfReports();
-            }
-        };
-
-        const handleNewReport = (event) => {
-            if (event.detail && event.detail.report) {
-                loadPdfReports();
-            }
-        };
-
-        const handleNewScholarship = (event) => {
-            if (event.detail && event.detail.scholarship) {
-                loadSavedScholarships();
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('newTestResult', handleNewTest);
-        window.addEventListener('newReportSaved', handleNewReport);
-        window.addEventListener('newScholarshipSaved', handleNewScholarship);
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('newTestResult', handleNewTest);
-            window.removeEventListener('newReportSaved', handleNewReport);
-            window.removeEventListener('newScholarshipSaved', handleNewScholarship);
-        };
-    }, []);
-
-    const menuItems = [
-        { id: 'dashboard', label: 'Tableau de bord', icon: <IconDashboard /> },
-        { id: 'history', label: 'Historique des tests', icon: <IconHistory /> },
-        { id: 'reports', label: 'Rapports ', icon: <IconFile /> },
-        { id: 'evolution', label: 'Suivi évolution', icon: <IconTrendUp /> },
-        { id: 'scholarships', label: 'Bourses enregistrées', icon: <IconScholarship /> },
-        { id: 'profile', label: 'Mon profil', icon: <IconUser /> },
-    ];
-
-    const lastTest = testHistory.filter((t) => t.status === 'completed')[0];
+    }
 
     return (
         <div className="espace-container">
-            <div className="espace-header">
+            <header className="espace-header">
                 <div className="espace-header-content">
-                    <h1>
-                        <IconUser /> Espace personnel
-                    </h1>
-                    <p>Suivez votre parcours d'orientation</p>
+                    <h1>Mon parcours d'orientation</h1>
+                   
                 </div>
                 <div className="espace-header-stats">
                     <div className="stat-badge">
+                        <span className="stat-number">{gamification.totalXp ?? 0}</span>
+                        <span className="stat-label">XP</span>
+                    </div>
+                    <div className="stat-badge">
+                        <span className="stat-number">{gamification.level ?? 1}</span>
+                        <span className="stat-label">Niveau</span>
+                    </div>
+                    <div className="stat-badge">
                         <span className="stat-number">{evolutionData.testsCompleted}</span>
-                        <span className="stat-label">Tests réalisés</span>
-                    </div>
-                    <div className="stat-badge">
-                        <span className="stat-number">
-                            {evolutionData.totalTests > 0
-                                ? Math.round((evolutionData.testsCompleted / evolutionData.totalTests) * 100)
-                                : 0}
-                            %
-                        </span>
-                        <span className="stat-label">Profil complété</span>
-                    </div>
-                    <div className="stat-badge">
-                        <span className="stat-number">{evolutionData.bestScore}</span>
-                        <span className="stat-label">Meilleur score</span>
+                        <span className="stat-label">Tests complétés</span>
                     </div>
                 </div>
-            </div>
+            </header>
 
             <div className="espace-body">
                 <aside className="espace-sidebar">
-                    <div className="user-card">
+                    <div className="user-card" style={{ marginBottom: '1.5rem' }}>
                         <h3>{userInfo.name}</h3>
-                        <p>{userInfo.location}</p>
+                        <p>{userInfo.email}</p>
+                       
                     </div>
+
                     <nav className="sidebar-nav">
-                        {menuItems.map((item) => (
+                        {MENU_ITEMS.map((item) => (
                             <button
                                 key={item.id}
                                 className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
@@ -996,252 +486,48 @@ export default function EspacePersonnel() {
                             </button>
                         ))}
                     </nav>
+
                     <div className="sidebar-footer">
-                        <button className="help-btn" onClick={() => navigate('/contact')}>
-                            <IconHelpCircle /> Aide
+                        <button className="help-btn" onClick={() => navigate('/support')}>
+                            Aide
                         </button>
-                        <button className="support-btn" onClick={() => navigate('/support')}>
-                            <IconMail /> Support
+                        <button className="support-btn" onClick={() => navigate('/contact')}>
+                            Contact
                         </button>
                     </div>
                 </aside>
 
                 <main className="espace-main">
-                    {/* DASHBOARD */}
                     {activeMenu === 'dashboard' && (
-                        <div className="dashboard-content">
-                            <h2>
-                                <IconDashboard /> Aperçu de votre parcours
-                            </h2>
-
-                            <div className="progress-card">
-                                <h3>📊 Progression globale</h3>
-                                <div className="progress-bar-container">
-                                    <div
-                                        className="progress-bar"
-                                        style={{
-                                            width: `${evolutionData.totalTests > 0 ? (evolutionData.testsCompleted / evolutionData.totalTests) * 100 : 0}%`,
-                                        }}
-                                    ></div>
-                                </div>
-                                <div className="progress-details">
-                                    <span>
-                                        <IconCheck /> {evolutionData.testsCompleted}/
-                                        {evolutionData.totalTests || 0} tests complétés
-                                    </span>
-                                    <span>
-                                        <IconChart /> Score moyen: {evolutionData.averageScore}/100
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="last-test-card">
-                                <h3>🎯 Dernier test réalisé</h3>
-                                {lastTest ? (
-                                    <div className="test-result">
-                                        <div className="test-info">
-                                            <strong>{lastTest.title}</strong>
-                                            <span className="test-date">
-                                                <IconCalendar /> {lastTest.date}
-                                            </span>
-                                        </div>
-                                        <div className="test-score-badge">{lastTest.score}/100</div>
-                                        {lastTest.code && (
-                                            <div className="test-code-badge">
-                                                Code: {lastTest.code}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="no-test-message">
-                                        <p>Aucun test réalisé pour le moment.</p>
-                                    </div>
-                                )}
-                                {lastTest && (
-                                    <button
-                                        className="view-details-btn"
-                                        onClick={() => setActiveMenu('history')}
-                                    >
-                                        Voir l'historique <IconArrowRight />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* HISTORIQUE DES TESTS */}
-                    {activeMenu === 'history' && (
-                        <div className="history-content">
+                        <section>
                             <div className="section-header">
                                 <h2>
-                                    <IconHistory /> Historique des tests
+                                    <IconDashboard /> Vue d'ensemble
                                 </h2>
-                                <button className="new-test-btn" onClick={() => navigate('/tests')}>
-                                    <IconPlus /> Nouveau test
+                                <button className="new-test-btn" onClick={resumeAssessment}>
+                                    Nouveau test
                                 </button>
                             </div>
-                            {syncLoading && <p className="sync-message">Synchronisation en cours...</p>}
-                            <div className="tests-list">
-                                {testHistory.length === 0 ? (
-                                    <div className="empty-state">
-                                        <p>Aucun test réalisé pour le moment.</p>
-                                        <button
-                                            className="new-test-btn"
-                                            onClick={() => navigate('/tests')}
-                                        >
-                                            Commencer un test
-                                        </button>
-                                    </div>
-                                ) : (
-                                    testHistory.map((test) => (
-                                        <div key={test.id} className="test-card">
-                                            <div className="test-card-header">
-                                                <div>
-                                                    <h4>{test.title}</h4>
-                                                    <span className="test-type">{test.type}</span>
-                                                </div>
-                                                <span className="status-badge completed">
-                                                    <IconCheck /> Terminé
-                                                </span>
-                                            </div>
-                                            <div className="test-card-body">
-                                                <div className="test-meta">
-                                                    <IconCalendar /> {test.date}
-                                                </div>
-                                                <div className="test-score-large">
-                                                    <span className="score-number">
-                                                        {test.score}
-                                                    </span>
-                                                    <span className="score-max">/100</span>
-                                                </div>
-                                                {test.code && (
-                                                    <div className="test-code">
-                                                        Code RIASEC: <strong>{test.code}</strong>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="test-card-footer">
-                                                <button
-                                                    className="btn-resume"
-                                                    onClick={() => handleResumeTest(test)}
-                                                >
-                                                    Voir les détails
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
 
-                    {/* RAPPORTS PDF */}
-                    {activeMenu === 'reports' && (
-                        <div className="reports-content">
-                            <div className="section-header">
-                                <h2>
-                                    <IconFile /> Mes rapports PDF
-                                </h2>
-                            </div>
-                            <div className="reports-grid">
-                                {pdfReports.length === 0 ? (
-                                    <div className="empty-state">
-                                        <p>
-                                            Aucun rapport disponible. Passez un test pour générer
-                                            votre premier rapport.
-                                        </p>
-                                        <button
-                                            className="new-test-btn"
-                                            onClick={() => navigate('/tests')}
-                                        >
-                                            Commencer un test
-                                        </button>
-                                    </div>
-                                ) : (
-                                    pdfReports.map((report) => (
-                                        <div key={report.id} className="report-card">
-                                            <div className="report-icon">
-                                                <IconFile />
-                                            </div>
-                                            <div className="report-info">
-                                                <h4>{report.title}</h4>
-                                                <div className="report-meta">
-                                                    <span>
-                                                        <IconCalendar /> {report.date}
-                                                    </span>
-                                                    <span>
-                                                        <IconDownload /> {report.size}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="report-actions">
-                                                <button
-                                                    className="action-icon"
-                                                    onClick={() => handleViewReport(report)}
-                                                    title="Voir"
-                                                >
-                                                    <IconEye />
-                                                </button>
-                                                <button
-                                                    className="action-icon"
-                                                    onClick={() => handleDownloadReport(report)}
-                                                    title="Télécharger"
-                                                >
-                                                    <IconDownload />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            {pdfReports.length > 0 && (
-                                <div className="reports-summary">
-                                    <h3>
-                                        <IconChart /> Bilan personnalisé
-                                    </h3>
-                                    <p>
-                                        Vous avez {pdfReports.length} rapport(s) disponible(s) dans
-                                        votre espace.
-                                    </p>
-                                    <button
-                                        className="download-all-btn"
-                                        onClick={handleDownloadAllReports}
-                                    >
-                                        <IconPackage /> Télécharger tous les rapports
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* SUIVI ÉVOLUTION */}
-                    {activeMenu === 'evolution' && (
-                        <div className="evolution-content">
-                            <h2>
-                                <IconTrendUp /> Évolution de vos performances
-                            </h2>
-                            <div className="chart-card">
-                                <h3>Progression des scores</h3>
-                                <div className="simple-chart">
-                                    {evolutionData.progression.map((item, idx) => (
-                                        <div key={idx} className="chart-bar-wrapper">
-                                            <div
-                                                className="chart-bar"
-                                                style={{
-                                                    height: item.score ? `${item.score}%` : '0%',
-                                                    backgroundColor: item.score ? '#3347df' : '#e5e7eb',
-                                                }}
-                                            >
-                                                {item.score && (
-                                                    <span className="bar-value">{item.score}</span>
-                                                )}
-                                            </div>
-                                            <span className="bar-label">{item.month}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
                             <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-icon">
+                                        <IconHistory />
+                                    </div>
+                                    <div>
+                                        <div className="stat-number">{evolutionData.totalTests}</div>
+                                        <div className="stat-label">Total des évaluations</div>
+                                    </div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">
+                                        <IconChart />
+                                    </div>
+                                    <div>
+                                        <div className="stat-number">{evolutionData.averageScore}</div>
+                                        <div className="stat-label">Moyenne de complétion</div>
+                                    </div>
+                                </div>
                                 <div className="stat-card">
                                     <div className="stat-icon">
                                         <IconTrophy />
@@ -1251,198 +537,248 @@ export default function EspacePersonnel() {
                                         <div className="stat-label">Meilleur score</div>
                                     </div>
                                 </div>
-                                <div className="stat-card">
-                                    <div className="stat-icon">
-                                        <IconChart />
-                                    </div>
-                                    <div>
-                                        <div className="stat-number">{evolutionData.averageScore}</div>
-                                        <div className="stat-label">Moyenne générale</div>
-                                    </div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-icon">
-                                        <IconCheck />
-                                    </div>
-                                    <div>
-                                        <div className="stat-number">{evolutionData.testsCompleted}</div>
-                                        <div className="stat-label">Tests complétés</div>
-                                    </div>
-                                </div>
                             </div>
-                        </div>
-                    )}
 
-                    {/* BOURSES ENREGISTRÉES */}
-                    {activeMenu === 'scholarships' && (
-                        <div className="scholarships-content">
-                            <div className="section-header">
-                                <h2>
-                                    <IconScholarship /> Bourses enregistrées
-                                </h2>
-                            </div>
-                            <div className="scholarships-list">
-                                {savedScholarships.length === 0 ? (
-                                    <div className="empty-state">
-                                        <p>Aucune bourse enregistrée pour le moment.</p>
-                                        <button
-                                            className="new-test-btn"
-                                            onClick={() => navigate('/bourses-aides')}
-                                        >
-                                            Explorer les bourses
-                                        </button>
+                            <div className="advice-card">
+                                <h3>Dernier test synchronisé</h3>
+                                {latestAssessment ? (
+                                    <div className="test-result">
+                                        <div className="test-info">
+                                            <strong>{latestAssessment.title}</strong>
+                                            <div className="test-date">
+                                                <IconCalendar /> {latestAssessment.date}
+                                            </div>
+                                        </div>
+                                        <div className="test-score-badge">
+                                            {latestAssessment.completionPercentage}%
+                                        </div>
                                     </div>
                                 ) : (
-                                    savedScholarships.map((scholarship) => (
-                                        <div key={scholarship.id} className="scholarship-card">
-                                            <div className="scholarship-header">
-                                                <h4>{scholarship.title}</h4>
+                                    <p>Aucun test trouvé dans votre historique.</p>
+                                )}
+                            </div>
+                        </section>
+                    )}
+
+                    {activeMenu === 'tests' && (
+                        <section>
+                            <div className="section-header">
+                                <h2>
+                                    <IconHistory /> Mes tests
+                                </h2>
+                
+                            </div>
+
+                            <div className="tests-list">
+                                {assessments.length === 0 ? (
+                                    <div className="advice-card">
+                                        <p>Aucun test disponible pour le moment.</p>
+                                    </div>
+                                ) : (
+                                    assessments.map((assessment) => (
+                                        <div
+                                            key={assessment.id}
+                                            className={`test-card ${assessment.status !== 'completed' ? 'pending' : ''}`}
+                                        >
+                                            <div className="test-card-header">
+                                                <div>
+                                                    <h4>{assessment.title}</h4>
+                                                    <div className="test-type">
+                                                        {assessment.type} {assessment.code ? `- ${assessment.code}` : ''}
+                                                    </div>
+                                                </div>
                                                 <span
-                                                    className={`scholarship-status ${scholarship.status === 'ouvert' ? 'open' : 'closed'}`}
+                                                    className={`status-badge ${assessment.status === 'completed' ? 'completed' : 'pending'}`}
                                                 >
-                                                    {scholarship.status === 'ouvert' ? <IconOpen /> : <IconClosed />}
-                                                    {scholarship.status === 'ouvert' ? 'Ouvert' : 'Fermé'}
+                                                    {STATUS_LABELS[assessment.status] || assessment.status}
                                                 </span>
                                             </div>
-                                            <div className="scholarship-body">
-                                                <p className="scholarship-description">
-                                                    {scholarship.description}
-                                                </p>
-                                                <div className="scholarship-details">
-                                                    <span>
-                                                        <IconScholarship />{' '}
-                                                        {scholarship.amount || 'Montant non spécifié'}
+
+                                            <div className="test-card-body">
+                                                <div className="test-meta">
+                                                    <IconCalendar /> {assessment.date}
+                                                </div>
+                                                <div className="test-score-large">
+                                                    <span className="score-number">
+                                                        {assessment.completionPercentage}
                                                     </span>
-                                                    <span>
-                                                        <IconCalendar />{' '}
-                                                        {scholarship.deadline || 'Non spécifiée'}
-                                                    </span>
-                                                    <span>
-                                                        <IconBuilding />{' '}
-                                                        {scholarship.country || 'Bénin'}
-                                                    </span>
+                                                    <span className="score-max">%</span>
                                                 </div>
                                             </div>
-                                            <div className="scholarship-footer">
+
+                                            <div className="test-card-footer">
                                                 <button
                                                     className="btn-view"
-                                                    onClick={() =>
-                                                        window.open(scholarship.link || scholarship.applyUrl, '_blank')
-                                                    }
+                                                    onClick={() => openAssessment(assessment)}
                                                 >
                                                     Voir les détails
                                                 </button>
                                                 <button
-                                                    className="btn-remove"
-                                                    onClick={() => handleRemoveScholarship(scholarship.id)}
+                                                    className="btn-view"
+                                                    onClick={() => exportAssessmentPdf(assessment)}
+                                                    disabled={savingPdfId === assessment.id}
                                                 >
-                                                    Retirer
+                                                    {savingPdfId === assessment.id ? 'Export...' : 'PDF'}
                                                 </button>
                                             </div>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            {savedScholarships.length > 0 && (
-                                <div className="scholarships-summary">
-                                    <h3>
-                                        <IconChart /> Résumé
-                                    </h3>
-                                    <p>
-                                        Vous avez {savedScholarships.length} bourse(s) enregistrée(s).
-                                    </p>
-                                </div>
-                            )}
-                        </div>
+                        </section>
                     )}
 
-                    {/* MON PROFIL */}
-                    {activeMenu === 'profile' && (
-                        <div className="profile-content">
+                    {activeMenu === 'reports' && (
+                        <section className="reports-content">
                             <div className="section-header">
                                 <h2>
-                                    <IconUser /> Informations personnelles
+                                    <IconFile /> Rapports
                                 </h2>
-                                {!isEditingProfile && (
-                                    <button className="edit-profile-btn" onClick={handleEditProfile}>
-                                        <IconEdit /> Modifier
-                                    </button>
-                                )}
+                                <button className="generate-btn" onClick={resumeAssessment}>
+                                    Nouveau rapport
+                                </button>
                             </div>
-                            <div className="profile-form">
-                                {isEditingProfile ? (
-                                    <>
-                                        <div className="form-group">
-                                            <label>Nom complet *</label>
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                value={editFormData.name || ''}
-                                                onChange={handleInputChange}
-                                                placeholder="Votre nom complet"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Email *</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={editFormData.email || ''}
-                                                onChange={handleInputChange}
-                                                placeholder="votre@email.com"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Téléphone</label>
-                                            <input
-                                                type="tel"
-                                                name="phone"
-                                                value={editFormData.phone || ''}
-                                                onChange={handleInputChange}
-                                                placeholder="+229 XX XX XX XX"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Ville</label>
-                                            <input
-                                                type="text"
-                                                name="location"
-                                                value={editFormData.location || ''}
-                                                onChange={handleInputChange}
-                                                placeholder="Votre ville"
-                                            />
-                                        </div>
-                                        <div className="profile-actions editing-actions">
-                                            <button className="save-profile-btn" onClick={handleSaveProfile}>
-                                                Enregistrer
-                                            </button>
-                                            <button className="cancel-edit-btn" onClick={handleCancelEdit}>
-                                                Annuler
-                                            </button>
-                                        </div>
-                                    </>
+
+                            <div className="reports-grid">
+                                {completedAssessments.length === 0 ? (
+                                    <div className="advice-card">
+                                        <p>Aucun rapport générable pour le moment.</p>
+                                    </div>
                                 ) : (
-                                    <>
-                                        <div className="form-group">
-                                            <label>Nom complet</label>
-                                            <input type="text" value={userInfo.name} readOnly disabled />
+                                    completedAssessments.map((assessment) => (
+                                        <div key={assessment.id} className="report-card">
+                                            <div className="report-icon">
+                                                <IconFile />
+                                            </div>
+                                            <div className="report-info">
+                                                <h4>{assessment.title}</h4>
+                                                <div className="report-meta">
+                                                    <span>
+                                                        <IconCalendar /> {assessment.date}
+                                                    </span>
+                                                    <span>
+                                                        <IconLoader /> {assessment.completionPercentage}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="report-actions">
+                                                <button
+                                                    className="action-icon"
+                                                    onClick={() => openAssessment(assessment)}
+                                                    title="Voir"
+                                                >
+                                                    <IconEye />
+                                                </button>
+                                                <button
+                                                    className="action-icon"
+                                                    onClick={() => exportAssessmentPdf(assessment)}
+                                                    title="Télécharger"
+                                                >
+                                                    <IconDownload />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="form-group">
-                                            <label>Email</label>
-                                            <input type="email" value={userInfo.email} readOnly disabled />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Téléphone</label>
-                                            <input type="tel" value={userInfo.phone} readOnly disabled />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Ville</label>
-                                            <input type="text" value={userInfo.location} readOnly disabled />
-                                        </div>
-                                    </>
+                                    ))
                                 )}
                             </div>
-                        </div>
+                        </section>
+                    )}
+
+                    {activeMenu === 'badges' && (
+                        <section>
+                            <div className="section-header">
+                                <h2>
+                                    <IconTrophy /> Badges
+                                </h2>
+                            </div>
+
+                            <div className="tests-list">
+                                {badges.length === 0 ? (
+                                    <div className="advice-card">
+                                        <p>Aucun badge débloqué pour le moment.</p>
+                                    </div>
+                                ) : (
+                                    badges.map((badge) => (
+                                        <div key={badge.id} className="test-card">
+                                            <div className="test-card-header">
+                                                <div>
+                                                    <h4>
+                                                        {badge.emoji ? `${badge.emoji} ` : ''}
+                                                        {badge.name}
+                                                    </h4>
+                                                    <div className="test-type">
+                                                        {badge.description}
+                                                    </div>
+                                                </div>
+                                                <span className="status-badge completed">
+                                                    {getBadgeLabel(badge.rarity)}
+                                                </span>
+                                            </div>
+                                            <div className="test-card-body">
+                                                <div className="test-meta">
+                                                    Débloqué le {formatDate(badge.unlockedAt)}
+                                                </div>
+                                                <div className="test-score-large">
+                                                    <span className="score-number">
+                                                        {badge.pointsValue}
+                                                    </span>
+                                                    <span className="score-max">XP</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </section>
+                    )}
+
+                    {activeMenu === 'profile' && (
+                        <section>
+                            <div className="section-header">
+                                <h2>
+                                    <IconUser /> Profil
+                                </h2>
+                            </div>
+
+                            <div className="profile-form">
+                                <div className="form-group">
+                                    <label>Nom complet</label>
+                                    <input type="text" value={userInfo.name} readOnly disabled />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input type="email" value={userInfo.email} readOnly disabled />
+                                </div>
+                                <div className="form-group">
+                                    <label>XP total</label>
+                                    <input
+                                        type="text"
+                                        value={String(gamification.totalXp ?? 0)}
+                                        readOnly
+                                        disabled
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Niveau</label>
+                                    <input
+                                        type="text"
+                                        value={String(gamification.level ?? 1)}
+                                        readOnly
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="reports-summary">
+                                <h3>
+                                    <IconCheck /> Résumé
+                                </h3>
+                                <p>
+                                    {completedAssessments.length} test(s) terminé(s),{' '}
+                                    {inProgressAssessments.length} en cours.
+                                </p>
+                            </div>
+                        </section>
                     )}
                 </main>
             </div>

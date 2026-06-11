@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBookmark, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
 import { saveTestResult, savePdfReport } from '../services/testService';
+import api from '../services/api';
 
 const IconDoc = () => (
     <svg
@@ -439,6 +439,8 @@ function RadarChart({ scores }) {
 export default function Orientations() {
     const navigate = useNavigate();
     const { assessmentId } = useParams();
+    const location = useLocation();
+    const routeAssessmentId = assessmentId || location.state?.assessmentId || localStorage.getItem('assessment_id');
     const [activeTab, setActiveTab] = useState('investigative');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -655,10 +657,10 @@ export default function Orientations() {
 
     useEffect(() => {
         const loadData = async () => {
-            console.log('🔍 AssessmentId from URL/Params:', assessmentId);
+            console.log('🔍 AssessmentId from URL/Params:', routeAssessmentId);
 
-            if (assessmentId) {
-                await fetchCompleteReport(assessmentId);
+            if (routeAssessmentId) {
+                await fetchCompleteReport(routeAssessmentId);
             } else {
                 const storedAssessmentId = localStorage.getItem('assessment_id');
                 console.log('📦 AssessmentId from localStorage:', storedAssessmentId);
@@ -682,7 +684,7 @@ export default function Orientations() {
         };
 
         loadData();
-    }, [assessmentId]);
+    }, [routeAssessmentId]);
 
     const getDominantScores = () => {
         const scores = data.scores || MOCK_SCORES;
