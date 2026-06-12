@@ -178,19 +178,9 @@ const IconChart = () => (
 );
 
 const IconTrophy = () => (
-    <svg
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
-        <path d="M6 3h12v3c0 3.5-2.5 6-6 6s-6-2.5-6-6V3z" />
-        <path d="M8 12v3c0 1.5 1.5 3 4 3s4-1.5 4-3v-3" />
-        <line x1="12" y1="18" x2="12" y2="21" />
-        <line x1="9" y1="21" x2="15" y2="21" />
-    </svg>
+   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 17L12 22L20 17M4 12L12 17L20 12M12 2L4 7L12 12L20 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        </svg>
 );
 
 const IconLoader = () => (
@@ -211,7 +201,7 @@ const MENU_ITEMS = [
     { id: 'dashboard', label: 'Tableau de bord', icon: <IconDashboard /> },
     { id: 'tests', label: 'Mes tests', icon: <IconHistory /> },
     { id: 'reports', label: 'Rapports', icon: <IconFile /> },
-    { id: 'badges', label: 'Badges', icon: <IconTrophy /> },
+    { id: 'bourses', label: 'Bourses', icon: <IconTrophy /> },
     { id: 'profile', label: 'Profil', icon: <IconUser /> },
 ];
 
@@ -401,7 +391,7 @@ export default function EspacePersonnel() {
 
     const assessments = useMemo(() => flattenAssessments(historyData), [historyData]);
     const evolutionData = useMemo(() => buildEvolution(assessments), [assessments]);
-    const badges = Array.isArray(historyData?.badges) ? historyData.badges : [];
+    const bourses = Array.isArray(historyData?.bourses) ? historyData.bourses : [];
     const gamification = historyData?.gamification || {};
 
     const userInfo = useMemo(() => {
@@ -799,45 +789,44 @@ export default function EspacePersonnel() {
                         </section>
                     )}
 
-                    {activeMenu === 'badges' && (
+                    {activeMenu === 'bourses' && (
                         <section>
                             <div className="section-header">
                                 <h2>
-                                    <IconTrophy /> Badges
+                                    <IconTrophy /> Bourses
                                 </h2>
                             </div>
 
                             <div className="tests-list">
-                                {badges.length === 0 ? (
+                                {bourses.length === 0 ? (
                                     <div className="advice-card">
-                                        <p>Aucun badge débloqué pour le moment.</p>
+                                        <p>Aucune bourse disponible pour le moment.</p>
                                     </div>
                                 ) : (
-                                    badges.map((badge) => (
-                                        <div key={badge.id} className="test-card">
+                                    bourses.map((bourse) => (
+                                        <div key={bourse.id} className="test-card">
                                             <div className="test-card-header">
                                                 <div>
                                                     <h4>
-                                                        {badge.emoji ? `${badge.emoji} ` : ''}
-                                                        {badge.name}
+                                                        {bourse.emoji ? `${bourse.emoji} ` : ''}
+                                                        {bourse.name}
                                                     </h4>
                                                     <div className="test-type">
-                                                        {badge.description}
+                                                        {bourse.description}
                                                     </div>
                                                 </div>
                                                 <span className="status-badge completed">
-                                                    {getBadgeLabel(badge.rarity)}
+                                                    {getBadgeLabel(bourse.rarity)}
                                                 </span>
                                             </div>
                                             <div className="test-card-body">
                                                 <div className="test-meta">
-                                                    Débloqué le {formatDate(badge.unlockedAt)}
+                                                    Débloqué le {formatDate(bourse.unlockedAt)}
                                                 </div>
                                                 <div className="test-score-large">
                                                     <span className="score-number">
-                                                        {badge.pointsValue}
+                                                        {bourse.pointsValue}
                                                     </span>
-                                                    <span className="score-max">XP</span>
                                                 </div>
                                             </div>
                                         </div>
