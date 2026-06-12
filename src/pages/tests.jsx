@@ -4,7 +4,6 @@ import '../styles/tests.css';
 import api from '../services/api';
 import { saveTestResult, savePdfReport } from '../services/testService';
 
-
 const EmotionSvgs = {
     sad: (
         <svg
@@ -53,23 +52,44 @@ const EmotionSvgs = {
     ),
 };
 
+// Nouveaux SVGs pour les sections de la phase 2
+const SectionSvgs = {
+    realist: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 17L12 22L20 17M4 12L12 17L20 12M12 2L4 7L12 12L20 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        </svg>
+    ),
+    investigator: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <path d="M16 16L21 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+    ),
+    artistic: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4V20M8 8L16 16M8 16L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        </svg>
+    ),
+};
+
 const PHASE2_SECTIONS = [
     {
         name: 'OCCUPATIONS',
         label: 'Réaliste',
-        icon: '🔧',
+        icon: SectionSvgs.realist,
         description: 'Travail pratique et technique',
     },
     {
         name: 'APTITUDES',
         label: 'Investigateur',
-        icon: '🔬',
+        icon: SectionSvgs.investigator,
         description: 'Exploration et analyse',
     },
     {
         name: 'PERSONNALITY',
         label: 'Artistique',
-        icon: '🎨',
+        icon: SectionSvgs.artistic,
         description: 'Créativité et expression',
     },
 ];
@@ -260,8 +280,6 @@ const Test = () => {
     const [completionPercentage, setCompletionPercentage] = useState(0);
     const [sessionToken, setSessionToken] = useState(null);
     const [assessmentId, setAssessmentId] = useState(null);
-    const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
-    const [totalBatches, setTotalBatches] = useState(0);
 
     const [currentBatch, setCurrentBatch] = useState([]);
     const [draftAnswers, setDraftAnswers] = useState({});
@@ -270,8 +288,13 @@ const Test = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [phase2SectionsCompleted, setPhase2SectionsCompleted] = useState({});
-    const [showConfirmPhase1, setShowConfirmPhase1] = useState(false);
-    const [showConfirmPhase2Complete, setShowConfirmPhase2Complete] = useState(false);
+    
+    // Historique des lots avec leurs réponses
+    const [batchHistory, setBatchHistory] = useState([]);
+    // Stockage des réponses des lots précédents
+    const [savedAnswersHistory, setSavedAnswersHistory] = useState([]);
+    // Indique si l'utilisateur a utilisé "Page précédente" sur ce lot
+    const [hasUsedPrevious, setHasUsedPrevious] = useState(false);
 
     const initializeSession = useCallback(async () => {
         try {
@@ -365,8 +388,8 @@ const Test = () => {
                 if (response?.data && response.data.length > 0) {
                     const formatted = formatQuestions(response.data, phase, section);
                     setCurrentBatch(formatted);
+                    // Ne pas charger les réponses existantes - commencer avec un tableau vide
                     setDraftAnswers({});
-                    setTotalBatches(1);
                     return true;
                 }
                 setError('Aucune donnée reçue');
@@ -415,6 +438,7 @@ const Test = () => {
                           })),
                       };
             await api.post(endpoint, payload);
+            
             setDraftAnswers({});
             const updatedProgress = await resolveProgress(sessionToken, assessmentId);
             return updatedProgress;
@@ -435,13 +459,61 @@ const Test = () => {
         resolveProgress,
     ]);
 
+    // Fonction pour revenir au lot précédent
     const handlePreviousBatch = useCallback(async () => {
-        alert('Navigation vers la page précédente non disponible pour le moment');
-    }, []);
+        if (batchHistory.length === 0) {
+            const shouldReload = window.confirm("Vous êtes au début du test. Voulez-vous recharger les questions ?");
+            if (shouldReload) {
+                await fetchBatch(currentPhase, currentSection, sessionToken, assessmentId);
+            }
+            return;
+        }
+        
+        // Marquer que l'utilisateur a utilisé "Page précédente" sur ce lot
+        setHasUsedPrevious(true);
+        
+        // Récupérer le lot précédent et ses réponses
+        const previousBatchData = batchHistory[batchHistory.length - 1];
+        const previousAnswers = savedAnswersHistory[savedAnswersHistory.length - 1];
+        
+        // Retirer de l'historique
+        setBatchHistory(prev => prev.slice(0, -1));
+        setSavedAnswersHistory(prev => prev.slice(0, -1));
+        
+        // Restaurer le lot précédent avec ses réponses
+        setCurrentBatch(previousBatchData.questions);
+        setDraftAnswers(previousAnswers || {});
+        
+        // Mettre à jour la phase et section courantes
+        setCurrentPhase(previousBatchData.phase);
+        if (previousBatchData.section) {
+            setCurrentSection(previousBatchData.section);
+        }
+    }, [batchHistory, savedAnswersHistory, currentPhase, currentSection, sessionToken, assessmentId, fetchBatch]);
 
-    const handleBatchComplete = useCallback(async () => {
+    // Navigation manuelle vers le lot suivant (utilisé après correction)
+    const handleManualNextBatch = useCallback(async () => {
+        // Vérifier que toutes les questions sont répond
+        if (Object.keys(draftAnswers).length !== currentBatch.length) {
+            const remaining = currentBatch.length - Object.keys(draftAnswers).length;
+            alert(`Veuillez répondre à toutes les questions avant de continuer (${remaining} restante${remaining > 1 ? 's' : ''})`);
+            return;
+        }
+        
+        // Sauvegarder le lot actuel et ses réponses dans l'historique
+        setBatchHistory(prev => [...prev, {
+            batchId: Date.now(),
+            phase: currentPhase,
+            section: currentSection,
+            questions: [...currentBatch]
+        }]);
+        setSavedAnswersHistory(prev => [...prev, { ...draftAnswers }]);
+        
         const progressData = await submitBatch();
         if (!progressData) return;
+
+        // Réinitialiser le flag après soumission manuelle
+        setHasUsedPrevious(false);
 
         if (progressData.status === 'COMPLETED') {
             handleAssessmentCompletion();
@@ -485,7 +557,7 @@ const Test = () => {
                 if (!success) setError('Impossible de charger la prochaine batch');
             }
         }
-    }, [currentPhase, currentSection, fetchBatch, submitBatch, sessionToken, assessmentId]);
+    }, [currentPhase, currentSection, fetchBatch, submitBatch, sessionToken, assessmentId, currentBatch, draftAnswers]);
 
     const handleAssessmentCompletion = useCallback(async () => {
         try {
@@ -585,14 +657,19 @@ const Test = () => {
     const allAnswered =
         currentBatch.length > 0 && Object.keys(draftAnswers).length === currentBatch.length;
 
+    // Auto-submit uniquement quand :
+    // 1. Toutes les questions sont répondues
+    // 2. On n'est pas en train de soumettre
+    // 3. Le lot n'est pas en cours de chargement
+    // 4. L'utilisateur n'a PAS utilisé "Page précédente" sur ce lot
     useEffect(() => {
-        if (allAnswered && !submitting && !loadingBatch && currentBatch.length > 0) {
+        if (allAnswered && !submitting && !loadingBatch && currentBatch.length > 0 && !hasUsedPrevious) {
             const timer = setTimeout(() => {
-                handleBatchComplete();
+                handleManualNextBatch();
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [allAnswered, submitting, loadingBatch, currentBatch.length, handleBatchComplete]);
+    }, [allAnswered, submitting, loadingBatch, currentBatch.length, hasUsedPrevious, handleManualNextBatch]);
 
     if (loading)
         return (
@@ -620,37 +697,6 @@ const Test = () => {
                 </div>
             </div>
         );
-
-        const handleTestComplete = (testResults) => {
-    // Sauvegarder le test
-    const testResult = {
-        title: testResults.title || "Test d'évaluation",
-        score: testResults.score,
-        type: testResults.type || 'Général',
-        code: testResults.code || '',
-        fullReport: {
-            questions: testResults.questions,
-            answers: testResults.answers,
-            score: testResults.score,
-            completedAt: new Date().toISOString()
-        }
-    };
-    
-    const savedTest = saveTestResult(testResult);
-    
-    // Sauvegarder un rapport
-    const report = {
-        title: `Rapport ${testResult.title} - ${new Date().toLocaleDateString()}`,
-        type: testResult.type,
-        testId: savedTest.id,
-        content: testResult.fullReport
-    };
-    
-    savePdfReport(report);
-    
-    // Rediriger vers l'espace personnel
-    navigate('/parcours');
-};
 
     return (
         <div className="test-page">
@@ -696,20 +742,47 @@ const Test = () => {
                                 />
                             ))}
                         </div>
-                        <div className="pagination-nav">
+                        
+                        {/* Section des boutons de navigation */}
+                        <div className="pagination-nav" style={{ display: 'flex', gap: '15px', justifyContent: 'space-between' }}>
+                            <button
+                                className="page-nav-btn prev-btn"
+                                onClick={handlePreviousBatch}
+                                disabled={submitting || loadingBatch || batchHistory.length === 0}
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: '#f0f0f0',
+                                    color: '#333',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                ← Page précédente
+                            </button>
                             <button
                                 className="page-nav-btn next-btn"
-                                onClick={handleBatchComplete}
+                                onClick={handleManualNextBatch}
                                 disabled={!allAnswered || submitting || loadingBatch}
-                                style={{ width: '100%' }}
+                                style={{ flex: 1 }}
                             >
                                 {submitting
                                     ? 'Envoi...'
                                     : allAnswered
                                       ? 'Continuer →'
-                                      : 'Page suivante→'}
+                                      : `Page suivante (${currentBatch.length - Object.keys(draftAnswers).length} restante${currentBatch.length - Object.keys(draftAnswers).length > 1 ? 's' : ''}) →`}
                             </button>
                         </div>
+                        
+                        {/* Message d'information pour l'auto-défilement */}
+                        {!hasUsedPrevious && allAnswered && !submitting && (
+                            <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#666' }}>
+                            
+                            </div>
+                        )}
+                        {hasUsedPrevious && (
+                            <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#ff9800' }}>
+                                Cliquez sur "Continuer" pour valider vos modifications
+                            </div>
+                        )}
                     </>
                 )}
             </div>
