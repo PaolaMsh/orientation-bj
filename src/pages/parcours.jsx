@@ -708,23 +708,7 @@ export default function EspacePersonnel() {
                                                 </div>
                                             </div>
 
-                                            <div className="test-card-footer">
-                                                <button
-                                                    className="btn-view"
-                                                    onClick={() => openAssessment(assessment)}
-                                                >
-                                                    Voir les détails
-                                                </button>
-                                                <button
-                                                    className="btn-view"
-                                                    onClick={() => exportAssessmentPdf(assessment)}
-                                                    disabled={savingPdfId === assessment.id}
-                                                >
-                                                    {savingPdfId === assessment.id
-                                                        ? 'Export...'
-                                                        : 'PDF'}
-                                                </button>
-                                            </div>
+                                            
                                         </div>
                                     ))
                                 )}
