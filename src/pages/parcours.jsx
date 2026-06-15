@@ -236,42 +236,6 @@ const STATUS_LABELS = {
     unknown: 'Inconnu',
 };
 
-const [recommendations, setRecommendations] = useState({});
-const [loadingRecos, setLoadingRecos] = useState({});
-
-
-const loadRecommendations = useCallback(async (assessmentId) => {
-    if (!assessmentId) return null;
-    
-    setLoadingRecos(prev => ({ ...prev, [assessmentId]: true }));
-    
-    try {
-        const response = await api.get(`/users/me/assessments/${assessmentId}/recommendations`, {
-            params: { limit: 10 }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Erreur chargement recommandations:', error);
-        return null;
-    } finally {
-        setLoadingRecos(prev => ({ ...prev, [assessmentId]: false }));
-    }
-}, []);
-
-// Ajoutez ce useEffect pour charger les recommandations quand on est dans l'onglet reports
-useEffect(() => {
-    if (activeMenu === 'reports' && completedAssessments.length > 0) {
-        completedAssessments.forEach(async (assessment) => {
-            if (!recommendations[assessment.id]) {
-                const recos = await loadRecommendations(assessment.assessmentId);
-                if (recos) {
-                    setRecommendations(prev => ({ ...prev, [assessment.id]: recos }));
-                }
-            }
-        });
-    }
-}, [activeMenu, completedAssessments, loadRecommendations, recommendations]);
-
 function formatDate(value) {
     if (!value) return 'Date inconnue';
     const date = new Date(value);
@@ -753,177 +717,61 @@ export default function EspacePersonnel() {
                     )}
 
                     {activeMenu === 'reports' && (
-    <section className="reports-content">
-        <div className="section-header">
-            <h2>
-                <IconFile /> Rapports
-            </h2>
-            <button className="generate-btn" onClick={resumeAssessment}>
-                Nouveau rapport
-            </button>
-        </div>
+                        <section className="reports-content">
+                            <div className="section-header">
+                                <h2>
+                                    <IconFile /> Rapports
+                                </h2>
+                                <button className="generate-btn" onClick={resumeAssessment}>
+                                    Nouveau rapport
+                                </button>
+                            </div>
 
-        <div className="reports-grid">
-            {completedAssessments.length === 0 ? (
-                <div className="advice-card">
-                    <p>Aucun rapport générable pour le moment.</p>
-                </div>
-            ) : (
-                completedAssessments.map((assessment) => {
-                    const recos = recommendations[assessment.id];
-                    const isLoading = loadingRecos[assessment.id];
-                    
-                    return (
-                        <div key={assessment.id} className="report-card">
-                            <div className="report-icon">
-                                <IconFile />
-                            </div>
-                            <div className="report-info">
-                                <h4>{assessment.title}</h4>
-                                <div className="report-meta">
-                                    <span>
-                                        <IconCalendar /> {assessment.date}
-                                    </span>
-                                    <span>
-                                        <IconLoader />{' '}
-                                        {assessment.completionPercentage}%
-                                    </span>
-                                </div>
-                                
-                                {/* AFFICHAGE DU CODE RIASEC */}
-                                {assessment.phase2Code && (
-                                    <div className="report-code-badge">
-                                        <strong>Code RIASEC:</strong> {assessment.phase2Code}
+                            <div className="reports-grid">
+                                {completedAssessments.length === 0 ? (
+                                    <div className="advice-card">
+                                        <p>Aucun rapport générable pour le moment.</p>
                                     </div>
+                                ) : (
+                                    completedAssessments.map((assessment) => (
+                                        <div key={assessment.id} className="report-card">
+                                            <div className="report-icon">
+                                                <IconFile />
+                                            </div>
+                                            <div className="report-info">
+                                                <h4>{assessment.title}</h4>
+                                                <div className="report-meta">
+                                                    <span>
+                                                        <IconCalendar /> {assessment.date}
+                                                    </span>
+                                                    <span>
+                                                        <IconLoader />{' '}
+                                                        {assessment.completionPercentage}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="report-actions">
+                                                <button
+                                                    className="action-icon"
+                                                    onClick={() => openAssessment(assessment)}
+                                                    title="Voir"
+                                                >
+                                                    <IconEye />
+                                                </button>
+                                                <button
+                                                    className="action-icon"
+                                                    onClick={() => exportAssessmentPdf(assessment)}
+                                                    title="Télécharger"
+                                                >
+                                                    <IconDownload />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
-                                
-                                {/* AFFICHAGE DES RECOMMANDATIONS */}
-                                <div className="report-recommendations">
-                                    {isLoading ? (
-                                        <div className="reco-loading">
-                                            <span className="loader-small"></span>
-                                            Chargement des recommandations...
-                                        </div>
-                                    ) : recos ? (
-                                        <>
-                                            {/* MÉTIERS */}
-                                            {recos.careers && recos.careers.length > 0 && (
-                                                <div className="reco-section">
-                                                    <div className="reco-title">🎯 Métiers recommandés</div>
-                                                    <ul className="reco-list">
-                                                        {recos.careers.slice(0, 5).map((career, idx) => (
-                                                            <li key={idx}>
-                                                                <span className="reco-icon">💼</span>
-                                                                {typeof career === 'string' ? career : career.name || career.title}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                            
-                                            {/* FORMATIONS / ÉCOLES */}
-                                            {recos.trainings && recos.trainings.length > 0 && (
-                                                <div className="reco-section">
-                                                    <div className="reco-title">📚 Formations recommandées</div>
-                                                    <ul className="reco-list">
-                                                        {recos.trainings.slice(0, 5).map((training, idx) => (
-                                                            <li key={idx}>
-                                                                <span className="reco-icon">🏫</span>
-                                                                {typeof training === 'string' ? training : training.name || training.title}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                            
-                                            {/* ÉCOLES / UNIVERSITÉS */}
-                                            {recos.schools && recos.schools.length > 0 && (
-                                                <div className="reco-section">
-                                                    <div className="reco-title">🎓 Écoles / Universités</div>
-                                                    <ul className="reco-list">
-                                                        {recos.schools.slice(0, 5).map((school, idx) => (
-                                                            <li key={idx}>
-                                                                <span className="reco-icon">🏛️</span>
-                                                                {typeof school === 'string' ? school : school.name}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                            
-                                            {/* BOURSES */}
-                                            {recos.scholarships && recos.scholarships.length > 0 && (
-                                                <div className="reco-section">
-                                                    <div className="reco-title">💰 Bourses disponibles</div>
-                                                    <ul className="reco-list">
-                                                        {recos.scholarships.slice(0, 3).map((scholarship, idx) => (
-                                                            <li key={idx}>
-                                                                <span className="reco-icon">🎓</span>
-                                                                {typeof scholarship === 'string' ? scholarship : scholarship.name}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                            
-                                            {/* MESSAGE SI AUCUNE DONNÉE */}
-                                            {(!recos.careers || recos.careers.length === 0) && 
-                                             (!recos.trainings || recos.trainings.length === 0) && 
-                                             (!recos.schools || recos.schools.length === 0) && (
-                                                <div className="reco-empty">
-                                                    <p>Recommandations disponibles après analyse complète de votre profil.</p>
-                                                    <button 
-                                                        className="retry-reco-btn"
-                                                        onClick={() => loadRecommendations(assessment.assessmentId).then(data => {
-                                                            if (data) setRecommendations(prev => ({ ...prev, [assessment.id]: data }));
-                                                        })}
-                                                    >
-                                                        Réessayer
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className="reco-empty">
-                                            <p>Cliquez pour charger les recommandations</p>
-                                            <button 
-                                                className="load-reco-btn"
-                                                onClick={async () => {
-                                                    const data = await loadRecommendations(assessment.assessmentId);
-                                                    if (data) {
-                                                        setRecommendations(prev => ({ ...prev, [assessment.id]: data }));
-                                                    }
-                                                }}
-                                            >
-                                                Voir les métiers et formations
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
                             </div>
-                            <div className="report-actions">
-                                <button
-                                    className="action-icon"
-                                    onClick={() => openAssessment(assessment)}
-                                    title="Voir le rapport détaillé"
-                                >
-                                    <IconEye />
-                                </button>
-                                <button
-                                    className="action-icon"
-                                    onClick={() => exportAssessmentPdf(assessment)}
-                                    title="Télécharger le PDF"
-                                >
-                                    <IconDownload />
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })
-            )}
-        </div>
-    </section>
-)}
+                        </section>
+                    )}
 
                     {activeMenu === 'bourses' && (
                         <section>
