@@ -1,4 +1,12 @@
-import api from './api';
+import axios from 'axios';
+
+const FALLBACK_API_BASE_URL = 'https://api-orientation-production.up.railway.app/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || FALLBACK_API_BASE_URL;
+
+const publicApi = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 10000,
+});
 
 /**
  * Verify email token with backend.
@@ -12,7 +20,7 @@ export const verifyEmail = async (token) => {
     }
 
     try {
-        const response = await api.get('/auth/verify-email', {
+        const response = await publicApi.get('/auth/verify-email', {
             params: { token },
         });
 
