@@ -10,7 +10,10 @@ const VerifyEmailGuard = () => {
     const navigate = useNavigate();
     const hasRun = useRef(false); // évite double appel en React StrictMode
 
-    const token = searchParams.get('token');
+    const token =
+        searchParams.get('token') ||
+        searchParams.get('verificationToken') ||
+        searchParams.get('t');
 
     useEffect(() => {
         if (hasRun.current) return;
@@ -19,17 +22,19 @@ const VerifyEmailGuard = () => {
         const verifyAndRedirect = async () => {
             if (!token) {
                 setStatus('error');
-                setErrorMessage("Token de vérification manquant dans l'URL.");
+                setErrorMessage(
+                    "Token de vérification manquant dans l'URL. Vérifie le lien envoyé par email.",
+                );
                 return;
             }
 
-                            try {
-                const result = await verifyEmail(token);
+            try {
+                await verifyEmail(token);
                 setStatus('success');
 
                 // Attendre que le backend finalise l'activation en DB
                 // avant de rediriger (évite le 403 "account not active")
-                const waitForActivation = () => new Promise(resolve => setTimeout(resolve, 2000));
+                const waitForActivation = () => new Promise((resolve) => setTimeout(resolve, 2000));
                 await waitForActivation();
 
                 let count = 3;

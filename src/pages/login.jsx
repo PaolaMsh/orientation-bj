@@ -17,6 +17,25 @@ const LoginPage = () => {
     const [error, setError] = useState('');
     const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
 
+    const getLoginErrorMessage = (err) => {
+        const status = err.response?.status;
+        const backendMessage = err.response?.data?.message?.trim();
+
+        if (status === 403) {
+            if (backendMessage && /inactive|inactif|verify|vérifi|unverified/i.test(backendMessage)) {
+                return 'Compte inactif. Vérifiez votre email avant de vous connecter.';
+            }
+
+            return backendMessage || 'Compte inactif. Vérifiez votre email avant de vous connecter.';
+        }
+
+        if (status === 401) {
+            return backendMessage || 'Email ou mot de passe incorrect';
+        }
+
+        return backendMessage || 'Impossible de se connecter pour le moment';
+    };
+
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const verificationStatus = params.get('verification');
@@ -52,7 +71,7 @@ const LoginPage = () => {
             navigate('/accueil');
         } catch (error) {
             console.error('Erreur:', error.response?.data);
-            setError(error.response?.data?.message || 'Email ou mot de passe incorrect');
+            setError(getLoginErrorMessage(error));
         } finally {
             setIsLoading(false);
         }
