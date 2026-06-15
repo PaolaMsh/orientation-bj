@@ -13,7 +13,7 @@ import PhaseTest from './pages/phaseText';
 import UniversitiesPage from './pages/universites-formations';
 import HeaderParent from './components/headerParent';
 import Footer from './components/footer';
-import ScrollToTop from './components/ScrollToTop';
+import ScrollToTop from './components/scrollToTop';
 import BoursesAides from './pages/bourses-aides';
 import Parcours from './pages/parcours';
 import Contact from './pages/contact';
