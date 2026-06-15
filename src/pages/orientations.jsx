@@ -440,7 +440,8 @@ export default function Orientations() {
     const navigate = useNavigate();
     const { assessmentId } = useParams();
     const location = useLocation();
-    const routeAssessmentId = assessmentId || location.state?.assessmentId || localStorage.getItem('assessment_id');
+    const routeAssessmentId =
+        assessmentId || location.state?.assessmentId || localStorage.getItem('assessment_id');
     const [activeTab, setActiveTab] = useState('investigative');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -1063,9 +1064,6 @@ export default function Orientations() {
                 <div className="Buttons">
                     <button className="button" onClick={() => navigate('/tests')}>
                         Nouveau test
-                    </button>
-                    <button className="button" onClick={handleSaveReport} disabled={saving}>
-                        {saving ? 'Enregistrement...' : 'Enregistrer le rapport'}
                     </button>
                     <button className="button" onClick={() => navigate('/universites-formations')}>
                         Voir les écoles

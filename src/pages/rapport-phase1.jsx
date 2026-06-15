@@ -370,9 +370,9 @@ function RapportPhase1() {
                         Nouveau test
                     </button>
 
-                    <button className="button" onClick={handlePrint}>
-                        Imprimer
-                    </button>
+                   <button className="button" onClick={() => navigate('/universites-formations')}>
+                        Voir les écoles
+                    </button>  
                 </div>
             </div>
         </div>
