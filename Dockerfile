@@ -18,7 +18,8 @@ FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
-    PORT=3000
+    PORT=3000 \
+    VITE_API_URL=https://api-orientation-production.up.railway.app/api/v1
 
 RUN npm install -g serve@14.2.4
 
