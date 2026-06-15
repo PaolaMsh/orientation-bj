@@ -88,8 +88,14 @@ const RegisterPage = () => {
             setSuccess(true);
 
             setTimeout(() => {
-                navigate('/login');
-            }, 2000);
+                navigate('/auth/login', {
+                    state: {
+                        message:
+                            response.data?.message ||
+                            "Inscription réussie. Vérifiez votre email pour activer votre compte.",
+                    },
+                });
+            }, 2200);
         } catch (error) {
             console.error('Erreur:', error.response?.data);
 
@@ -132,7 +138,7 @@ const RegisterPage = () => {
                     <h2>Créer un compte</h2>
                     <p className="subtitle">
                         Ou{' '}
-                        <Link to="/login" className="toggle-link">
+                        <Link to="/auth/login" className="toggle-link">
                             connectez-vous à votre compte
                         </Link>
                     </p>
@@ -301,7 +307,7 @@ const RegisterPage = () => {
                     {error && <div className="error-message">{error}</div>}
                     {success && (
                         <div className="success-message">
-                            Inscription réussie ! Redirection vers la connexion...
+                            Inscription réussie ! Vérifiez votre email pour activer le compte.
                         </div>
                     )}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/authContext';
 import Home from './pages/home';
 import LoginPage from './pages/login';
@@ -23,13 +23,13 @@ import RapportPhase1 from './pages/rapport-phase1';
 import VerifyEmailGuard from './components/VerifyEmailGuard';
     
 const ProtectedRoute = ({ children }) => {
-    const { token } = useAuth();  
-    const isAuth = !!token;  //
+    const { token } = useAuth();
+    const location = useLocation();
+    const isAuth = !!token;
 
     if (!isAuth) {
-         return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
+        return <Navigate to="/auth/login" state={{ from: location.pathname + location.search }} replace />;
     }
-
 
     return children;
 };
@@ -44,13 +44,14 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Navigate to="/accueil" replace />} />
                     <Route path="/accueil" element={<Home />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/verify-email" element={<VerifyEmailGuard />} />
+                    <Route path="/auth/login" element={<LoginPage />} />
+                    <Route path="/auth/register" element={<RegisterPage />} />
+                    <Route path="/auth/verify-email" element={<VerifyEmailGuard />} />
 
                     <Route path="/universites-formations" element={<UniversitiesPage />} />
 
                     <Route
+
                         path="/metiers-porteurs"
                         element={
                             <ProtectedRoute>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 import '../styles/auth.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,12 +8,23 @@ import api from '../services/api';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const verificationStatus = params.get('verification');
+
+        if (verificationStatus === 'sent' && !infoMessage) {
+            setInfoMessage('Un email de vérification a été envoyé. Consultez votre boîte mail.');
+        }
+    }, [location.search, infoMessage]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,7 +66,7 @@ const LoginPage = () => {
                     <h2>Connexion à votre compte</h2>
                     <p className="subtitle">
                         Ou{' '}
-                        <Link to="/register" className="toggle-link">
+                        <Link to="/auth/register" className="toggle-link">
                             créer un compte
                         </Link>
                     </p>
@@ -94,6 +105,7 @@ const LoginPage = () => {
                         </div>
                     </div>
 
+                    {infoMessage && <div className="success-message">{infoMessage}</div>}
                     {error && <div className="error-message">{error}</div>}
 
                     <button type="submit" className="submit-btn" disabled={isLoading}>
