@@ -12,14 +12,18 @@ RUN npm ci
 
 FROM deps AS build
 COPY . .
+
+# ⚠️ IMPORTANT: Les variables VITE doivent être définies PENDANT le build
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
-    PORT=3000 \
-    VITE_API_URL=https://api-orientation-production.up.railway.app/api/v1
+    PORT=3000
 
 RUN npm install -g serve@14.2.4
 
