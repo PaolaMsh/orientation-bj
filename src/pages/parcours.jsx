@@ -228,6 +228,7 @@ const AXIS_LABELS = {
 const STATUS_LABELS = {
     completed: 'Terminé',
     in_progress: 'En cours',
+    not_started: 'Non commencé',
     abandoned: 'Abandonné',
     unknown: 'Inconnu',
 };
@@ -243,11 +244,54 @@ function formatDate(value) {
     });
 }
 
-function normalizeStatus(status) {
+// Fonction pour vérifier si le test a vraiment été commencé
+function checkIfAssessmentStarted(assessment) {
+    // Vérifier s'il y a des réponses
+    if (assessment.responses && assessment.responses.length > 0) {
+        return true;
+    }
+    
+    // Vérifier les batches de réponses
+    if (assessment.responseBatches && assessment.responseBatches.length > 0) {
+        return true;
+    }
+    
+    // Vérifier le nombre de questions répondues
+    if (assessment.answeredQuestions && assessment.answeredQuestions > 0) {
+        return true;
+    }
+    
+    // Vérifier le pourcentage de complétion
+    if (assessment.completionPercentage && assessment.completionPercentage > 0) {
+        return true;
+    }
+    
+    // Vérifier les réponses dans les données brutes
+    if (assessment.raw) {
+        const raw = assessment.raw;
+        if (raw.responses && raw.responses.length > 0) return true;
+        if (raw.responseBatches && raw.responseBatches.length > 0) return true;
+        if (raw.answeredQuestions && raw.answeredQuestions > 0) return true;
+        if (raw.completionPercentage && raw.completionPercentage > 0) return true;
+    }
+    
+    return false;
+}
+
+function normalizeStatus(status, assessment) {
     const normalized = String(status || '').toLowerCase();
+    
+    // Si le statut est explicitement 'completed'
     if (normalized === 'completed') return 'completed';
-    if (normalized === 'in_progress') return 'in_progress';
+    
+    // Si le statut est 'in_progress', vérifier si des réponses existent
+    if (normalized === 'in_progress') {
+        const hasStarted = checkIfAssessmentStarted(assessment);
+        return hasStarted ? 'in_progress' : 'not_started';
+    }
+    
     if (normalized === 'abandoned') return 'abandoned';
+    
     return 'unknown';
 }
 
@@ -270,17 +314,48 @@ function flattenAssessments(historyData) {
 
     const sessionAssessments = sessions.flatMap((session) => {
         const assessments = Array.isArray(session.assessments) ? session.assessments : [];
-        return assessments.map((assessment) => ({
+        return assessments.map((assessment) => {
+            const status = normalizeStatus(assessment.status, assessment);
+            return {
+                id: assessment.id,
+                assessmentId: assessment.id,
+                sessionToken: session.sessionToken || null,
+                shareToken: session.shareToken || null,
+                type: assessment.type || 'RIASEC',
+                title: buildAssessmentTitle(assessment),
+                date: formatDate(assessment.completedAt || assessment.startedAt || session.createdAt),
+                completedAt: assessment.completedAt || null,
+                startedAt: assessment.startedAt || null,
+                status: status,
+                score: Number(assessment.completionPercentage ?? 0),
+                completionPercentage: Number(assessment.completionPercentage ?? 0),
+                phase1Code: assessment.phase1Code || null,
+                phase2Code: assessment.phase2Code || null,
+                code: buildAssessmentCode(assessment),
+                consistencyLevel: assessment.consistencyLevel || null,
+                hasResult: Boolean(assessment.hasResult),
+                hasTreasureMap: Boolean(assessment.hasTreasureMap),
+                responses: assessment.responses || [],
+                responseBatches: assessment.responseBatches || [],
+                answeredQuestions: assessment.answeredQuestions || 0,
+                raw: assessment,
+            };
+        });
+    });
+
+    const directList = directAssessments.map((assessment) => {
+        const status = normalizeStatus(assessment.status, assessment);
+        return {
             id: assessment.id,
             assessmentId: assessment.id,
-            sessionToken: session.sessionToken || null,
-            shareToken: session.shareToken || null,
+            sessionToken: historyData?.sessionToken || null,
+            shareToken: historyData?.shareToken || null,
             type: assessment.type || 'RIASEC',
             title: buildAssessmentTitle(assessment),
-            date: formatDate(assessment.completedAt || assessment.startedAt || session.createdAt),
+            date: formatDate(assessment.completedAt || assessment.startedAt || historyData?.createdAt),
             completedAt: assessment.completedAt || null,
             startedAt: assessment.startedAt || null,
-            status: normalizeStatus(assessment.status),
+            status: status,
             score: Number(assessment.completionPercentage ?? 0),
             completionPercentage: Number(assessment.completionPercentage ?? 0),
             phase1Code: assessment.phase1Code || null,
@@ -289,31 +364,12 @@ function flattenAssessments(historyData) {
             consistencyLevel: assessment.consistencyLevel || null,
             hasResult: Boolean(assessment.hasResult),
             hasTreasureMap: Boolean(assessment.hasTreasureMap),
+            responses: assessment.responses || [],
+            responseBatches: assessment.responseBatches || [],
+            answeredQuestions: assessment.answeredQuestions || 0,
             raw: assessment,
-        }));
+        };
     });
-
-    const directList = directAssessments.map((assessment) => ({
-        id: assessment.id,
-        assessmentId: assessment.id,
-        sessionToken: historyData?.sessionToken || null,
-        shareToken: historyData?.shareToken || null,
-        type: assessment.type || 'RIASEC',
-        title: buildAssessmentTitle(assessment),
-        date: formatDate(assessment.completedAt || assessment.startedAt || historyData?.createdAt),
-        completedAt: assessment.completedAt || null,
-        startedAt: assessment.startedAt || null,
-        status: normalizeStatus(assessment.status),
-        score: Number(assessment.completionPercentage ?? 0),
-        completionPercentage: Number(assessment.completionPercentage ?? 0),
-        phase1Code: assessment.phase1Code || null,
-        phase2Code: assessment.phase2Code || null,
-        code: buildAssessmentCode(assessment),
-        consistencyLevel: assessment.consistencyLevel || null,
-        hasResult: Boolean(assessment.hasResult),
-        hasTreasureMap: Boolean(assessment.hasTreasureMap),
-        raw: assessment,
-    }));
 
     const combined = sessionAssessments.length > 0 ? sessionAssessments : directList;
 
@@ -413,16 +469,18 @@ export default function EspacePersonnel() {
     const inProgressAssessments = assessments.filter(
         (assessment) => assessment.status === 'in_progress',
     );
+    const notStartedAssessments = assessments.filter(
+        (assessment) => assessment.status === 'not_started',
+    );
     const latestAssessment = assessments[0] || null;
 
-    // ✅ FONCTION POUR SAUVEGARDER UNE BOURSE (API CORRECTE)
+    // Fonction pour sauvegarder une bourse
     const saveScholarship = useCallback(async (scholarshipId) => {
         if (!scholarshipId) return;
         
         setSavingScholarship(scholarshipId);
         
         try {
-            // ✅ API CORRECTE : POST /users/me/scholarship?scholarshipId={id}
             const response = await api.post('/users/me/scholarship', null, {
                 params: { scholarshipId: scholarshipId }
             });
@@ -720,6 +778,20 @@ export default function EspacePersonnel() {
                                     <p>Aucun test trouvé dans votre historique.</p>
                                 )}
                             </div>
+
+                            {inProgressAssessments.length > 0 && (
+                                <div className="advice-card" style={{ marginTop: '1rem', borderLeft: '4px solid #f59e0b' }}>
+                                    <h3>📝 Tests en cours</h3>
+                                    <p>Vous avez {inProgressAssessments.length} test(s) à terminer.</p>
+                                    <button 
+                                        className="new-test-btn" 
+                                        onClick={resumeAssessment}
+                                        style={{ marginTop: '0.5rem' }}
+                                    >
+                                        Continuer un test
+                                    </button>
+                                </div>
+                            )}
                         </section>
                     )}
 
@@ -729,6 +801,9 @@ export default function EspacePersonnel() {
                                 <h2>
                                     <IconHistory /> Mes tests
                                 </h2>
+                                <button className="new-test-btn" onClick={resumeAssessment}>
+                                    Nouveau test
+                                </button>
                             </div>
 
                             <div className="tests-list">
@@ -753,7 +828,7 @@ export default function EspacePersonnel() {
                                                     </div>
                                                 </div>
                                                 <span
-                                                    className={`status-badge ${assessment.status === 'completed' ? 'completed' : 'pending'}`}
+                                                    className={`status-badge ${assessment.status === 'completed' ? 'completed' : assessment.status === 'in_progress' ? 'in-progress' : assessment.status === 'not_started' ? 'not-started' : 'pending'}`}
                                                 >
                                                     {STATUS_LABELS[assessment.status] ||
                                                         assessment.status}
@@ -779,6 +854,14 @@ export default function EspacePersonnel() {
                                                 >
                                                     Voir les détails
                                                 </button>
+                                                {assessment.status === 'in_progress' && (
+                                                    <button
+                                                        className="btn-resume"
+                                                        onClick={resumeAssessment}
+                                                    >
+                                                        Continuer
+                                                    </button>
+                                                )}
                                                 <button
                                                     className="btn-view"
                                                     onClick={() => exportAssessmentPdf(assessment)}
@@ -791,6 +874,16 @@ export default function EspacePersonnel() {
                                     ))
                                 )}
                             </div>
+
+                            {notStartedAssessments.length > 0 && (
+                                <div className="advice-card" style={{ marginTop: '1rem' }}>
+                                    <h4>ℹ️ Tests non commencés</h4>
+                                    <p>
+                                        {notStartedAssessments.length} test(s) ont été créés mais 
+                                        vous n'avez pas encore commencé à répondre aux questions.
+                                    </p>
+                                </div>
+                            )}
                         </section>
                     )}
 
@@ -1027,7 +1120,8 @@ export default function EspacePersonnel() {
                                 </h3>
                                 <p>
                                     {completedAssessments.length} test(s) terminé(s),{' '}
-                                    {inProgressAssessments.length} en cours.
+                                    {inProgressAssessments.length} en cours,
+                                    {notStartedAssessments.length} non commencé(s).
                                 </p>
                             </div>
                         </section>

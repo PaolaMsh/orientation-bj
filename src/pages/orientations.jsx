@@ -717,7 +717,6 @@ export default function Orientations() {
     const topAxes = getTopAxes();
     const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
     const code = dominantScores.map(([key]) => key[0]).join('');
-    // Ajouter dans Orientations.jsx la fonction pour générer la treasure map
 
     const generateTreasureMap = async () => {
         const assessmentIdToUse = assessmentId || localStorage.getItem('assessment_id');
@@ -737,7 +736,6 @@ export default function Orientations() {
             });
 
             if (response.data?.shareToken) {
-                // Afficher un lien pour partager
                 const shareUrl = `${window.location.origin}/share/${response.data.shareToken}`;
                 console.log('Treasure map shareable:', shareUrl);
                 alert(`Carte générée ! Partagez-la : ${shareUrl}`);
@@ -749,7 +747,6 @@ export default function Orientations() {
         }
     };
 
-    // Ajouter un bouton dans le rendu
     <button className="button" onClick={generateTreasureMap}>
         Générer ma carte 🗺️
     </button>;

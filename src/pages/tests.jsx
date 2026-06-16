@@ -52,7 +52,6 @@ const EmotionSvgs = {
     ),
 };
 
-// Nouveaux SVGs pour les sections de la phase 2
 const SectionSvgs = {
     realist: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -174,7 +173,7 @@ const ProgressHeader = ({
                 </div>
                 <div className="progress-stats">
                     <span>
-                        {draftCount}/{batchSize} questions
+                        {draftCount}/{batchSize} questions répondues
                     </span>
                     <span>{Math.round(completionPercentage)}%</span>
                 </div>
@@ -289,11 +288,8 @@ const Test = () => {
     const [error, setError] = useState(null);
     const [phase2SectionsCompleted, setPhase2SectionsCompleted] = useState({});
     
-    // Historique des lots avec leurs réponses
     const [batchHistory, setBatchHistory] = useState([]);
-    // Stockage des réponses des lots précédents
     const [savedAnswersHistory, setSavedAnswersHistory] = useState([]);
-    // Indique si l'utilisateur a utilisé "Page précédente" sur ce lot
     const [hasUsedPrevious, setHasUsedPrevious] = useState(false);
 
     const initializeSession = useCallback(async () => {
@@ -388,7 +384,6 @@ const Test = () => {
                 if (response?.data && response.data.length > 0) {
                     const formatted = formatQuestions(response.data, phase, section);
                     setCurrentBatch(formatted);
-                    // Ne pas charger les réponses existantes - commencer avec un tableau vide
                     setDraftAnswers({});
                     return true;
                 }
@@ -459,7 +454,6 @@ const Test = () => {
         resolveProgress,
     ]);
 
-    // Fonction pour revenir au lot précédent
     const handlePreviousBatch = useCallback(async () => {
         if (batchHistory.length === 0) {
             const shouldReload = window.confirm("Vous êtes au début du test. Voulez-vous recharger les questions ?");
@@ -469,38 +463,30 @@ const Test = () => {
             return;
         }
         
-        // Marquer que l'utilisateur a utilisé "Page précédente" sur ce lot
         setHasUsedPrevious(true);
         
-        // Récupérer le lot précédent et ses réponses
         const previousBatchData = batchHistory[batchHistory.length - 1];
         const previousAnswers = savedAnswersHistory[savedAnswersHistory.length - 1];
         
-        // Retirer de l'historique
         setBatchHistory(prev => prev.slice(0, -1));
         setSavedAnswersHistory(prev => prev.slice(0, -1));
         
-        // Restaurer le lot précédent avec ses réponses
         setCurrentBatch(previousBatchData.questions);
         setDraftAnswers(previousAnswers || {});
         
-        // Mettre à jour la phase et section courantes
         setCurrentPhase(previousBatchData.phase);
         if (previousBatchData.section) {
             setCurrentSection(previousBatchData.section);
         }
     }, [batchHistory, savedAnswersHistory, currentPhase, currentSection, sessionToken, assessmentId, fetchBatch]);
 
-    // Navigation manuelle vers le lot suivant (utilisé après correction)
     const handleManualNextBatch = useCallback(async () => {
-        // Vérifier que toutes les questions sont répond
         if (Object.keys(draftAnswers).length !== currentBatch.length) {
             const remaining = currentBatch.length - Object.keys(draftAnswers).length;
             alert(`Veuillez répondre à toutes les questions avant de continuer (${remaining} restante${remaining > 1 ? 's' : ''})`);
             return;
         }
         
-        // Sauvegarder le lot actuel et ses réponses dans l'historique
         setBatchHistory(prev => [...prev, {
             batchId: Date.now(),
             phase: currentPhase,
@@ -512,7 +498,6 @@ const Test = () => {
         const progressData = await submitBatch();
         if (!progressData) return;
 
-        // Réinitialiser le flag après soumission manuelle
         setHasUsedPrevious(false);
 
         if (progressData.status === 'COMPLETED') {
@@ -657,11 +642,7 @@ const Test = () => {
     const allAnswered =
         currentBatch.length > 0 && Object.keys(draftAnswers).length === currentBatch.length;
 
-    // Auto-submit uniquement quand :
-    // 1. Toutes les questions sont répondues
-    // 2. On n'est pas en train de soumettre
-    // 3. Le lot n'est pas en cours de chargement
-    // 4. L'utilisateur n'a PAS utilisé "Page précédente" sur ce lot
+    
     useEffect(() => {
         if (allAnswered && !submitting && !loadingBatch && currentBatch.length > 0 && !hasUsedPrevious) {
             const timer = setTimeout(() => {
