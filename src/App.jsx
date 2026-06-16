@@ -46,7 +46,7 @@ function App() {
                     <Route path="/accueil" element={<Home />} />
                     <Route path="/auth/login" element={<LoginPage />} />
                     <Route path="/auth/register" element={<RegisterPage />} />
-                    <Route path="/auth/verify-email" element={<VerifyEmailGuard />} />
+                    <Route path="/auth/check-email" element={<VerifyEmailGuard />} />
 
                     <Route path="/universites-formations" element={<UniversitiesPage />} />
 
