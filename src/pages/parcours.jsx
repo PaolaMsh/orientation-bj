@@ -268,34 +268,29 @@ function formatDate(value) {
     });
 }
 
-// ✅ Fonction pour extraire la lettre dominante d'un code Phase 1
-function getDominantLetter(code) {
-    if (!code) return '';
-    const codeStr = String(code);
-    return codeStr.charAt(0).toUpperCase();
-}
-
-// ✅ Fonction pour formater l'affichage du code selon le type
-function formatDisplayCode(assessment) {
-    const fullCode = assessment?.phase2Code || assessment?.phase1Code || assessment?.code || '';
-    if (!fullCode) return '';
-    
-    // Si c'est une Phase 1, on affiche seulement la première lettre
-    if (assessment?.type === 'PHASE1') {
-        return fullCode.charAt(0).toUpperCase();
-    }
-    
-    // Sinon (Phase 2 / FULL), on affiche le code complet
-    return fullCode;
-}
-
 // Fonction pour vérifier si le test a vraiment été commencé
 function checkIfAssessmentStarted(assessment) {
-    if (assessment.responses && assessment.responses.length > 0) return true;
-    if (assessment.responseBatches && assessment.responseBatches.length > 0) return true;
-    if (assessment.answeredQuestions && assessment.answeredQuestions > 0) return true;
-    if (assessment.completionPercentage && assessment.completionPercentage > 0) return true;
+    // Vérifier s'il y a des réponses
+    if (assessment.responses && assessment.responses.length > 0) {
+        return true;
+    }
 
+    // Vérifier les batches de réponses
+    if (assessment.responseBatches && assessment.responseBatches.length > 0) {
+        return true;
+    }
+
+    // Vérifier le nombre de questions répondues
+    if (assessment.answeredQuestions && assessment.answeredQuestions > 0) {
+        return true;
+    }
+
+    // Vérifier le pourcentage de complétion
+    if (assessment.completionPercentage && assessment.completionPercentage > 0) {
+        return true;
+    }
+
+    // Vérifier les réponses dans les données brutes
     if (assessment.raw) {
         const raw = assessment.raw;
         if (raw.responses && raw.responses.length > 0) return true;
@@ -310,8 +305,10 @@ function checkIfAssessmentStarted(assessment) {
 function normalizeStatus(status, assessment) {
     const normalized = String(status || '').toLowerCase();
 
+    // Si le statut est explicitement 'completed'
     if (normalized === 'completed') return 'completed';
 
+    // Si le statut est 'in_progress', vérifier si des réponses existent
     if (normalized === 'in_progress') {
         const hasStarted = checkIfAssessmentStarted(assessment);
         return hasStarted ? 'in_progress' : 'not_started';
@@ -343,12 +340,6 @@ function flattenAssessments(historyData) {
         const assessments = Array.isArray(session.assessments) ? session.assessments : [];
         return assessments.map((assessment) => {
             const status = normalizeStatus(assessment.status, assessment);
-            const fullCode = buildAssessmentCode(assessment);
-            // ✅ Pour Phase 1, on garde la première lettre comme code affiché
-            const displayCode = assessment?.type === 'PHASE1' 
-                ? getDominantLetter(fullCode) 
-                : fullCode;
-            
             return {
                 id: assessment.id,
                 assessmentId: assessment.id,
@@ -366,8 +357,7 @@ function flattenAssessments(historyData) {
                 completionPercentage: Number(assessment.completionPercentage ?? 0),
                 phase1Code: assessment.phase1Code || null,
                 phase2Code: assessment.phase2Code || null,
-                code: displayCode,
-                fullCode: fullCode,
+                code: buildAssessmentCode(assessment),
                 consistencyLevel: assessment.consistencyLevel || null,
                 hasResult: Boolean(assessment.hasResult),
                 hasTreasureMap: Boolean(assessment.hasTreasureMap),
@@ -381,11 +371,6 @@ function flattenAssessments(historyData) {
 
     const directList = directAssessments.map((assessment) => {
         const status = normalizeStatus(assessment.status, assessment);
-        const fullCode = buildAssessmentCode(assessment);
-        const displayCode = assessment?.type === 'PHASE1' 
-            ? getDominantLetter(fullCode) 
-            : fullCode;
-            
         return {
             id: assessment.id,
             assessmentId: assessment.id,
@@ -403,8 +388,7 @@ function flattenAssessments(historyData) {
             completionPercentage: Number(assessment.completionPercentage ?? 0),
             phase1Code: assessment.phase1Code || null,
             phase2Code: assessment.phase2Code || null,
-            code: displayCode,
-            fullCode: fullCode,
+            code: buildAssessmentCode(assessment),
             consistencyLevel: assessment.consistencyLevel || null,
             hasResult: Boolean(assessment.hasResult),
             hasTreasureMap: Boolean(assessment.hasTreasureMap),
@@ -584,18 +568,9 @@ export default function EspacePersonnel() {
         }
     }, [activeMenu, completedAssessments, loadRecommendations, recommendations]);
 
-    // ✅ Vérifier si le token existe avant de charger
     const loadHistory = useCallback(async () => {
         setLoading(true);
         setError('');
-
-        // ✅ Vérifier si l'utilisateur est authentifié
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setError('Veuillez vous reconnecter');
-            setTimeout(() => navigate('/login'), 2000);
-            return;
-        }
 
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => {
@@ -607,23 +582,8 @@ export default function EspacePersonnel() {
                 signal: controller.signal,
             });
             setHistoryData(response.data || null);
-            setError(''); // ✅ Réinitialiser l'erreur en cas de succès
         } catch (apiError) {
             console.error('Erreur chargement historique:', apiError);
-            
-            // ✅ Gestion des erreurs 401 (token expiré)
-            if (apiError.response?.status === 401) {
-                const message = apiError.response?.data?.message || '';
-                if (message.includes('expired') || message.includes('Invalid token')) {
-                    setError('Session expirée. Veuillez vous reconnecter.');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('user');
-                    setTimeout(() => navigate('/login'), 2000);
-                    return;
-                }
-            }
-            
             if (apiError.name === 'CanceledError' || apiError.code === 'ERR_CANCELED') {
                 setError('Le chargement a pris trop de temps. Réessayez dans quelques instants.');
             } else {
@@ -636,7 +596,7 @@ export default function EspacePersonnel() {
             window.clearTimeout(timeoutId);
             setLoading(false);
         }
-    }, [navigate]);
+    }, []);
 
     useEffect(() => {
         loadHistory();
@@ -655,8 +615,7 @@ export default function EspacePersonnel() {
             });
 
             const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
-            // ✅ Pour l'export PDF, on utilise le code complet
-            const code = assessment.fullCode || assessment.code || 'N/A';
+            const code = assessment.code || 'N/A';
 
             pdf.setFillColor(51, 71, 223);
             pdf.rect(0, 0, 210, 42, 'F');
@@ -730,27 +689,13 @@ export default function EspacePersonnel() {
     }
 
     if (error) {
-        const isSessionError = error.includes('expiré') || error.includes('reconnecter');
         return (
             <div className="espace-container">
                 <div className="loading-container">
-                    <p style={{ color: isSessionError ? '#dc2626' : '#6b7280', marginBottom: '1rem' }}>
-                        {error}
-                    </p>
-                    {!isSessionError && (
-                        <button className="new-test-btn" onClick={loadHistory}>
-                            Réessayer
-                        </button>
-                    )}
-                    {isSessionError && (
-                        <button 
-                            className="new-test-btn" 
-                            onClick={() => navigate('/login')}
-                            style={{ background: '#dc2626' }}
-                        >
-                            Se reconnecter
-                        </button>
-                    )}
+                    <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</p>
+                    <button className="new-test-btn" onClick={loadHistory}>
+                        Réessayer
+                    </button>
                 </div>
             </div>
         );
@@ -855,21 +800,6 @@ export default function EspacePersonnel() {
                                             <div className="test-date">
                                                 <IconCalendar /> {latestAssessment.date}
                                             </div>
-                                            {/* ✅ Affichage du code avec la bonne logique */}
-                                            {latestAssessment.code && (
-                                                <div className="test-code" style={{ 
-                                                    fontSize: '0.9rem', 
-                                                    color: '#6b7280',
-                                                    marginTop: '0.25rem'
-                                                }}>
-                                                    Code: {latestAssessment.code}
-                                                    {latestAssessment.type === 'PHASE1' && latestAssessment.fullCode && latestAssessment.fullCode !== latestAssessment.code && (
-                                                        <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginLeft: '0.5rem' }}>
-                                                            (complet: {latestAssessment.fullCode})
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
                                         <div className="test-score-badge">
                                             {latestAssessment.completionPercentage}%
@@ -928,17 +858,9 @@ export default function EspacePersonnel() {
                                                     <h4>{assessment.title}</h4>
                                                     <div className="test-type">
                                                         {assessment.type}{' '}
-                                                        {/* ✅ Affichage du code avec la bonne logique */}
-                                                        {assessment.code && (
-                                                            <span style={{ fontWeight: '500' }}>
-                                                                - {assessment.code}
-                                                                {assessment.type === 'PHASE1' && assessment.fullCode && assessment.fullCode !== assessment.code && (
-                                                                    <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginLeft: '0.3rem' }}>
-                                                                        ({assessment.fullCode})
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                        )}
+                                                        {assessment.code
+                                                            ? `- ${assessment.code}`
+                                                            : ''}
                                                     </div>
                                                 </div>
                                                 <span
@@ -969,23 +891,6 @@ export default function EspacePersonnel() {
                                                     >
                                                         Continuer
                                                     </button>
-                                                )}
-                                                {assessment.status === 'completed' && (
-                                                    <>
-                                                        <button
-                                                            className="btn-view"
-                                                            onClick={() => openAssessment(assessment)}
-                                                        >
-                                                            Voir
-                                                        </button>
-                                                        <button
-                                                            className="btn-view"
-                                                            onClick={() => exportAssessmentPdf(assessment)}
-                                                            disabled={savingPdfId === assessment.id}
-                                                        >
-                                                            {savingPdfId === assessment.id ? 'Export...' : 'PDF'}
-                                                        </button>
-                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -1043,16 +948,10 @@ export default function EspacePersonnel() {
                                                         </span>
                                                     </div>
 
-                                                    {/* ✅ Affichage du code avec la bonne logique */}
-                                                    {assessment.code && (
+                                                    {assessment.phase2Code && (
                                                         <div className="report-code-badge">
-                                                            <strong>Code:</strong>{' '}
-                                                            {assessment.code}
-                                                            {assessment.type === 'PHASE1' && assessment.fullCode && assessment.fullCode !== assessment.code && (
-                                                                <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginLeft: '0.5rem' }}>
-                                                                    (complet: {assessment.fullCode})
-                                                                </span>
-                                                            )}
+                                                            <strong>Code RIASEC:</strong>{' '}
+                                                            {assessment.phase2Code}
                                                         </div>
                                                     )}
 
