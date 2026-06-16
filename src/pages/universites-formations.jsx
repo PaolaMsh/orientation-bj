@@ -7,7 +7,6 @@ import {
     faEnvelope,
     faUniversity,
     faExternalLinkAlt,
-    faImage
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/universites-formations.css';
 import { universityService } from '../services/universityService';
@@ -27,12 +26,14 @@ const UniversitiesPage = () => {
             try {
                 setLoading(true);
                 const data = await universityService.getAllUniversities();
-                console.log('Données avec images:', data);
+                console.log('Universités avec images corrigées:', data);
                 setUniversities(data);
                 setFilteredUniversities(data);
             } catch (err) {
                 console.error('Erreur:', err);
                 setError('Impossible de charger les universités');
+                setUniversities([]);
+                setFilteredUniversities([]);
             } finally {
                 setLoading(false);
             }
@@ -51,7 +52,7 @@ const UniversitiesPage = () => {
         try {
             setSearching(true);
             const results = await universityService.searchUniversities(query);
-            console.log('Résultats de recherche:', results);
+            console.log('Résultats recherche:', results);
             setFilteredUniversities(results);
             setShowAll(false);
         } catch (err) {
@@ -75,22 +76,13 @@ const UniversitiesPage = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, universities]);
 
+    // Gestionnaire d'erreur d'image
     const handleImageError = (id) => {
-        console.log(`Erreur de chargement d'image pour l'université ${id}`);
+        console.log(`Erreur de chargement pour l'image ${id}`);
         setImageErrors(prev => ({
             ...prev,
             [id]: true
         }));
-    };
-
-    const getImageSrc = (uni) => {
-        // Si l'image a déjà une erreur, utiliser l'image par défaut
-        if (imageErrors[uni.id]) {
-            return '/images/default-university.jpg';
-        }
-        
-        // Utiliser l'image transformée ou l'image par défaut
-        return uni.image || '/images/default-university.jpg';
     };
 
     const visibleCount = showAll ? filteredUniversities.length : 15;
@@ -101,10 +93,7 @@ const UniversitiesPage = () => {
         return (
             <div className="universities-page">
                 <div className="container" style={{ textAlign: 'center', padding: '50px' }}>
-                    <div className="loader">
-                        <FontAwesomeIcon icon={faUniversity} spin />
-                        <span style={{ marginLeft: '10px' }}>Chargement des universités...</span>
-                    </div>
+                    <div className="loader">Chargement des universités...</div>
                 </div>
             </div>
         );
@@ -149,17 +138,16 @@ const UniversitiesPage = () => {
                     {visibleUniversities.map((uni) => (
                         <div key={uni.id} className="uni-card">
                             <div className="uni-image">
-                                <img
-                                    src={getImageSrc(uni)}
+                                <img 
+                                    src={
+                                        imageErrors[uni.id] 
+                                            ? '/images/default-university.jpg' 
+                                            : uni.coverUrl || '/images/default-university.jpg'
+                                    }
                                     alt={uni.name}
                                     onError={() => handleImageError(uni.id)}
                                     loading="lazy"
                                 />
-                                {!uni.image && (
-                                    <div className="image-placeholder">
-                                        <FontAwesomeIcon icon={faImage} />
-                                    </div>
-                                )}
                             </div>
                             <div className="uni-content">
                                 <h3>{uni.name}</h3>
