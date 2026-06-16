@@ -1,74 +1,38 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const FALLBACK_API_BASE_URL = 'https://api-orientation-production.up.railway.app/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || FALLBACK_API_BASE_URL;
 
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+const publicApi = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 10000,
 });
 
-// ✅ Interceptor pour ajouter le token à chaque requête
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+/**
+ * Verify email token with backend.
+ * Calls GET /auth/verify-email?token=...
+ * @param {string} token - verification token from the URL query string
+ * @returns {Promise<any>} response data
+ */
+export const verifyEmail = async (token) => {
+    if (!token || typeof token !== 'string') {
+        throw new Error('Token invalide');
     }
-);
 
-// ✅ Interceptor pour gérer les erreurs de token
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
+    try {
+        const response = await publicApi.get('/auth/verify-email', {
+            params: { token },
+        });
 
-        // Si l'erreur est "Invalid or expired token" et qu'on n'a pas encore essayé de rafraîchir
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            error.response?.data?.message?.includes('expired') ||
-            error.response?.data?.message?.includes('Invalid token')
-        ) {
-            originalRequest._retry = true;
-
-            try {
-                // Essayer de rafraîchir le token
-                const refreshToken = localStorage.getItem('refreshToken');
-                if (!refreshToken) {
-                    throw new Error('No refresh token');
-                }
-
-                const response = await axios.post(`${API_URL}/auth/refresh-token`, {
-                    refreshToken,
-                });
-
-                const newToken = response.data.token;
-                localStorage.setItem('token', newToken);
-
-                // Mettre à jour le header et réessayer la requête originale
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                return api(originalRequest);
-            } catch (refreshError) {
-                // Si le refresh échoue, déconnecter l'utilisateur
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('user');
-                
-                // Rediriger vers la page de connexion
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
-            }
+        return response.data;
+    } catch (error) {
+        const apiError = error.response?.data;
+        if (apiError?.details?.length) {
+            throw new Error(apiError.details.join(', '));
         }
 
-        return Promise.reject(error);
+        throw new Error(apiError?.message || 'Token invalide ou expiré');
     }
-);
+};
 
-export default api;
+export default { verifyEmail };
