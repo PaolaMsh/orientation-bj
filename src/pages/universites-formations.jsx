@@ -7,6 +7,7 @@ import {
     faEnvelope,
     faUniversity,
     faExternalLinkAlt,
+    faImage
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/universites-formations.css';
 import { universityService } from '../services/universityService';
@@ -26,14 +27,12 @@ const UniversitiesPage = () => {
             try {
                 setLoading(true);
                 const data = await universityService.getAllUniversities();
-                // Maintenant data contient déjà imageUrl
+                console.log('Données avec images:', data);
                 setUniversities(data);
                 setFilteredUniversities(data);
             } catch (err) {
                 console.error('Erreur:', err);
                 setError('Impossible de charger les universités');
-                setUniversities([]);
-                setFilteredUniversities([]);
             } finally {
                 setLoading(false);
             }
@@ -52,12 +51,12 @@ const UniversitiesPage = () => {
         try {
             setSearching(true);
             const results = await universityService.searchUniversities(query);
+            console.log('Résultats de recherche:', results);
             setFilteredUniversities(results);
             setShowAll(false);
         } catch (err) {
             console.error('Erreur de recherche:', err);
             setFilteredUniversities([]);
-            setError('Aucun résultat trouvé');
         } finally {
             setSearching(false);
         }
@@ -76,12 +75,22 @@ const UniversitiesPage = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, universities]);
 
-    // Gestionnaire d'erreur d'image
-    const handleImageError = (universityId) => {
+    const handleImageError = (id) => {
+        console.log(`Erreur de chargement d'image pour l'université ${id}`);
         setImageErrors(prev => ({
             ...prev,
-            [universityId]: true
+            [id]: true
         }));
+    };
+
+    const getImageSrc = (uni) => {
+        // Si l'image a déjà une erreur, utiliser l'image par défaut
+        if (imageErrors[uni.id]) {
+            return '/images/default-university.jpg';
+        }
+        
+        // Utiliser l'image transformée ou l'image par défaut
+        return uni.image || '/images/default-university.jpg';
     };
 
     const visibleCount = showAll ? filteredUniversities.length : 15;
@@ -92,7 +101,10 @@ const UniversitiesPage = () => {
         return (
             <div className="universities-page">
                 <div className="container" style={{ textAlign: 'center', padding: '50px' }}>
-                    <div className="loader">Chargement des universités...</div>
+                    <div className="loader">
+                        <FontAwesomeIcon icon={faUniversity} spin />
+                        <span style={{ marginLeft: '10px' }}>Chargement des universités...</span>
+                    </div>
                 </div>
             </div>
         );
@@ -126,12 +138,10 @@ const UniversitiesPage = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        {searching && <span className="search-spinner">...</span>}
                     </div>
                     <div className="results-count">
                         {filteredUniversities.length} résultat
                         {filteredUniversities.length > 1 ? 's' : ''} trouvé
-                        {filteredUniversities.length > 1 ? 's' : ''}
                     </div>
                 </div>
 
@@ -140,11 +150,16 @@ const UniversitiesPage = () => {
                         <div key={uni.id} className="uni-card">
                             <div className="uni-image">
                                 <img
-                                    src={imageErrors[uni.id] ? '/images/default-university.jpg' : (uni.imageUrl || '/images/default-university.jpg')}
+                                    src={getImageSrc(uni)}
                                     alt={uni.name}
                                     onError={() => handleImageError(uni.id)}
                                     loading="lazy"
                                 />
+                                {!uni.image && (
+                                    <div className="image-placeholder">
+                                        <FontAwesomeIcon icon={faImage} />
+                                    </div>
+                                )}
                             </div>
                             <div className="uni-content">
                                 <h3>{uni.name}</h3>
@@ -161,14 +176,16 @@ const UniversitiesPage = () => {
                                     <span>{uni.email || 'Email non disponible'}</span>
                                 </div>
 
-                                <a
-                                    href={uni.website}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="read-more-link"
-                                >
-                                    <FontAwesomeIcon icon={faExternalLinkAlt} /> Lire plus
-                                </a>
+                                {uni.website && (
+                                    <a
+                                        href={uni.website}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="read-more-link"
+                                    >
+                                        <FontAwesomeIcon icon={faExternalLinkAlt} /> Lire plus
+                                    </a>
+                                )}
                             </div>
                         </div>
                     ))}
