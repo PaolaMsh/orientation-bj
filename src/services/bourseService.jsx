@@ -6,7 +6,6 @@ export const bourseService = {
     getAllScholarships: async () => {
         try {
             const response = await api.get('/scholarships');
-            console.log('Bourses chargées:', response.data);
             return response.data;
         } catch (error) {
             console.error('Erreur chargement bourses:', error);
@@ -14,55 +13,9 @@ export const bourseService = {
         }
     },
 
-    // Récupérer une bourse par son ID
-    getScholarshipById: async (id) => {
-        try {
-            const response = await api.get(`/scholarships/${id}`);
-            console.log('Bourse chargée:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error(`Erreur chargement bourse ${id}:`, error);
-            throw error;
-        }
-    },
-
-    // Rechercher des bourses
-    searchScholarships: async (query) => {
-        try {
-            if (!query || query.trim() === '') {
-                return [];
-            }
-
-            const url = `/scholarships/search?q=${encodeURIComponent(query.trim())}`;
-            console.log('URL complète:', api.defaults.baseURL + url);
-
-            const response = await api.get(url);
-            return response.data;
-        } catch (error) {
-            console.error(`Erreur lors de la recherche pour "${query}":`, error);
-            console.error("Détails de l'erreur:", error.response?.data);
-            throw error;
-        }
-    },
-
-    // Récupérer les bourses recommandées pour un utilisateur (basé sur son profil RIASEC)
-    getRecommendedScholarships: async (assessmentId) => {
-        try {
-            const response = await api.get(`/users/me/assessments/${assessmentId}/recommendations`, {
-                params: { limit: 10 }
-            });
-            console.log('Bourses recommandées:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('Erreur chargement bourses recommandées:', error);
-            return { scholarships: [] };
-        }
-    },
-
-    // ✅ CORRIGÉ: Sauvegarder une bourse (POST avec paramètre PATH)
+    // ✅ Sauvegarder une bourse (POST avec paramètre PATH)
     saveScholarship: async (scholarshipId) => {
         try {
-            // L'API utilise le paramètre PATH, pas QUERY
             const response = await api.post(`/users/me/scholarship/${scholarshipId}`);
             console.log('✅ Bourse sauvegardée:', response.data);
             return response.data;
@@ -72,11 +25,11 @@ export const bourseService = {
         }
     },
 
-    // ✅ CORRIGÉ: Supprimer une bourse des favoris (DELETE avec paramètre path)
+    // ✅ Supprimer une bourse (DELETE avec paramètre PATH)
     removeSavedScholarship: async (scholarshipId) => {
         try {
             const response = await api.delete(`/users/me/scholarship/${scholarshipId}`);
-            console.log('✅ Bourse supprimée des favoris:', response.data);
+            console.log('✅ Bourse supprimée:', response.data);
             return response.data;
         } catch (error) {
             console.error('❌ Erreur suppression bourse:', error);
@@ -84,7 +37,7 @@ export const bourseService = {
         }
     },
 
-    // ✅ CORRIGÉ: Récupérer une bourse spécifique (GET avec paramètre QUERY)
+    // ✅ Récupérer UNE bourse spécifique (GET avec paramètre QUERY)
     getSpecificSavedScholarship: async (scholarshipId) => {
         try {
             const response = await api.get('/users/me/scholarship', {
@@ -93,33 +46,107 @@ export const bourseService = {
             console.log('✅ Bourse spécifique récupérée:', response.data);
             return response.data;
         } catch (error) {
-            console.error('❌ Erreur récupération bourse spécifique:', error);
+            console.error('❌ Erreur récupération bourse:', error);
             throw error;
         }
     },
 
-    // ⚠️ NOTE: Cet endpoint N'EXISTE PAS dans votre API
-    // Vous devez gérer cela différemment
-    getSavedScholarships: async () => {
+    // ✅ Récupérer TOUTES les bourses sauvegardées en les récupérant une par une
+    getAllSavedScholarships: async () => {
         try {
-            // Solution 1: Récupérer depuis localStorage
+            // 1. Récupérer les IDs depuis localStorage
             const localSaved = localStorage.getItem('savedScholarships');
-            if (localSaved) {
+            if (!localSaved) {
+                return [];
+            }
+            
+            const savedIds = JSON.parse(localSaved);
+            if (savedIds.length === 0) {
+                return [];
+            }
+            
+            console.log(`📚 Récupération de ${savedIds.length} bourses depuis la base de données...`);
+            
+            // 2. Récupérer chaque bourse individuellement depuis l'API
+            const scholarships = [];
+            const errors = [];
+            
+            for (const item of savedIds) {
                 try {
-                    return JSON.parse(localSaved);
-                } catch (e) {
-                    return [];
+                    const scholarshipId = item.id || item;
+                    const response = await bourseService.getSpecificSavedScholarship(scholarshipId);
+                    
+                    if (response && response.data) {
+                        // Combiner les données de l'API avec les données locales
+                        const apiData = response.data;
+                        scholarships.push({
+                            id: apiData.id || scholarshipId,
+                            title: apiData.title || apiData.name || item.title || 'Bourse',
+                            description: apiData.description || item.description || '',
+                            country: apiData.country || item.country || '',
+                            university: apiData.university || item.university || '',
+                            type: apiData.type || item.type || '',
+                            level: apiData.level || item.level || '',
+                            amount: apiData.amount || item.amount || '',
+                            link: apiData.link || apiData.applicationUrl || item.link || '',
+                            emoji: apiData.emoji || item.emoji || '🎓',
+                            savedAt: item.savedAt || new Date().toISOString(),
+                            // Conserver les données locales si l'API ne les a pas
+                            ...item,
+                            // Surcharger avec les données de l'API si disponibles
+                            ...(apiData.data || apiData)
+                        });
+                    } else {
+                        // Si l'API ne renvoie rien, utiliser les données locales
+                        scholarships.push(item);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Erreur récupération bourse ${item.id || item}:`, error);
+                    errors.push({ id: item.id || item, error: error.message });
+                    // En cas d'erreur, garder la version locale
+                    scholarships.push(item);
                 }
             }
             
-            // Solution 2: Si vous avez un endpoint pour lister toutes les bourses sauvegardées
-            // Mais d'après votre documentation, il n'existe pas
-            // const response = await api.get('/users/me/scholarships');
-            // return response.data;
+            console.log(`✅ ${scholarships.length} bourses récupérées (${errors.length} erreurs)`);
             
+            // Mettre à jour localStorage avec les données fraîches
+            localStorage.setItem('savedScholarships', JSON.stringify(scholarships));
+            
+            return scholarships;
+        } catch (error) {
+            console.error('❌ Erreur récupération toutes les bourses:', error);
+            // Fallback vers localStorage
+            const localSaved = localStorage.getItem('savedScholarships');
+            return localSaved ? JSON.parse(localSaved) : [];
+        }
+    },
+
+    // ✅ Vérifier si une bourse est sauvegardée (en utilisant l'API)
+    isScholarshipSaved: async (scholarshipId) => {
+        try {
+            await bourseService.getSpecificSavedScholarship(scholarshipId);
+            return true;
+        } catch (error) {
+            if (error.response?.status === 404) {
+                return false;
+            }
+            // En cas d'erreur, vérifier dans localStorage
+            const saved = bourseService.getSavedScholarships();
+            return saved.some(s => s.id === scholarshipId);
+        }
+    },
+
+    // ✅ Récupérer depuis localStorage (rapide)
+    getSavedScholarships: () => {
+        try {
+            const localSaved = localStorage.getItem('savedScholarships');
+            if (localSaved) {
+                return JSON.parse(localSaved);
+            }
             return [];
         } catch (error) {
-            console.error('❌ Erreur chargement bourses sauvegardées:', error);
+            console.error('❌ Erreur chargement bourses locales:', error);
             return [];
         }
     }
