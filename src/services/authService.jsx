@@ -1,34 +1,72 @@
-// src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://api-orientation-production.up.railway.app/api/v1';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 const api = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 15000,
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
     },
 });
 
-// ⚠️ AJOUTE CET INTERCEPTEUR POUR VOIR LES REQUÊTES
+// ✅ Interceptor pour ajouter le token à chaque requête
 api.interceptors.request.use(
     (config) => {
-        console.log('🚀 Requête sortante:', config.method.toUpperCase(), config.url);
-        console.log('📦 Paramètres:', config.params);
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        return Promise.reject(error);
+    }
 );
 
+// ✅ Interceptor pour gérer les erreurs de token
 api.interceptors.response.use(
-    (response) => {
-        console.log('✅ Réponse reçue:', response.status, response.config.url);
-        return response;
-    },
-    (error) => {
-        console.error('❌ Erreur réponse:', error.response?.status, error.response?.data);
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        // Si l'erreur est "Invalid or expired token" et qu'on n'a pas encore essayé de rafraîchir
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            error.response?.data?.message?.includes('expired') ||
+            error.response?.data?.message?.includes('Invalid token')
+        ) {
+            originalRequest._retry = true;
+
+            try {
+                // Essayer de rafraîchir le token
+                const refreshToken = localStorage.getItem('refreshToken');
+                if (!refreshToken) {
+                    throw new Error('No refresh token');
+                }
+
+                const response = await axios.post(`${API_URL}/auth/refresh-token`, {
+                    refreshToken,
+                });
+
+                const newToken = response.data.token;
+                localStorage.setItem('token', newToken);
+
+                // Mettre à jour le header et réessayer la requête originale
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                // Si le refresh échoue, déconnecter l'utilisateur
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('user');
+                
+                // Rediriger vers la page de connexion
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
+        }
+
         return Promise.reject(error);
     }
 );
