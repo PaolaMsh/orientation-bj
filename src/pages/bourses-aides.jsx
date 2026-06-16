@@ -51,7 +51,7 @@ const Scholarships = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalResults, setTotalResults] = useState(0);
     const [savedMessage, setSavedMessage] = useState(null);
-    const [searching, setSearching] = useState(false); // État pour le spinner
+    const [searching, setSearching] = useState(false);
 
     const itemsPerPage = 12;
 
@@ -132,41 +132,89 @@ const Scholarships = () => {
         };
     };
 
+    // Fonction corrigée pour sauvegarder une bourse
     const handleSaveScholarship = async (scholarship, e) => {
         e.stopPropagation();
         
         try {
             const token = localStorage.getItem('token');
             
+            // Vérifier d'abord si la bourse est déjà sauvegardée
+            const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
+            const alreadySaved = savedScholarships.some(s => s.id === scholarship.id);
+            
+            if (alreadySaved) {
+                setSavedMessage({ 
+                    id: scholarship.id, 
+                    text: 'ℹ️ Cette bourse est déjà dans vos favoris', 
+                    type: 'info' 
+                });
+                setTimeout(() => setSavedMessage(null), 3000);
+                return;
+            }
+            
             if (token) {
                 try {
-                    await api.post('/users/me/saved-scholarships', {
-                        scholarshipId: scholarship.id,
-                        scholarshipData: scholarship
-                    });
+                    // Appel API corrigé - passer uniquement l'ID
+                    await bourseService.saveScholarship(scholarship.id);
+                    
+                    // Sauvegarder aussi localement pour un accès hors ligne
+                    const scholarshipToSave = mapScholarshipForSaving(scholarship);
+                    const saved = saveScholarship(scholarshipToSave);
+                    
+                    if (saved) {
+                        setSavedMessage({ 
+                            id: scholarship.id, 
+                            text: '✓ Bourse enregistrée avec succès !', 
+                            type: 'success' 
+                        });
+                    }
                 } catch (apiError) {
-                    console.warn('API save failed, using local storage:', apiError);
+                    console.warn('Échec de la sauvegarde API, utilisation du stockage local uniquement:', apiError);
+                    
+                    // Vérifier le code d'erreur pour un message approprié
+                    if (apiError.response?.status === 403) {
+                        setSavedMessage({ 
+                            id: scholarship.id, 
+                            text: '⛔ Vous n\'avez pas les droits pour sauvegarder cette bourse', 
+                            type: 'error' 
+                        });
+                        setTimeout(() => setSavedMessage(null), 3000);
+                        return;
+                    }
+                    
+                    // Fallback vers le stockage local
+                    const scholarshipToSave = mapScholarshipForSaving(scholarship);
+                    const saved = saveScholarship(scholarshipToSave);
+                    if (saved) {
+                        setSavedMessage({ 
+                            id: scholarship.id, 
+                            text: '✓ Bourse enregistrée localement !', 
+                            type: 'success' 
+                        });
+                    }
+                }
+            } else {
+                // Pas de token, sauvegarde locale uniquement
+                const scholarshipToSave = mapScholarshipForSaving(scholarship);
+                const saved = saveScholarship(scholarshipToSave);
+                if (saved) {
+                    setSavedMessage({ 
+                        id: scholarship.id, 
+                        text: '✓ Bourse enregistrée ! (Connexion requise pour la synchronisation)', 
+                        type: 'success' 
+                    });
                 }
             }
             
-            const scholarshipToSave = mapScholarshipForSaving(scholarship);
-            const saved = saveScholarship(scholarshipToSave);
-            
-            if (saved) {
-                setSavedMessage({ id: scholarship.id, text: '✓ Bourse enregistrée !', type: 'success' });
-            } else {
-                setSavedMessage({ id: scholarship.id, text: 'ℹ️ Déjà dans vos favoris', type: 'info' });
-            }
             setTimeout(() => setSavedMessage(null), 3000);
         } catch (error) {
-            console.error('Error saving scholarship:', error);
-            const scholarshipToSave = mapScholarshipForSaving(scholarship);
-            const saved = saveScholarship(scholarshipToSave);
-            if (saved) {
-                setSavedMessage({ id: scholarship.id, text: '✓ Bourse enregistrée !', type: 'success' });
-            } else {
-                setSavedMessage({ id: scholarship.id, text: 'ℹ️ Déjà dans vos favoris', type: 'info' });
-            }
+            console.error('Erreur lors de la sauvegarde de la bourse:', error);
+            setSavedMessage({ 
+                id: scholarship.id, 
+                text: '❌ Erreur lors de l\'enregistrement. Veuillez réessayer.', 
+                type: 'error' 
+            });
             setTimeout(() => setSavedMessage(null), 3000);
         }
     };
@@ -211,10 +259,8 @@ const Scholarships = () => {
             let data = Array.isArray(results) ? results : results.data || [];
             let mappedResults = data.map(mapScholarshipData);
             
-            // Mettre à jour les bourses avec les résultats
             setAllScholarships(mappedResults);
             
-            // Mettre à jour les filtres
             const uniqueCountries = [...new Set(mappedResults.map(s => s.country).filter(Boolean))];
             const uniqueLevels = [...new Set(mappedResults.map(s => s.level).filter(Boolean))];
             
@@ -249,7 +295,7 @@ const Scholarships = () => {
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
     };
 
-    // Debounce pour la recherche (comme dans UniversitiesPage)
+    // Debounce pour la recherche
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if (searchTerm.trim() !== '') {
