@@ -1,3 +1,4 @@
+// src/pages/EspacePersonnel.js
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
@@ -270,27 +271,18 @@ function formatDate(value) {
 
 // Fonction pour vérifier si le test a vraiment été commencé
 function checkIfAssessmentStarted(assessment) {
-    // Vérifier s'il y a des réponses
     if (assessment.responses && assessment.responses.length > 0) {
         return true;
     }
-
-    // Vérifier les batches de réponses
     if (assessment.responseBatches && assessment.responseBatches.length > 0) {
         return true;
     }
-
-    // Vérifier le nombre de questions répondues
     if (assessment.answeredQuestions && assessment.answeredQuestions > 0) {
         return true;
     }
-
-    // Vérifier le pourcentage de complétion
     if (assessment.completionPercentage && assessment.completionPercentage > 0) {
         return true;
     }
-
-    // Vérifier les réponses dans les données brutes
     if (assessment.raw) {
         const raw = assessment.raw;
         if (raw.responses && raw.responses.length > 0) return true;
@@ -298,24 +290,17 @@ function checkIfAssessmentStarted(assessment) {
         if (raw.answeredQuestions && raw.answeredQuestions > 0) return true;
         if (raw.completionPercentage && raw.completionPercentage > 0) return true;
     }
-
     return false;
 }
 
 function normalizeStatus(status, assessment) {
     const normalized = String(status || '').toLowerCase();
-
-    // Si le statut est explicitement 'completed'
     if (normalized === 'completed') return 'completed';
-
-    // Si le statut est 'in_progress', vérifier si des réponses existent
     if (normalized === 'in_progress') {
         const hasStarted = checkIfAssessmentStarted(assessment);
         return hasStarted ? 'in_progress' : 'not_started';
     }
-
     if (normalized === 'abandoned') return 'abandoned';
-
     return 'unknown';
 }
 
@@ -502,29 +487,87 @@ export default function EspacePersonnel() {
     );
     const latestAssessment = assessments[0] || null;
 
-    // Fonction pour sauvegarder une bourse
+    // ✅ Fonction corrigée pour sauvegarder une bourse
     const saveScholarship = useCallback(async (scholarshipId) => {
         if (!scholarshipId) return;
 
         setSavingScholarship(scholarshipId);
 
         try {
-            const response = await api.post('/users/me/scholarship', null, {
-                params: { scholarshipId: scholarshipId },
-            });
-
+            console.log('📝 Sauvegarde de la bourse ID:', scholarshipId);
+            
+            // ✅ Correction: l'ID est dans le PATH, pas en query param
+            const response = await api.post(`/users/me/scholarship/${scholarshipId}`);
+            
+            console.log('✅ Bourse sauvegardée avec succès:', response.data);
+            
             setSaveMessage({
                 id: scholarshipId,
                 text: '✓ Bourse sauvegardée avec succès !',
                 type: 'success',
             });
+            
+            // Mettre à jour le localStorage
+            try {
+                const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
+                // Ajouter la bourse aux favoris si elle n'existe pas déjà
+                if (!savedScholarships.some(s => s.id === scholarshipId)) {
+                    // Récupérer les infos de la bourse depuis l'historique
+                    const bourse = bourses.find(b => b.id === scholarshipId);
+                    if (bourse) {
+                        savedScholarships.push({
+                            id: bourse.id,
+                            name: bourse.name,
+                            description: bourse.description,
+                            unlockedAt: bourse.unlockedAt,
+                            savedAt: new Date().toISOString(),
+                            emoji: bourse.emoji || '🎓',
+                            pointsValue: bourse.pointsValue || 0
+                        });
+                        localStorage.setItem('savedScholarships', JSON.stringify(savedScholarships));
+                        console.log('📦 Bourse ajoutée au localStorage');
+                    }
+                } else {
+                    console.log('ℹ️ Bourse déjà dans les favoris locaux');
+                }
+            } catch (storageError) {
+                console.warn('⚠️ Erreur de sauvegarde locale:', storageError);
+            }
+            
             setTimeout(() => setSaveMessage(null), 3000);
             return { success: true, data: response.data };
         } catch (error) {
-            console.error('Erreur lors de la sauvegarde:', error);
+            console.error('❌ Erreur lors de la sauvegarde:', error);
+            
+            let errorMessage = '✗ Erreur lors de la sauvegarde';
+            
+            if (error.response) {
+                console.error('Status:', error.response.status);
+                console.error('Data:', error.response.data);
+                
+                switch (error.response.status) {
+                    case 403:
+                        errorMessage = '⛔ Vous n\'avez pas les droits pour sauvegarder cette bourse';
+                        break;
+                    case 404:
+                        errorMessage = '❌ Bourse non trouvée';
+                        break;
+                    case 401:
+                        errorMessage = '🔒 Veuillez vous reconnecter';
+                        break;
+                    case 409:
+                        errorMessage = 'ℹ️ Cette bourse est déjà dans vos favoris';
+                        break;
+                    default:
+                        errorMessage = error.response.data?.message || '✗ Erreur lors de la sauvegarde';
+                }
+            } else if (error.request) {
+                errorMessage = '⚠️ Impossible de contacter le serveur. Vérifiez votre connexion.';
+            }
+            
             setSaveMessage({
                 id: scholarshipId,
-                text: '✗ Erreur lors de la sauvegarde',
+                text: errorMessage,
                 type: 'error',
             });
             setTimeout(() => setSaveMessage(null), 3000);
@@ -532,7 +575,7 @@ export default function EspacePersonnel() {
         } finally {
             setSavingScholarship(null);
         }
-    }, []);
+    }, [bourses]);
 
     const loadRecommendations = useCallback(async (assessmentId) => {
         if (!assessmentId) return null;
