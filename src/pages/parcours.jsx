@@ -178,9 +178,16 @@ const IconChart = () => (
 );
 
 const IconTrophy = () => (
-   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 17L12 22L20 17M4 12L12 17L20 12M12 2L4 7L12 12L20 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        </svg>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+            d="M4 17L12 22L20 17M4 12L12 17L20 12M12 2L4 7L12 12L20 7L12 2Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+        />
+    </svg>
 );
 
 const IconLoader = () => (
@@ -198,7 +205,14 @@ const IconLoader = () => (
 );
 
 const IconBookmark = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+    >
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
 );
@@ -212,8 +226,18 @@ const MENU_ITEMS = [
 ];
 
 const MONTHS = [
-    'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-    'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
+    'Jan',
+    'Fév',
+    'Mar',
+    'Avr',
+    'Mai',
+    'Juin',
+    'Juil',
+    'Aoû',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Déc',
 ];
 
 const AXIS_LABELS = {
@@ -250,22 +274,22 @@ function checkIfAssessmentStarted(assessment) {
     if (assessment.responses && assessment.responses.length > 0) {
         return true;
     }
-    
+
     // Vérifier les batches de réponses
     if (assessment.responseBatches && assessment.responseBatches.length > 0) {
         return true;
     }
-    
+
     // Vérifier le nombre de questions répondues
     if (assessment.answeredQuestions && assessment.answeredQuestions > 0) {
         return true;
     }
-    
+
     // Vérifier le pourcentage de complétion
     if (assessment.completionPercentage && assessment.completionPercentage > 0) {
         return true;
     }
-    
+
     // Vérifier les réponses dans les données brutes
     if (assessment.raw) {
         const raw = assessment.raw;
@@ -274,24 +298,24 @@ function checkIfAssessmentStarted(assessment) {
         if (raw.answeredQuestions && raw.answeredQuestions > 0) return true;
         if (raw.completionPercentage && raw.completionPercentage > 0) return true;
     }
-    
+
     return false;
 }
 
 function normalizeStatus(status, assessment) {
     const normalized = String(status || '').toLowerCase();
-    
+
     // Si le statut est explicitement 'completed'
     if (normalized === 'completed') return 'completed';
-    
+
     // Si le statut est 'in_progress', vérifier si des réponses existent
     if (normalized === 'in_progress') {
         const hasStarted = checkIfAssessmentStarted(assessment);
         return hasStarted ? 'in_progress' : 'not_started';
     }
-    
+
     if (normalized === 'abandoned') return 'abandoned';
-    
+
     return 'unknown';
 }
 
@@ -323,7 +347,9 @@ function flattenAssessments(historyData) {
                 shareToken: session.shareToken || null,
                 type: assessment.type || 'RIASEC',
                 title: buildAssessmentTitle(assessment),
-                date: formatDate(assessment.completedAt || assessment.startedAt || session.createdAt),
+                date: formatDate(
+                    assessment.completedAt || assessment.startedAt || session.createdAt,
+                ),
                 completedAt: assessment.completedAt || null,
                 startedAt: assessment.startedAt || null,
                 status: status,
@@ -352,7 +378,9 @@ function flattenAssessments(historyData) {
             shareToken: historyData?.shareToken || null,
             type: assessment.type || 'RIASEC',
             title: buildAssessmentTitle(assessment),
-            date: formatDate(assessment.completedAt || assessment.startedAt || historyData?.createdAt),
+            date: formatDate(
+                assessment.completedAt || assessment.startedAt || historyData?.createdAt,
+            ),
             completedAt: assessment.completedAt || null,
             startedAt: assessment.startedAt || null,
             status: status,
@@ -477,27 +505,27 @@ export default function EspacePersonnel() {
     // Fonction pour sauvegarder une bourse
     const saveScholarship = useCallback(async (scholarshipId) => {
         if (!scholarshipId) return;
-        
+
         setSavingScholarship(scholarshipId);
-        
+
         try {
             const response = await api.post('/users/me/scholarship', null, {
-                params: { scholarshipId: scholarshipId }
+                params: { scholarshipId: scholarshipId },
             });
-            
-            setSaveMessage({ 
-                id: scholarshipId, 
-                text: '✓ Bourse sauvegardée avec succès !', 
-                type: 'success' 
+
+            setSaveMessage({
+                id: scholarshipId,
+                text: '✓ Bourse sauvegardée avec succès !',
+                type: 'success',
             });
             setTimeout(() => setSaveMessage(null), 3000);
             return { success: true, data: response.data };
         } catch (error) {
             console.error('Erreur lors de la sauvegarde:', error);
-            setSaveMessage({ 
-                id: scholarshipId, 
-                text: '✗ Erreur lors de la sauvegarde', 
-                type: 'error' 
+            setSaveMessage({
+                id: scholarshipId,
+                text: '✗ Erreur lors de la sauvegarde',
+                type: 'error',
             });
             setTimeout(() => setSaveMessage(null), 3000);
             return { success: false, error: error.response?.data?.message || error.message };
@@ -508,19 +536,22 @@ export default function EspacePersonnel() {
 
     const loadRecommendations = useCallback(async (assessmentId) => {
         if (!assessmentId) return null;
-        
-        setLoadingRecos(prev => ({ ...prev, [assessmentId]: true }));
-        
+
+        setLoadingRecos((prev) => ({ ...prev, [assessmentId]: true }));
+
         try {
-            const response = await api.get(`/users/me/assessments/${assessmentId}/recommendations`, {
-                params: { limit: 10 }
-            });
+            const response = await api.get(
+                `/users/me/assessments/${assessmentId}/recommendations`,
+                {
+                    params: { limit: 10 },
+                },
+            );
             return response.data;
         } catch (error) {
             console.error('Erreur chargement recommandations:', error);
             return null;
         } finally {
-            setLoadingRecos(prev => ({ ...prev, [assessmentId]: false }));
+            setLoadingRecos((prev) => ({ ...prev, [assessmentId]: false }));
         }
     }, []);
 
@@ -530,7 +561,7 @@ export default function EspacePersonnel() {
                 if (!recommendations[assessment.id]) {
                     const recos = await loadRecommendations(assessment.assessmentId);
                     if (recos) {
-                        setRecommendations(prev => ({ ...prev, [assessment.id]: recos }));
+                        setRecommendations((prev) => ({ ...prev, [assessment.id]: recos }));
                     }
                 }
             });
@@ -780,15 +811,20 @@ export default function EspacePersonnel() {
                             </div>
 
                             {inProgressAssessments.length > 0 && (
-                                <div className="advice-card" style={{ marginTop: '1rem', borderLeft: '4px solid #f59e0b' }}>
+                                <div
+                                    className="advice-card"
+                                    style={{ marginTop: '1rem', borderLeft: '4px solid #f59e0b' }}
+                                >
                                     <h3>📝 Tests en cours</h3>
-                                    <p>Vous avez {inProgressAssessments.length} test(s) à terminer.</p>
-                                    <button 
-                                        className="new-test-btn" 
+                                    <p>
+                                        Vous avez {inProgressAssessments.length} test(s) à terminer.
+                                    </p>
+                                    <button
+                                        className="new-test-btn"
                                         onClick={resumeAssessment}
                                         style={{ marginTop: '0.5rem' }}
                                     >
-                                        Continuer un test
+                                        Continuer le test
                                     </button>
                                 </div>
                             )}
@@ -848,27 +884,14 @@ export default function EspacePersonnel() {
                                             </div>
 
                                             <div className="test-card-footer">
-                                                <button
-                                                    className="btn-view"
-                                                    onClick={() => openAssessment(assessment)}
-                                                >
-                                                    Voir les détails
-                                                </button>
                                                 {assessment.status === 'in_progress' && (
                                                     <button
-                                                        className="btn-resume"
+                                                        className="generate-btn"
                                                         onClick={resumeAssessment}
                                                     >
                                                         Continuer
                                                     </button>
                                                 )}
-                                                <button
-                                                    className="btn-view"
-                                                    onClick={() => exportAssessmentPdf(assessment)}
-                                                    disabled={savingPdfId === assessment.id}
-                                                >
-                                                    {savingPdfId === assessment.id ? 'Export...' : 'PDF'}
-                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -879,7 +902,7 @@ export default function EspacePersonnel() {
                                 <div className="advice-card" style={{ marginTop: '1rem' }}>
                                     <h4>ℹ️ Tests non commencés</h4>
                                     <p>
-                                        {notStartedAssessments.length} test(s) ont été créés mais 
+                                        {notStartedAssessments.length} test(s) ont été créés mais
                                         vous n'avez pas encore commencé à répondre aux questions.
                                     </p>
                                 </div>
@@ -907,7 +930,7 @@ export default function EspacePersonnel() {
                                     completedAssessments.map((assessment) => {
                                         const recos = recommendations[assessment.id];
                                         const isLoading = loadingRecos[assessment.id];
-                                        
+
                                         return (
                                             <div key={assessment.id} className="report-card">
                                                 <div className="report-icon">
@@ -924,82 +947,176 @@ export default function EspacePersonnel() {
                                                             {assessment.completionPercentage}%
                                                         </span>
                                                     </div>
-                                                    
+
                                                     {assessment.phase2Code && (
                                                         <div className="report-code-badge">
-                                                            <strong>Code RIASEC:</strong> {assessment.phase2Code}
+                                                            <strong>Code RIASEC:</strong>{' '}
+                                                            {assessment.phase2Code}
                                                         </div>
                                                     )}
-                                                    
+
                                                     <div className="report-recommendations">
                                                         {isLoading ? (
                                                             <div className="reco-loading">
                                                                 <div className="loader-small"></div>
-                                                                <span>Chargement des recommandations...</span>
+                                                                <span>
+                                                                    Chargement des
+                                                                    recommandations...
+                                                                </span>
                                                             </div>
                                                         ) : recos ? (
                                                             <>
-                                                                {recos.careers && recos.careers.length > 0 && (
-                                                                    <div className="reco-section">
-                                                                        <div className="reco-title">🎯 Métiers recommandés</div>
-                                                                        <ul className="reco-list">
-                                                                            {recos.careers.slice(0, 5).map((career, idx) => (
-                                                                                <li key={idx}>
-                                                                                    <span className="reco-icon">💼</span>
-                                                                                    {typeof career === 'string' ? career : career.name}
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-                                                                {recos.trainings && recos.trainings.length > 0 && (
-                                                                    <div className="reco-section">
-                                                                        <div className="reco-title">📚 Formations recommandées</div>
-                                                                        <ul className="reco-list">
-                                                                            {recos.trainings.slice(0, 5).map((training, idx) => (
-                                                                                <li key={idx}>
-                                                                                    <span className="reco-icon">🏫</span>
-                                                                                    {typeof training === 'string' ? training : training.name}
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-                                                                {recos.schools && recos.schools.length > 0 && (
-                                                                    <div className="reco-section">
-                                                                        <div className="reco-title">🎓 Écoles / Universités</div>
-                                                                        <ul className="reco-list">
-                                                                            {recos.schools.slice(0, 5).map((school, idx) => (
-                                                                                <li key={idx}>
-                                                                                    <span className="reco-icon">🏛️</span>
-                                                                                    {typeof school === 'string' ? school : school.name}
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-                                                                {recos.scholarships && recos.scholarships.length > 0 && (
-                                                                    <div className="reco-section">
-                                                                        <div className="reco-title">💰 Bourses disponibles</div>
-                                                                        <ul className="reco-list">
-                                                                            {recos.scholarships.slice(0, 3).map((scholarship, idx) => (
-                                                                                <li key={idx}>
-                                                                                    <span className="reco-icon">🎓</span>
-                                                                                    {typeof scholarship === 'string' ? scholarship : scholarship.name}
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
+                                                                {recos.careers &&
+                                                                    recos.careers.length > 0 && (
+                                                                        <div className="reco-section">
+                                                                            <div className="reco-title">
+                                                                                🎯 Métiers
+                                                                                recommandés
+                                                                            </div>
+                                                                            <ul className="reco-list">
+                                                                                {recos.careers
+                                                                                    .slice(0, 5)
+                                                                                    .map(
+                                                                                        (
+                                                                                            career,
+                                                                                            idx,
+                                                                                        ) => (
+                                                                                            <li
+                                                                                                key={
+                                                                                                    idx
+                                                                                                }
+                                                                                            >
+                                                                                                <span className="reco-icon">
+                                                                                                    💼
+                                                                                                </span>
+                                                                                                {typeof career ===
+                                                                                                'string'
+                                                                                                    ? career
+                                                                                                    : career.name}
+                                                                                            </li>
+                                                                                        ),
+                                                                                    )}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
+                                                                {recos.trainings &&
+                                                                    recos.trainings.length > 0 && (
+                                                                        <div className="reco-section">
+                                                                            <div className="reco-title">
+                                                                                📚 Formations
+                                                                                recommandées
+                                                                            </div>
+                                                                            <ul className="reco-list">
+                                                                                {recos.trainings
+                                                                                    .slice(0, 5)
+                                                                                    .map(
+                                                                                        (
+                                                                                            training,
+                                                                                            idx,
+                                                                                        ) => (
+                                                                                            <li
+                                                                                                key={
+                                                                                                    idx
+                                                                                                }
+                                                                                            >
+                                                                                                <span className="reco-icon">
+                                                                                                    🏫
+                                                                                                </span>
+                                                                                                {typeof training ===
+                                                                                                'string'
+                                                                                                    ? training
+                                                                                                    : training.name}
+                                                                                            </li>
+                                                                                        ),
+                                                                                    )}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
+                                                                {recos.schools &&
+                                                                    recos.schools.length > 0 && (
+                                                                        <div className="reco-section">
+                                                                            <div className="reco-title">
+                                                                                🎓 Écoles /
+                                                                                Universités
+                                                                            </div>
+                                                                            <ul className="reco-list">
+                                                                                {recos.schools
+                                                                                    .slice(0, 5)
+                                                                                    .map(
+                                                                                        (
+                                                                                            school,
+                                                                                            idx,
+                                                                                        ) => (
+                                                                                            <li
+                                                                                                key={
+                                                                                                    idx
+                                                                                                }
+                                                                                            >
+                                                                                                <span className="reco-icon">
+                                                                                                    🏛️
+                                                                                                </span>
+                                                                                                {typeof school ===
+                                                                                                'string'
+                                                                                                    ? school
+                                                                                                    : school.name}
+                                                                                            </li>
+                                                                                        ),
+                                                                                    )}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
+                                                                {recos.scholarships &&
+                                                                    recos.scholarships.length >
+                                                                        0 && (
+                                                                        <div className="reco-section">
+                                                                            <div className="reco-title">
+                                                                                💰 Bourses
+                                                                                disponibles
+                                                                            </div>
+                                                                            <ul className="reco-list">
+                                                                                {recos.scholarships
+                                                                                    .slice(0, 3)
+                                                                                    .map(
+                                                                                        (
+                                                                                            scholarship,
+                                                                                            idx,
+                                                                                        ) => (
+                                                                                            <li
+                                                                                                key={
+                                                                                                    idx
+                                                                                                }
+                                                                                            >
+                                                                                                <span className="reco-icon">
+                                                                                                    🎓
+                                                                                                </span>
+                                                                                                {typeof scholarship ===
+                                                                                                'string'
+                                                                                                    ? scholarship
+                                                                                                    : scholarship.name}
+                                                                                            </li>
+                                                                                        ),
+                                                                                    )}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
                                                             </>
                                                         ) : (
                                                             <div className="reco-empty">
-                                                                <button 
+                                                                <button
                                                                     className="load-reco-btn"
                                                                     onClick={async () => {
-                                                                        const data = await loadRecommendations(assessment.assessmentId);
+                                                                        const data =
+                                                                            await loadRecommendations(
+                                                                                assessment.assessmentId,
+                                                                            );
                                                                         if (data) {
-                                                                            setRecommendations(prev => ({ ...prev, [assessment.id]: data }));
+                                                                            setRecommendations(
+                                                                                (prev) => ({
+                                                                                    ...prev,
+                                                                                    [assessment.id]:
+                                                                                        data,
+                                                                                }),
+                                                                            );
                                                                         }
                                                                     }}
                                                                 >
@@ -1010,10 +1127,20 @@ export default function EspacePersonnel() {
                                                     </div>
                                                 </div>
                                                 <div className="report-actions">
-                                                    <button className="action-icon" onClick={() => openAssessment(assessment)} title="Voir">
+                                                    <button
+                                                        className="action-icon"
+                                                        onClick={() => openAssessment(assessment)}
+                                                        title="Voir"
+                                                    >
                                                         <IconEye />
                                                     </button>
-                                                    <button className="action-icon" onClick={() => exportAssessmentPdf(assessment)} title="Télécharger">
+                                                    <button
+                                                        className="action-icon"
+                                                        onClick={() =>
+                                                            exportAssessmentPdf(assessment)
+                                                        }
+                                                        title="Télécharger"
+                                                    >
                                                         <IconDownload />
                                                     </button>
                                                 </div>
@@ -1074,7 +1201,7 @@ export default function EspacePersonnel() {
                                                 </div>
                                             )}
                                             <div className="test-card-footer">
-                                                <button 
+                                                <button
                                                     className="save-scholarship-btn"
                                                     onClick={() => saveScholarship(bourse.id)}
                                                     disabled={savingScholarship === bourse.id}
@@ -1083,7 +1210,8 @@ export default function EspacePersonnel() {
                                                         <span className="btn-spinner"></span>
                                                     ) : (
                                                         <>
-                                                            <IconBookmark /> Sauvegarder cette bourse
+                                                            <IconBookmark /> Sauvegarder cette
+                                                            bourse
                                                         </>
                                                     )}
                                                 </button>
