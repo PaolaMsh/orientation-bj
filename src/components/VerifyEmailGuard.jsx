@@ -8,50 +8,37 @@ const VerifyEmailGuard = () => {
     const [countdown, setCountdown] = useState(3);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const hasRun = useRef(false); // évite double appel en React StrictMode
+    const hasRun = useRef(false);
 
-    const token =
-        searchParams.get('token') ||
-        searchParams.get('verificationToken') ||
-        searchParams.get('t');
+    // ⚠️ IMPORTANT : Vérifie comment le token est récupéré
+    const token = searchParams.get('token');
 
     useEffect(() => {
         if (hasRun.current) return;
         hasRun.current = true;
 
         const verifyAndRedirect = async () => {
+            console.log('🔍 Token récupéré:', token); // ← AJOUTE CETTE LIGNE
+
             if (!token) {
                 setStatus('error');
-                setErrorMessage(
-                    "Token de vérification manquant dans l'URL. Vérifie le lien envoyé par email.",
-                );
+                setErrorMessage("Token de vérification manquant dans l'URL.");
                 return;
             }
 
             try {
-                await verifyEmail(token);
+                console.log('📤 Envoi du token à l\'API...');
+                const response = await verifyEmail(token);
+                console.log('✅ Réponse API:', response);
+                
                 setStatus('success');
-
-                // Attendre que le backend finalise l'activation en DB
-                // avant de rediriger (évite le 403 "account not active")
-                const waitForActivation = () => new Promise((resolve) => setTimeout(resolve, 2000));
-                await waitForActivation();
-
-                let count = 3;
-                const timer = setInterval(() => {
-                    count -= 1;
-                    setCountdown(count);
-                    if (count <= 0) {
-                        clearInterval(timer);
-                        navigate('/auth/login', {
-                            state: {
-                                message: 'Email vérifié avec succès. Vous pouvez maintenant vous connecter.',
-                                verified: true,
-                            },
-                        });
-                    }
-                }, 1000);
+                setTimeout(() => {
+                    navigate('/auth/login', {
+                        state: { message: 'Email vérifié avec succès !' }
+                    });
+                }, 2000);
             } catch (error) {
+                console.error('❌ Erreur:', error);
                 setStatus('error');
                 setErrorMessage(error.message || 'Token invalide ou expiré.');
             }
@@ -73,22 +60,24 @@ const VerifyEmailGuard = () => {
         }}>
             {status === 'verifying' && (
                 <>
-                    <h2>Vérification de votre email…</h2>
+                    <h2>⏳ Vérification de votre email…</h2>
                     <p>Nous activons votre compte, veuillez patienter.</p>
+                    <p style={{ fontSize: '0.8rem', color: '#666' }}>
+                        Token: {token ? token.substring(0, 15) + '...' : 'Aucun token'}
+                    </p>
                 </>
             )}
 
             {status === 'success' && (
                 <>
                     <h2 style={{ color: '#1f7a1f' }}>✅ Email vérifié !</h2>
-                    <p>Redirection vers la connexion dans <strong>{countdown}</strong> seconde{countdown > 1 ? 's' : ''}…</p>
-                    <Link to="/auth/login">Aller à la connexion maintenant</Link>
+                    <p>Redirection vers la connexion…</p>
                 </>
             )}
 
             {status === 'error' && (
                 <>
-                    <h2 style={{ color: '#b42318' }}>Vérification échouée</h2>
+                    <h2 style={{ color: '#b42318' }}>❌ Vérification échouée</h2>
                     <p>{errorMessage}</p>
                     <Link to="/auth/login" className="toggle-link">
                         Retour à la connexion

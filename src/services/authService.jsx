@@ -1,38 +1,33 @@
-import axios from 'axios';
+// src/services/authService.js
+import api from './api';
 
-const FALLBACK_API_BASE_URL = 'https://api-orientation-production.up.railway.app/api/v1';
-const API_BASE_URL = import.meta.env.VITE_API_URL || FALLBACK_API_BASE_URL;
-
-const publicApi = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 10000,
-});
-
-/**
- * Verify email token with backend.
- * Calls GET /auth/verify-email?token=...
- * @param {string} token - verification token from the URL query string
- * @returns {Promise<any>} response data
- */
 export const verifyEmail = async (token) => {
+    console.log('🔑 verifyEmail appelé avec token:', token);
+    
     if (!token || typeof token !== 'string') {
         throw new Error('Token invalide');
     }
 
     try {
-        const response = await publicApi.get('/auth/verify-email', {
+        // ⚠️ IMPORTANT : Vérifie que l'URL est correcte
+        console.log('📡 Appel API: /auth/verify-email?token=' + token);
+        
+        const response = await api.get('/auth/verify-email', {
             params: { token },
         });
-
+        
+        console.log('✅ Réponse reçue:', response.data);
         return response.data;
     } catch (error) {
-        const apiError = error.response?.data;
-        if (apiError?.details?.length) {
-            throw new Error(apiError.details.join(', '));
+        console.error('❌ Erreur API:', error.response?.status, error.response?.data);
+        
+        // Message d'erreur plus clair
+        if (error.response?.status === 404) {
+            throw new Error('Le lien de vérification n\'existe pas ou a expiré.');
         }
-
-        throw new Error(apiError?.message || 'Token invalide ou expiré');
+        if (error.response?.status === 401) {
+            throw new Error('Token invalide ou expiré. Demandez un nouveau lien.');
+        }
+        throw new Error(error.response?.data?.message || 'Erreur lors de la vérification');
     }
 };
-
-export default { verifyEmail };

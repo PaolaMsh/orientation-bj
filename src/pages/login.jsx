@@ -1,3 +1,4 @@
+// src/pages/LoginPage.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
@@ -18,28 +19,27 @@ const LoginPage = () => {
     const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
 
     const getLoginErrorMessage = (err) => {
+        // Utiliser le message personnalisé de l'intercepteur
+        if (err.userMessage) return err.userMessage;
+        
         const status = err.response?.status;
-        const backendMessage = err.response?.data?.message?.trim();
+        const backendMessage = err.response?.data?.message;
 
         if (status === 403) {
-            if (backendMessage && /inactive|inactif|verify|vérifi|unverified/i.test(backendMessage)) {
-                return 'Compte inactif. Vérifiez votre email avant de vous connecter.';
-            }
-
             return backendMessage || 'Compte inactif. Vérifiez votre email avant de vous connecter.';
         }
-
         if (status === 401) {
             return backendMessage || 'Email ou mot de passe incorrect';
         }
-
+        if (status === 404) {
+            return 'Serveur indisponible. Réessayez plus tard.';
+        }
         return backendMessage || 'Impossible de se connecter pour le moment';
     };
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const verificationStatus = params.get('verification');
-
         if (verificationStatus === 'sent' && !infoMessage) {
             setInfoMessage('Un email de vérification a été envoyé. Consultez votre boîte mail.');
         }
@@ -56,8 +56,6 @@ const LoginPage = () => {
                 password,
             });
 
-            console.log('Réponse complète:', response.data);
-
             const { accessToken, refreshToken, data: userData } = response.data;
 
             const user = {
@@ -67,7 +65,6 @@ const LoginPage = () => {
             };
 
             login(user, accessToken);
-
             navigate('/accueil');
         } catch (error) {
             console.error('Erreur:', error.response?.data);
