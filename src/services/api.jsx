@@ -1,6 +1,10 @@
+// src/services/api.js
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+// ✅ Correction pour Vite - utiliser import.meta.env au lieu de process.env
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+console.log('🔗 API URL:', API_URL); // Pour déboguer
 
 const api = axios.create({
     baseURL: API_URL,
@@ -9,9 +13,12 @@ const api = axios.create({
     },
 });
 
-// ✅ Interceptor pour ajouter le token à chaque requête
+// Intercepteur pour ajouter le token
 api.interceptors.request.use(
     (config) => {
+        console.log(`🚀 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+        console.log('📦 Données:', config.data);
+        
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -23,23 +30,31 @@ api.interceptors.request.use(
     }
 );
 
-// ✅ Interceptor pour gérer les erreurs de token
+// Intercepteur pour gérer les erreurs
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        console.log('✅ Réponse reçue:', response.status);
+        return response;
+    },
     async (error) => {
+        console.error('❌ Erreur API:', error.message);
+        
+        if (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
+            console.error('⚠️ Le serveur backend n\'est pas accessible.');
+            console.error('🔗 URL utilisée:', API_URL);
+        }
+        
         const originalRequest = error.config;
 
-        // Si l'erreur est "Invalid or expired token" et qu'on n'a pas encore essayé de rafraîchir
         if (
             error.response?.status === 401 &&
             !originalRequest._retry &&
-            error.response?.data?.message?.includes('expired') ||
-            error.response?.data?.message?.includes('Invalid token')
+            (error.response?.data?.message?.includes('expired') ||
+            error.response?.data?.message?.includes('Invalid token'))
         ) {
             originalRequest._retry = true;
 
             try {
-                // Essayer de rafraîchir le token
                 const refreshToken = localStorage.getItem('refreshToken');
                 if (!refreshToken) {
                     throw new Error('No refresh token');
@@ -52,16 +67,12 @@ api.interceptors.response.use(
                 const newToken = response.data.token;
                 localStorage.setItem('token', newToken);
 
-                // Mettre à jour le header et réessayer la requête originale
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                // Si le refresh échoue, déconnecter l'utilisateur
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
-                
-                // Rediriger vers la page de connexion
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
