@@ -49,24 +49,6 @@ const IconGrid = ({ size = 18 }) => (
     </svg>
 );
 
-const IconHome = ({ size = 20 }) => (
-    <svg
-        width={size}
-        height={size}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-);
-
-const handlePrint = () => {
-    window.print();
-};
-
 function RapportPhase1() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -85,7 +67,7 @@ function RapportPhase1() {
                 const stateResults = location.state?.phaseResults;
                 if (stateResults) {
                     setRapportData(stateResults);
-                    await fetchRecommendations(stateResults.assessmentId);
+                    await fetchRecommendations(stateResults.assessmentId, stateResults.phase1Code);
                     return;
                 }
 
@@ -93,7 +75,7 @@ function RapportPhase1() {
                 if (storedReport) {
                     const parsed = JSON.parse(storedReport);
                     setRapportData(parsed);
-                    await fetchRecommendations(parsed.assessmentId);
+                    await fetchRecommendations(parsed.assessmentId, parsed.phase1Code);
                     return;
                 }
 
@@ -118,7 +100,7 @@ function RapportPhase1() {
 
                 const data = response?.data;
                 setRapportData(data);
-                await fetchRecommendations(assessmentId);
+                await fetchRecommendations(assessmentId, data?.phase1Code || data?.code);
             } catch (err) {
                 console.error('Erreur lors du chargement du rapport:', err);
                 setError(err.message || 'Erreur lors du chargement du rapport');
@@ -127,23 +109,20 @@ function RapportPhase1() {
             }
         };
 
-        const fetchRecommendations = async (assessmentId) => {
+        const fetchRecommendations = async (assessmentId, phase1Code) => {
             try {
-                // Récupérer le code RIASEC de la Phase 1
-                const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
-                const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
+                // ✅ Récupérer UNIQUEMENT la première lettre du code
+                const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'I';
+                const leadingLetter = String(code).charAt(0).toUpperCase();
 
-                console.log('Code RIASEC Phase 1:', phase1Code);
-                console.log('Première lettre (axe dominant):', leadingLetter);
+                console.log('Code Phase 1 complet:', code);
+                console.log('Lettre dominante (première lettre):', leadingLetter);
 
-                // Appeler le service avec le code RIASEC pour filtrer
                 const recoData = await recommendationService.getRiasecRecommendations(
                     assessmentId,
                     leadingLetter,
                 );
-                console.log("Recommandations pour l'axe", leadingLetter, ':', recoData);
 
-                // Extraire les recommandations pour l'axe dominant
                 const axisMapping = {
                     R: 'REALISTIC',
                     I: 'INVESTIGATIVE',
@@ -212,21 +191,26 @@ function RapportPhase1() {
         );
     }
 
-    const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
+    // ✅ Récupérer le code complet Phase 1 (ex: "CRI")
+    const fullCode = rapportData?.phase1Code || rapportData?.code || 'I';
+    
+    // ✅ Extraire UNIQUEMENT la première lettre (ex: "C")
+    const leadingLetter = String(fullCode).charAt(0).toUpperCase();
+    
+    // ✅ Déterminer l'axe à partir de la première lettre
     const axisFromCode = {
-        R: { code: 'REALISTIC', label: 'Réaliste' },
-        I: { code: 'INVESTIGATIVE', label: 'Investigateur' },
-        A: { code: 'ARTISTIC', label: 'Artistique' },
-        S: { code: 'SOCIAL', label: 'Social' },
-        E: { code: 'ENTERPRISING', label: 'Entreprenant' },
-        C: { code: 'CONVENTIONAL', label: 'Conventionnel' },
+        R: { code: 'REALISTIC', label: 'Réaliste', color: '#ef4444', icon: '🔧', bg: '#fef2f2' },
+        I: { code: 'INVESTIGATIVE', label: 'Investigateur', color: '#3b82f6', icon: '🔬', bg: '#eff6ff' },
+        A: { code: 'ARTISTIC', label: 'Artistique', color: '#ec4899', icon: '🎨', bg: '#fdf2f8' },
+        S: { code: 'SOCIAL', label: 'Social', color: '#10b981', icon: '👥', bg: '#ecfdf5' },
+        E: { code: 'ENTERPRISING', label: 'Entreprenant', color: '#f59e0b', icon: '💼', bg: '#fffbeb' },
+        C: { code: 'CONVENTIONAL', label: 'Conventionnel', color: '#8b5cf6', icon: '📋', bg: '#f5f3ff' },
     };
-    const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
-    const fallbackAxis = axisFromCode[leadingLetter] || axisFromCode.I;
-    const primaryAxis = rapportData.primaryAxis || {
-        ...fallbackAxis,
-        score: 100,
-    };
+    
+    const primaryAxis = axisFromCode[leadingLetter] || axisFromCode.I;
+    
+    // ✅ Code affiché = UNIQUEMENT la première lettre
+    const displayCode = leadingLetter;
 
     const definitions = {
         REALISTIC: {
@@ -271,14 +255,76 @@ function RapportPhase1() {
                         </div>
                     </div>
                 </div>
-                <div  style={{ padding: '2rem',display: 'flex', flexDirection: 'row',border: '1px solid #ddd' , boxShadow: '0 2px 5px rgba(0,0,0,0.1)', borderRadius: '10px', marginBottom: '2rem',marginTop: '2rem' }} className="ria-hero-section">
+
+                {/* ✅ Affichage de la 1ère lettre UNIQUEMENT */}
+                <div style={{ 
+                    padding: '2rem',
+                    display: 'flex', 
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    border: `3px solid ${primaryAxis.color}`,
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    borderRadius: '16px',
+                    marginBottom: '2rem',
+                    marginTop: '2rem',
+                    background: primaryAxis.bg || `${primaryAxis.color}10`,
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                }} className="ria-hero-section">
                     <div className="ria-section-header">
-                        <strong style={{ marginRight: '1rem' }} className="ria-section-title">Votre Profil Dominant</strong>
+                        <strong style={{ marginRight: '1rem', fontSize: '1.1rem' }} className="ria-section-title">
+                            Votre Profil Dominant
+                        </strong>
                     </div>
 
-                    <div  style={{ display: 'flex', flexDirection: 'row',marginRight: '1rem' }} className="ria-hero-card">
-                        <div style={{ marginRight: '1rem' }} className="ria-hero-score">{primaryAxis.label || 'Non déterminé'}</div>
-                        <div className="ria-hero-value">{primaryAxis.score || 0}/100</div>
+                    <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: '1.5rem',
+                        flexWrap: 'wrap',
+                    }} className="ria-hero-card">
+                        {/* ✅ UNIQUEMENT la première lettre en grand */}
+                        <div style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1.5rem',
+                        }}>
+                            <span style={{ 
+                                fontSize: '4.5rem',
+                                fontWeight: 'bold',
+                                color: primaryAxis.color,
+                                background: `${primaryAxis.color}20`,
+                                padding: '0.5rem 1.5rem',
+                                borderRadius: '16px',
+                                border: `3px solid ${primaryAxis.color}`,
+                                minWidth: '80px',
+                                textAlign: 'center',
+                                lineHeight: '1.2',
+                            }}>
+                                {displayCode}
+                            </span>
+                            <div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+                                    {primaryAxis.icon} {primaryAxis.label}
+                                </div>
+                                <div style={{ fontSize: '0.9rem', color: '#6b7280' }}>
+                                    Code complet : <strong>{fullCode}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style={{ 
+                            fontSize: '1.2rem',
+                            fontWeight: 'bold',
+                            color: primaryAxis.color,
+                            background: `${primaryAxis.color}20`,
+                            padding: '0.5rem 1.2rem',
+                            borderRadius: '8px',
+                        }}>
+                            {Math.round(rapportData?.primaryAxis?.score || rapportData?.score || 85)}/100
+                        </div>
                     </div>
                 </div>
 
@@ -297,9 +343,10 @@ function RapportPhase1() {
                         <IconSearch size={16} /> Interprétation personnalisée
                     </div>
                     <p className="ria-interp-text">
-                        Votre score ({primaryAxis.score}/100) indique une forte affinité avec l'axe{' '}
-                        {primaryAxis.label}. Vous vous épanouissez dans les environnements qui
-                        valorisent
+                        Votre profil dominant est <strong style={{ color: primaryAxis.color }}>
+                            {primaryAxis.label} ({displayCode})
+                        </strong>. 
+                        Vous vous épanouissez dans les environnements qui valorisent
                         {primaryAxis.label === 'Réaliste'
                             ? " l'action concrète et les résultats tangibles"
                             : primaryAxis.label === 'Entreprenant'
@@ -313,6 +360,10 @@ function RapportPhase1() {
                                     : " l'organisation et la précision"}
                         .
                     </p>
+                    <p style={{ marginTop: '0.5rem', color: '#6b7280', fontSize: '0.95rem' }}>
+                        <strong>Conseil :</strong> Explorez les métiers et formations 
+                        recommandés ci-dessous pour approfondir votre orientation.
+                    </p>
                 </div>
 
                 <div className="ria-def-card">
@@ -321,7 +372,7 @@ function RapportPhase1() {
                     </div>
                     <div className="ria-reco-grid">
                         <div>
-                            <div className="ria-reco-col-label">Formations</div>
+                            <div className="ria-reco-col-label">📚 Formations</div>
                             <div className="ria-chip-list">
                                 {recommendations.formations.length > 0 ? (
                                     recommendations.formations.map((f, i) => (
@@ -335,7 +386,7 @@ function RapportPhase1() {
                             </div>
                         </div>
                         <div>
-                            <div className="ria-reco-col-label">Métiers</div>
+                            <div className="ria-reco-col-label">💼 Métiers</div>
                             <div className="ria-chip-list">
                                 {recommendations.metiers.length > 0 ? (
                                     recommendations.metiers.map((m, i) => (
@@ -349,7 +400,7 @@ function RapportPhase1() {
                             </div>
                         </div>
                         <div>
-                            <div className="ria-reco-col-label">Écoles</div>
+                            <div className="ria-reco-col-label">🏛️ Écoles</div>
                             <div className="ria-chip-list">
                                 {recommendations.ecoles.length > 0 ? (
                                     recommendations.ecoles.map((e, i) => (
@@ -365,14 +416,81 @@ function RapportPhase1() {
                     </div>
                 </div>
 
-                <div className="Buttons">
-                    <button className="button" onClick={() => navigate('/tests-orientations')}>
+                <div className="Buttons" style={{ 
+                    display: 'flex', 
+                    gap: '1rem', 
+                    marginTop: '2rem',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                }}>
+                    <button 
+                        className="button" 
+                        onClick={() => navigate('/tests-orientations')}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: '#3b82f6',
+                            color: 'white',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#2563eb'}
+                        onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
+                    >
                         Nouveau test
                     </button>
 
-                   <button className="button" onClick={() => navigate('/universites-formations')}>
+                    <button 
+                        className="button" 
+                        onClick={() => navigate('/universites-formations')}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '8px',
+                            border: '2px solid #3b82f6',
+                            background: 'transparent',
+                            color: '#3b82f6',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.background = '#3b82f6';
+                            e.target.style.color = 'white';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.background = 'transparent';
+                            e.target.style.color = '#3b82f6';
+                        }}
+                    >
                         Voir les écoles
-                    </button>  
+                    </button>
+
+                    <button 
+                        className="button" 
+                        onClick={() => navigate('/espace-personnel')}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '8px',
+                            border: '2px solid #10b981',
+                            background: 'transparent',
+                            color: '#10b981',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.background = '#10b981';
+                            e.target.style.color = 'white';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.background = 'transparent';
+                            e.target.style.color = '#10b981';
+                        }}
+                    >
+                        Mon espace
+                    </button>
                 </div>
             </div>
         </div>
