@@ -1,33 +1,101 @@
-// src/services/authService.js
 import api from './api';
 
-export const verifyEmail = async (token) => {
-    console.log('🔑 verifyEmail appelé avec token:', token);
-    
-    if (!token || typeof token !== 'string') {
-        throw new Error('Token invalide');
-    }
+const authService = {
+    // ✅ Connexion
+    async login(email, password) {
+        try {
+            const response = await api.post('/auth/login', { email, password });
+            const data = response.data;
+            
+            // Stocker les tokens
+            if (data.token || data.accessToken) {
+                localStorage.setItem('token', data.token || data.accessToken);
+            }
+            if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
+            }
+            if (data.user) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    },
 
-    try {
-        // ⚠️ IMPORTANT : Vérifie que l'URL est correcte
-        console.log('📡 Appel API: /auth/verify-email?token=' + token);
-        
-        const response = await api.get('/auth/verify-email', {
-            params: { token },
-        });
-        
-        console.log('✅ Réponse reçue:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('❌ Erreur API:', error.response?.status, error.response?.data);
-        
-        // Message d'erreur plus clair
-        if (error.response?.status === 404) {
-            throw new Error('Le lien de vérification n\'existe pas ou a expiré.');
+    // ✅ Inscription
+    async register(userData) {
+        try {
+            const response = await api.post('/auth/register', userData);
+            return response.data;
+        } catch (error) {
+            console.error('Register error:', error);
+            throw error;
         }
-        if (error.response?.status === 401) {
-            throw new Error('Token invalide ou expiré. Demandez un nouveau lien.');
+    },
+
+    // ✅ Déconnexion
+    async logout() {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (refreshToken) {
+                await api.post('/auth/logout', { refreshToken });
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
         }
-        throw new Error(error.response?.data?.message || 'Erreur lors de la vérification');
+    },
+
+    // ✅ Rafraîchir le token manuellement
+    async refreshToken() {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                throw new Error('No refresh token');
+            }
+
+            const response = await api.post('/auth/refresh', { refreshToken });
+            const data = response.data;
+
+            if (data.token || data.accessToken) {
+                localStorage.setItem('token', data.token || data.accessToken);
+            }
+            if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Refresh token error:', error);
+            throw error;
+        }
+    },
+
+    // ✅ Vérifier si l'utilisateur est authentifié
+    isAuthenticated() {
+        const token = localStorage.getItem('token');
+        return !!token;
+    },
+
+    // ✅ Récupérer l'utilisateur courant
+    getCurrentUser() {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                return JSON.parse(userStr);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
     }
 };
+
+export default authService;
