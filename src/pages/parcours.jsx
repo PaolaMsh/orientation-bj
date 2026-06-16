@@ -457,7 +457,6 @@ export default function EspacePersonnel() {
     const [loadingRecos, setLoadingRecos] = useState({});
     const [savingScholarship, setSavingScholarship] = useState(null);
     const [saveMessage, setSaveMessage] = useState(null);
-    const [refreshKey, setRefreshKey] = useState(0); // Pour forcer le re-render
 
     const assessments = useMemo(() => flattenAssessments(historyData), [historyData]);
     const evolutionData = useMemo(() => buildEvolution(assessments), [assessments]);
@@ -488,22 +487,9 @@ export default function EspacePersonnel() {
     );
     const latestAssessment = assessments[0] || null;
 
-    // Fonction pour récupérer les bourses sauvegardées
-    const getSavedBourses = useCallback(() => {
-        try {
-            const saved = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-            return saved;
-        } catch (e) {
-            return [];
-        }
-    }, [refreshKey]);
-
     // ✅ Fonction corrigée pour sauvegarder une bourse
     const saveScholarship = useCallback(async (scholarshipId) => {
-        if (!scholarshipId) {
-            console.error('❌ scholarshipId est vide!');
-            return;
-        }
+        if (!scholarshipId) return;
 
         setSavingScholarship(scholarshipId);
 
@@ -515,37 +501,38 @@ export default function EspacePersonnel() {
             
             console.log('✅ Bourse sauvegardée avec succès:', response.data);
             
-            // Sauvegarder dans localStorage
-            const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-            
-            // Vérifier si déjà sauvegardée
-            if (!savedScholarships.some(s => s.id === scholarshipId)) {
-                // Récupérer les infos de la bourse depuis l'historique
-                const bourse = bourses.find(b => b.id === scholarshipId);
-                if (bourse) {
-                    savedScholarships.push({
-                        id: bourse.id,
-                        name: bourse.name || 'Bourse',
-                        description: bourse.description || '',
-                        emoji: bourse.emoji || '🎓',
-                        pointsValue: bourse.pointsValue || 0,
-                        unlockedAt: bourse.unlockedAt,
-                        savedAt: new Date().toISOString(),
-                        link: bourse.link || bourse.applicationUrl || null
-                    });
-                    localStorage.setItem('savedScholarships', JSON.stringify(savedScholarships));
-                    console.log('💾 Bourse ajoutée au localStorage');
-                }
-            }
-            
             setSaveMessage({
                 id: scholarshipId,
                 text: '✓ Bourse sauvegardée avec succès !',
                 type: 'success',
             });
             
-            // Forcer le re-render
-            setRefreshKey(prev => prev + 1);
+            // Mettre à jour le localStorage
+            try {
+                const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
+                // Ajouter la bourse aux favoris si elle n'existe pas déjà
+                if (!savedScholarships.some(s => s.id === scholarshipId)) {
+                    // Récupérer les infos de la bourse depuis l'historique
+                    const bourse = bourses.find(b => b.id === scholarshipId);
+                    if (bourse) {
+                        savedScholarships.push({
+                            id: bourse.id,
+                            name: bourse.name,
+                            description: bourse.description,
+                            unlockedAt: bourse.unlockedAt,
+                            savedAt: new Date().toISOString(),
+                            emoji: bourse.emoji || '🎓',
+                            pointsValue: bourse.pointsValue || 0
+                        });
+                        localStorage.setItem('savedScholarships', JSON.stringify(savedScholarships));
+                        console.log('📦 Bourse ajoutée au localStorage');
+                    }
+                } else {
+                    console.log('ℹ️ Bourse déjà dans les favoris locaux');
+                }
+            } catch (storageError) {
+                console.warn('⚠️ Erreur de sauvegarde locale:', storageError);
+            }
             
             setTimeout(() => setSaveMessage(null), 3000);
             return { success: true, data: response.data };
@@ -589,27 +576,6 @@ export default function EspacePersonnel() {
             setSavingScholarship(null);
         }
     }, [bourses]);
-
-    // Fonction pour retirer une bourse des favoris
-    const removeScholarship = useCallback((scholarshipId) => {
-        try {
-            const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-            const updated = savedScholarships.filter(s => s.id !== scholarshipId);
-            localStorage.setItem('savedScholarships', JSON.stringify(updated));
-            
-            setSaveMessage({
-                id: scholarshipId,
-                text: '🗑️ Bourse retirée des favoris',
-                type: 'info'
-            });
-            
-            setRefreshKey(prev => prev + 1);
-            
-            setTimeout(() => setSaveMessage(null), 3000);
-        } catch (error) {
-            console.error('Erreur lors du retrait:', error);
-        }
-    }, []);
 
     const loadRecommendations = useCallback(async (assessmentId) => {
         if (!assessmentId) return null;
@@ -1233,219 +1199,68 @@ export default function EspacePersonnel() {
                         <section>
                             <div className="section-header">
                                 <h2>
-                                    <IconTrophy /> Mes bourses
+                                    <IconTrophy /> Bourses
                                 </h2>
-                                <button className="generate-btn" onClick={() => navigate('/scholarships')}>
-                                    Voir toutes les bourses
+                                <button className="generate-btn" onClick={resumeAssessment}>
+                                    Nouveau test
                                 </button>
                             </div>
 
-                            {/* ✅ SECTION 1: Bourses sauvegardées */}
-                            <div className="bourses-section">
-                                <h3 style={{ marginBottom: '1rem', color: '#1f2937', fontSize: '1.1rem' }}>
-                                    📚 Mes bourses sauvegardées
-                                </h3>
-                                
-                                {(() => {
-                                    const savedBourses = getSavedBourses();
-                                    console.log('📚 Bourses sauvegardées:', savedBourses);
-                                    
-                                    if (savedBourses.length === 0) {
-                                        return (
-                                            <div className="advice-card">
-                                                <p>Aucune bourse sauvegardée pour le moment.</p>
-                                                <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                                                    Explorez les bourses disponibles et sauvegardez celles qui vous intéressent.
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                    
-                                    return (
-                                        <div className="tests-list">
-                                            {savedBourses.map((bourse) => (
-                                                <div key={bourse.id} className="test-card saved" style={{ borderLeft: '4px solid #10b981' }}>
-                                                    <div className="test-card-header">
-                                                        <div>
-                                                            <h4>
-                                                                {bourse.emoji ? `${bourse.emoji} ` : '🎓 '}
-                                                                {bourse.name || 'Bourse sans nom'}
-                                                            </h4>
-                                                            <div className="test-type">
-                                                                {bourse.description || 'Aucune description'}
-                                                            </div>
-                                                        </div>
-                                                        <span className="status-badge completed">
-                                                            💾 Sauvegardée
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <div className="test-card-body">
-                                                        <div className="test-meta">
-                                                            <IconCalendar /> 
-                                                            Sauvegardée le {formatDate(bourse.savedAt)}
-                                                        </div>
-                                                        <div className="test-score-large">
-                                                            <span className="score-number">
-                                                                {bourse.pointsValue || '★'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="test-card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                        {bourse.link && (
-                                                            <button
-                                                                className="apply-btn"
-                                                                onClick={() => window.open(bourse.link, '_blank')}
-                                                                style={{
-                                                                    padding: '0.5rem 1rem',
-                                                                    background: '#059669',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '6px',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: '0.9rem',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '0.5rem'
-                                                                }}
-                                                            >
-                                                                🔗 Voir la bourse
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            className="remove-btn"
-                                                            onClick={() => removeScholarship(bourse.id)}
-                                                            style={{
-                                                                padding: '0.5rem 1rem',
-                                                                background: '#ef4444',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                borderRadius: '6px',
-                                                                cursor: 'pointer',
-                                                                fontSize: '0.9rem'
-                                                            }}
-                                                        >
-                                                            ❌ Retirer
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* ✅ Séparateur */}
-                            <hr style={{ margin: '2rem 0', border: 'none', borderTop: '2px dashed #e5e7eb' }} />
-
-                            {/* ✅ SECTION 2: Bourses débloquées */}
-                            <div className="bourses-section">
-                                <h3 style={{ marginBottom: '1rem', color: '#1f2937', fontSize: '1.1rem' }}>
-                                    🎯 Bourses débloquées par vos tests
-                                </h3>
-                                
-                                {!bourses || bourses.length === 0 ? (
+                            <div className="tests-list">
+                                {bourses.length === 0 ? (
                                     <div className="advice-card">
-                                        <p>Aucune bourse débloquée pour le moment.</p>
-                                        <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                                            Complétez des tests d'orientation pour débloquer des bourses.
-                                        </p>
+                                        <p>Aucune bourse disponible pour le moment.</p>
                                     </div>
                                 ) : (
-                                    <div className="tests-list">
-                                        {bourses.map((bourse) => {
-                                            const savedBourses = getSavedBourses();
-                                            const isSaved = savedBourses.some(s => s.id === bourse.id);
-                                            
-                                            return (
-                                                <div key={bourse.id} className="test-card">
-                                                    <div className="test-card-header">
-                                                        <div>
-                                                            <h4>
-                                                                {bourse.emoji ? `${bourse.emoji} ` : '🎓 '}
-                                                                {bourse.name || 'Bourse sans nom'}
-                                                            </h4>
-                                                            <div className="test-type">
-                                                                {bourse.description || 'Aucune description'}
-                                                            </div>
-                                                        </div>
-                                                        <span className={`status-badge ${isSaved ? 'completed' : 'in-progress'}`}>
-                                                            {isSaved ? '✅ Sauvegardée' : getBadgeLabel(bourse.rarity)}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <div className="test-card-body">
-                                                        <div className="test-meta">
-                                                            <IconCalendar /> 
-                                                            {bourse.unlockedAt ? formatDate(bourse.unlockedAt) : 'Date inconnue'}
-                                                        </div>
-                                                        <div className="test-score-large">
-                                                            <span className="score-number">
-                                                                {bourse.pointsValue || 0}
-                                                            </span>
-                                                            <span className="score-max">pts</span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {saveMessage && saveMessage.id === bourse.id && (
-                                                        <div className={`save-message ${saveMessage.type}`}>
-                                                            {saveMessage.text}
-                                                        </div>
-                                                    )}
-                                                    
-                                                    <div className="test-card-footer">
-                                                        {isSaved ? (
-                                                            <button
-                                                                className="remove-btn"
-                                                                onClick={() => removeScholarship(bourse.id)}
-                                                                style={{
-                                                                    padding: '0.5rem 1rem',
-                                                                    background: '#ef4444',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '6px',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: '0.9rem'
-                                                                }}
-                                                            >
-                                                                ❌ Retirer
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                className="save-scholarship-btn"
-                                                                onClick={() => {
-                                                                    console.log('🖱️ Sauvegarde de la bourse:', bourse.id);
-                                                                    saveScholarship(bourse.id);
-                                                                }}
-                                                                disabled={savingScholarship === bourse.id}
-                                                                style={{
-                                                                    padding: '0.5rem 1rem',
-                                                                    background: '#4f46e5',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '6px',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: '0.9rem',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '0.5rem'
-                                                                }}
-                                                            >
-                                                                {savingScholarship === bourse.id ? (
-                                                                    <span className="btn-spinner"></span>
-                                                                ) : (
-                                                                    <>
-                                                                        <IconBookmark /> Sauvegarder cette bourse
-                                                                    </>
-                                                                )}
-                                                            </button>
-                                                        )}
+                                    bourses.map((bourse) => (
+                                        <div key={bourse.id} className="test-card">
+                                            <div className="test-card-header">
+                                                <div>
+                                                    <h4>
+                                                        {bourse.emoji ? `${bourse.emoji} ` : ''}
+                                                        {bourse.name}
+                                                    </h4>
+                                                    <div className="test-type">
+                                                        {bourse.description}
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
+                                                <span className="status-badge completed">
+                                                    {getBadgeLabel(bourse.rarity)}
+                                                </span>
+                                            </div>
+                                            <div className="test-card-body">
+                                                <div className="test-meta">
+                                                    Débloqué le {formatDate(bourse.unlockedAt)}
+                                                </div>
+                                                <div className="test-score-large">
+                                                    <span className="score-number">
+                                                        {bourse.pointsValue}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {saveMessage && saveMessage.id === bourse.id && (
+                                                <div className={`save-message ${saveMessage.type}`}>
+                                                    {saveMessage.text}
+                                                </div>
+                                            )}
+                                            <div className="test-card-footer">
+                                                <button
+                                                    className="save-scholarship-btn"
+                                                    onClick={() => saveScholarship(bourse.id)}
+                                                    disabled={savingScholarship === bourse.id}
+                                                >
+                                                    {savingScholarship === bourse.id ? (
+                                                        <span className="btn-spinner"></span>
+                                                    ) : (
+                                                        <>
+                                                            <IconBookmark /> Sauvegarder cette
+                                                            bourse
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         </section>
