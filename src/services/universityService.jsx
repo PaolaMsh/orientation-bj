@@ -1,21 +1,26 @@
 import api from './api';
-import { getImageUrl } from '../utils/imageUtils';
+import { getFullImageUrl } from '../utils/imageUtils';
 
 export const universityService = {
     getAllUniversities: async () => {
         try {
             const response = await api.get('/universities');
-            console.log('Universités chargées:', response.data);
+            console.log('Universités reçues:', response.data);
             
-            // Ajouter l'URL complète de l'image à chaque université
-            const universitiesWithImages = response.data.map((uni) => ({
-                ...uni,
-                coverUrl: getImageUrl(uni.coverUrl),
-                // Garder une copie de l'URL brute si nécessaire
-                rawCoverUrl: uni.coverUrl
-            }));
+            // Traiter chaque université pour corriger les URLs des images
+            const processedData = response.data.map((university) => {
+                const processedUni = {
+                    ...university,
+                    // Ajouter l'URL complète de l'image
+                    imageUrl: getFullImageUrl(university.coverUrl),
+                    // Garder l'URL originale pour débogage
+                    rawCoverUrl: university.coverUrl
+                };
+                return processedUni;
+            });
             
-            return universitiesWithImages;
+            console.log('Universités traitées avec URLs d\'images:', processedData);
+            return processedData;
         } catch (error) {
             console.error('Erreur chargement universités:', error);
             throw error;
@@ -25,16 +30,15 @@ export const universityService = {
     getUniversityById: async (id) => {
         try {
             const response = await api.get(`/universities/${id}`);
-            console.log('Université chargée:', response.data);
-            
-            // Ajouter l'URL complète de l'image
-            const university = {
+            console.log('Université reçue:', response.data);
+
+            const processedData = {
                 ...response.data,
-                coverUrl: getImageUrl(response.data.coverUrl),
+                imageUrl: getFullImageUrl(response.data.coverUrl),
                 rawCoverUrl: response.data.coverUrl
             };
-            
-            return university;
+
+            return processedData;
         } catch (error) {
             console.error(`Erreur chargement université ${id}:`, error);
             throw error;
@@ -48,18 +52,18 @@ export const universityService = {
             }
 
             const url = `/universities/search/?q=${encodeURIComponent(query.trim())}`;
-            console.log('URL complète:', api.defaults.baseURL + url);
+            console.log('URL de recherche:', api.defaults.baseURL + url);
 
             const response = await api.get(url);
             
-            // Ajouter l'URL complète de l'image à chaque résultat
-            const universitiesWithImages = response.data.map((uni) => ({
-                ...uni,
-                coverUrl: getImageUrl(uni.coverUrl),
-                rawCoverUrl: uni.coverUrl
+            // Traiter les résultats de recherche
+            const processedData = response.data.map((university) => ({
+                ...university,
+                imageUrl: getFullImageUrl(university.coverUrl),
+                rawCoverUrl: university.coverUrl
             }));
             
-            return universitiesWithImages;
+            return processedData;
         } catch (error) {
             console.error(`Erreur lors de la recherche pour "${query}":`, error);
             console.error("Détails de l'erreur:", error.response?.data);

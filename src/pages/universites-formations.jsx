@@ -7,11 +7,9 @@ import {
     faEnvelope,
     faUniversity,
     faExternalLinkAlt,
-    faImage
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/universites-formations.css';
 import { universityService } from '../services/universityService';
-import { getImageUrl } from '../utils/imageUtils';
 
 const UniversitiesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +26,7 @@ const UniversitiesPage = () => {
             try {
                 setLoading(true);
                 const data = await universityService.getAllUniversities();
+                // Maintenant data contient déjà imageUrl
                 setUniversities(data);
                 setFilteredUniversities(data);
             } catch (err) {
@@ -85,20 +84,6 @@ const UniversitiesPage = () => {
         }));
     };
 
-    // Fonction pour obtenir l'URL de l'image avec fallback
-    const getImageSrc = (university) => {
-        if (imageErrors[university.id]) {
-            return '/images/default-university.jpg';
-        }
-        
-        // Si coverUrl est null ou undefined, utiliser l'image par défaut
-        if (!university.coverUrl) {
-            return '/images/default-university.jpg';
-        }
-        
-        return university.coverUrl;
-    };
-
     const visibleCount = showAll ? filteredUniversities.length : 15;
     const visibleUniversities = filteredUniversities.slice(0, visibleCount);
     const hasMore = filteredUniversities.length > 15 && !showAll;
@@ -107,10 +92,7 @@ const UniversitiesPage = () => {
         return (
             <div className="universities-page">
                 <div className="container" style={{ textAlign: 'center', padding: '50px' }}>
-                    <div className="loader">
-                        <FontAwesomeIcon icon={faUniversity} spin />
-                        <span style={{ marginLeft: '10px' }}>Chargement des universités...</span>
-                    </div>
+                    <div className="loader">Chargement des universités...</div>
                 </div>
             </div>
         );
@@ -157,18 +139,12 @@ const UniversitiesPage = () => {
                     {visibleUniversities.map((uni) => (
                         <div key={uni.id} className="uni-card">
                             <div className="uni-image">
-                                <img 
-                                    src={getImageSrc(uni)}
+                                <img
+                                    src={imageErrors[uni.id] ? '/images/default-university.jpg' : (uni.imageUrl || '/images/default-university.jpg')}
                                     alt={uni.name}
                                     onError={() => handleImageError(uni.id)}
                                     loading="lazy"
                                 />
-                                {/* Badge pour indiquer si l'image est par défaut */}
-                                {imageErrors[uni.id] && (
-                                    <div className="image-fallback-badge">
-                                        <FontAwesomeIcon icon={faImage} />
-                                    </div>
-                                )}
                             </div>
                             <div className="uni-content">
                                 <h3>{uni.name}</h3>
