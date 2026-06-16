@@ -7,9 +7,11 @@ import {
     faEnvelope,
     faUniversity,
     faExternalLinkAlt,
+    faImage
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/universites-formations.css';
 import { universityService } from '../services/universityService';
+import { getImageUrl } from '../utils/imageUtils';
 
 const UniversitiesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -19,25 +21,15 @@ const UniversitiesPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searching, setSearching] = useState(false);
+    const [imageErrors, setImageErrors] = useState({});
 
     useEffect(() => {
         const fetchUniversities = async () => {
             try {
                 setLoading(true);
                 const data = await universityService.getAllUniversities();
-                const universitiesWithCorrectImages = data.map((uni) => ({
-                    ...uni,
-
-                    image:
-                        uni.coverUrl &&
-                        !uni.coverUrl.startsWith('/') &&
-                        !uni.coverUrl.startsWith('http')
-                            ? `/${uni.coverUrl}`
-                            : uni.coverUrl,
-                }));
-
-                setUniversities(universitiesWithCorrectImages);
-                setFilteredUniversities(universitiesWithCorrectImages);
+                setUniversities(data);
+                setFilteredUniversities(data);
             } catch (err) {
                 console.error('Erreur:', err);
                 setError('Impossible de charger les universités');
@@ -54,22 +46,14 @@ const UniversitiesPage = () => {
     const performSearch = async (query) => {
         if (!query.trim()) {
             setFilteredUniversities(universities);
+            setShowAll(false);
             return;
         }
 
         try {
             setSearching(true);
             const results = await universityService.searchUniversities(query);
-            const resultsWithCorrectImages = results.map((uni) => ({
-                ...uni,
-                image:
-                    uni.coverUrl &&
-                    !uni.coverUrl.startsWith('/') &&
-                    !uni.coverUrl.startsWith('http')
-                        ? `/${uni.coverUrl}`
-                        : uni.coverUrl,
-            }));
-            setFilteredUniversities(resultsWithCorrectImages);
+            setFilteredUniversities(results);
             setShowAll(false);
         } catch (err) {
             console.error('Erreur de recherche:', err);
@@ -88,10 +72,32 @@ const UniversitiesPage = () => {
                 setFilteredUniversities(universities);
                 setShowAll(false);
             }
-        }, 500); 
+        }, 500);
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, universities]);
+
+    // Gestionnaire d'erreur d'image
+    const handleImageError = (universityId) => {
+        setImageErrors(prev => ({
+            ...prev,
+            [universityId]: true
+        }));
+    };
+
+    // Fonction pour obtenir l'URL de l'image avec fallback
+    const getImageSrc = (university) => {
+        if (imageErrors[university.id]) {
+            return '/images/default-university.jpg';
+        }
+        
+        // Si coverUrl est null ou undefined, utiliser l'image par défaut
+        if (!university.coverUrl) {
+            return '/images/default-university.jpg';
+        }
+        
+        return university.coverUrl;
+    };
 
     const visibleCount = showAll ? filteredUniversities.length : 15;
     const visibleUniversities = filteredUniversities.slice(0, visibleCount);
@@ -101,7 +107,10 @@ const UniversitiesPage = () => {
         return (
             <div className="universities-page">
                 <div className="container" style={{ textAlign: 'center', padding: '50px' }}>
-                    <div className="loader">Chargement des universités...</div>
+                    <div className="loader">
+                        <FontAwesomeIcon icon={faUniversity} spin />
+                        <span style={{ marginLeft: '10px' }}>Chargement des universités...</span>
+                    </div>
                 </div>
             </div>
         );
@@ -135,6 +144,7 @@ const UniversitiesPage = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                        {searching && <span className="search-spinner">...</span>}
                     </div>
                     <div className="results-count">
                         {filteredUniversities.length} résultat
@@ -147,7 +157,18 @@ const UniversitiesPage = () => {
                     {visibleUniversities.map((uni) => (
                         <div key={uni.id} className="uni-card">
                             <div className="uni-image">
-                                <img src={uni.image} alt={uni.name} />
+                                <img 
+                                    src={getImageSrc(uni)}
+                                    alt={uni.name}
+                                    onError={() => handleImageError(uni.id)}
+                                    loading="lazy"
+                                />
+                                {/* Badge pour indiquer si l'image est par défaut */}
+                                {imageErrors[uni.id] && (
+                                    <div className="image-fallback-badge">
+                                        <FontAwesomeIcon icon={faImage} />
+                                    </div>
+                                )}
                             </div>
                             <div className="uni-content">
                                 <h3>{uni.name}</h3>
@@ -157,11 +178,11 @@ const UniversitiesPage = () => {
                                 </div>
                                 <div className="uni-address">
                                     <FontAwesomeIcon icon={faMapMarkerAlt} />
-                                    <span>{uni.address}</span>
+                                    <span>{uni.address || 'Adresse non disponible'}</span>
                                 </div>
                                 <div className="uni-email">
                                     <FontAwesomeIcon icon={faEnvelope} />
-                                    <span>{uni.email}</span>
+                                    <span>{uni.email || 'Email non disponible'}</span>
                                 </div>
 
                                 <a
