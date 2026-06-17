@@ -63,20 +63,17 @@ export const recommendationService = {
                 recommendationService.fetchFormationRecommendations(assessmentId).catch(() => []),
             ]);
             
-            // Extraire les métiers
             const careersList = careersData.map(item => ({
                 name: item.career?.name,
                 codes: item.career?.riasecCodes || []
             })).filter(c => c.name);
             
-            // Extraire les formations
             const formationsList = formationsData.map(item => ({
                 name: item.formation?.name || item.formation?.title,
                 field: item.formation?.field,
                 school: item.university?.name
             })).filter(f => f.name);
             
-            // Construire les recommandations par axe
             const recommendationsByAxis = {};
             
             RIASEC_AXES.forEach(axis => {
@@ -87,7 +84,6 @@ export const recommendationService = {
                 };
             });
             
-            // Répartir les métiers selon leurs codes RIASEC
             careersList.forEach(career => {
                 if (career.codes.length === 0) {
                     if (!recommendationsByAxis.INVESTIGATIVE.metiers.includes(career.name)) {
@@ -103,15 +99,12 @@ export const recommendationService = {
                 }
             });
             
-            // Pour les formations et écoles, les associer par domaine (field)
             formationsList.forEach(formation => {
                 const formationField = (formation.field || '').toLowerCase();
                 
-                // Associer chaque formation à l'axe correspondant selon son domaine
                 RIASEC_AXES.forEach(axis => {
                     let shouldAdd = false;
                     
-                    // Vérifier si la formation correspond à l'axe
                     if (axis === 'REALISTIC' && (formationField.includes('ingenierie') || formationField.includes('technique') || formationField.includes('genie'))) {
                         shouldAdd = true;
                     } else if (axis === 'INVESTIGATIVE' && (formationField.includes('informatique') || formationField.includes('data') || formationField.includes('science'))) {
@@ -137,11 +130,9 @@ export const recommendationService = {
                 });
             });
             
-            // Si un code RIASEC est passé en paramètre, ne garder que les recommandations de cet axe
             if (riasecCode) {
                 const targetAxis = riasecMapping[riasecCode.toUpperCase()];
                 if (targetAxis && recommendationsByAxis[targetAxis]) {
-                    // Retourner uniquement les recommandations de l'axe demandé
                     return {
                         careers: recommendationsByAxis[targetAxis].metiers,
                         formations: recommendationsByAxis[targetAxis].formations,
@@ -152,7 +143,6 @@ export const recommendationService = {
                 }
             }
             
-            // Limiter à 10 éléments par axe
             RIASEC_AXES.forEach(axis => {
                 recommendationsByAxis[axis].metiers = [...new Set(recommendationsByAxis[axis].metiers)].slice(0, 10);
                 recommendationsByAxis[axis].formations = [...new Set(recommendationsByAxis[axis].formations)].slice(0, 10);
