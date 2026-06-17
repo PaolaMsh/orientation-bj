@@ -189,7 +189,7 @@ const Scholarships = () => {
                     if (saved) {
                         setSavedMessage({ 
                             id: scholarship.id, 
-                            text: '✓ Bourse enregistrée localement !', 
+                            text: '✓ Bourse enregistrée !', 
                             type: 'success' 
                         });
                     }
