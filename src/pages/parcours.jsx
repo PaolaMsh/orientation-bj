@@ -4,7 +4,6 @@ import { jsPDF } from 'jspdf';
 import '../styles/parcours.css';
 import api from '../services/api';
 import { bourseService } from '../services/bourseService';
-import { faGlobe, faUniversity, faMoneyBill, faBookmark, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 
 const IconUser = () => (
     <svg
@@ -903,238 +902,169 @@ export default function EspacePersonnel() {
                         </section>
                     )}
 
-
-{/* ✅ SECTION BOURSES CORRIGÉE AVEC RÉCUPÉRATION DEPUIS LA BASE DE DONNÉES */}
-{activeMenu === 'bourses' && (
-    <section>
-        <div className="section-header">
-            <h2>
-                <IconTrophy /> Mes bourses sauvegardées
-                {!loadingBourses && (
-                    <span style={{
-                        fontSize: '0.9rem',
-                        color: '#6b7280',
-                        fontWeight: 'normal',
-                        marginLeft: '0.75rem',
-                        background: '#f3f4f6',
-                        padding: '0.2rem 0.75rem',
-                        borderRadius: '20px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem'
-                    }}>
-                        <span style={{ fontWeight: 'bold', color: '#4f46e5' }}>
-                            {savedBourses.length}
-                        </span>
-                        bourse{savedBourses.length > 1 ? 's' : ''}
-                    </span>
-                )}
-            </h2>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button 
-                    className="generate-btn" 
-                    onClick={loadSavedScholarshipsFromDB}
-                    disabled={loadingBourses}
-                    style={{
-                        background: loadingBourses ? '#9ca3af' : '#6b7280',
-                        color: 'white',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        cursor: loadingBourses ? 'not-allowed' : 'pointer',
-                        fontSize: '0.9rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}
-                >
-                    
-                </button>
-                
-            </div>
-        </div>
-
-        {loadingBourses ? (
-            <div className="loading-container">
-                <div className="simple-loader"></div>
-                <p>Synchronisation des bourses sauvegardées...</p>
-                <p style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-                    {syncProgress.current} / {syncProgress.total} bourses
-                </p>
-            </div>
-        ) : (
-            <>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '1.5rem',
-                    padding: '0.75rem 1rem',
-                    background: '#f8fafc',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0'
-                }}>
-                    <span style={{ color: '#475569', fontSize: '0.95rem' }}>
-                        📊 Total des bourses sauvegardées
-                    </span>
-                    <span style={{
-                        fontSize: '1.5rem',
-                        fontWeight: 'bold',
-                        color: '#4f46e5',
-                        background: '#eef2ff',
-                        padding: '0.25rem 1rem',
-                        borderRadius: '8px'
-                    }}>
-                        {savedBourses.length}
-                    </span>
-                </div>
-
-                <div className="tests-list">
-                    {savedBourses.length === 0 ? (
-                        <div className="advice-card">
-                            <p>Aucune bourse sauvegardée pour le moment.</p>
-                            <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                                Explorez les bourses disponibles et sauvegardez celles qui vous intéressent.
-                            </p>
-                            <button 
-                                className="generate-btn" 
-                                onClick={() => navigate('/scholarships')}
-                                style={{ marginTop: '1rem' }}
-                            >
-                                Découvrir les bourses
-                            </button>
-                        </div>
-                    ) : (
-                        savedBourses.map((bourse) => (
-                            <div 
-                                key={bourse.id} 
-                                className="test-card saved" 
-                                style={{ 
-                                    borderLeft: '4px solid #10b981',
-                                    background: 'linear-gradient(to right, #f0fdf4, #ffffff)'
-                                }}
-                            >
-                                <div className="test-card-header">
-                                    <div>
-                                        <h4>
-                                            {bourse.emoji ? `${bourse.emoji} ` : <FontAwesomeIcon icon={faGraduationCap} />}
-                                            {bourse.title || bourse.name || 'Bourse sans nom'}
-                                        </h4>
-                                        <div className="test-type">
-                                            {bourse.description || 'Aucune description'}
-                                        </div>
-                                    </div>
-                                    <span className="status-badge completed" style={{ 
-                                        background: '#10b981', 
-                                        color: 'white',
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '20px',
-                                        fontSize: '0.8rem'
-                                    }}>
-                                        <FontAwesomeIcon icon={faBookmark} />
-                                         Sauvegardée
-                                    </span>
-                                </div>
+                    {/* ✅ SECTION BOURSES CORRIGÉE AVEC RÉCUPÉRATION DEPUIS LA BASE DE DONNÉES */}
+                    {activeMenu === 'bourses' && (
+                        <section>
+                            <div className="section-header">
+                                <h2>
+                                    <IconTrophy /> Mes bourses sauvegardées
+                                </h2>
                                 
-                                <div className="test-card-body">
-                                    <div className="test-meta">
-                                        <FontAwesomeIcon icon={faCalendar} /> 
-                                        Sauvegardée le {formatDate(bourse.savedAt || bourse.unlockedAt || new Date().toISOString())}
-                                    </div>
-                                    {bourse.amount && (
-                                        <div className="test-score-large">
-                                            <span className="score-number" style={{ fontSize: '1.2rem' }}>
-                                                {bourse.amount}
-                                            </span>
-                                            <span className="score-max"><FontAwesomeIcon icon={faMoneyBill} /></span>
-                                        </div>
-                                    )}
-                                    {bourse.country && (
-                                        <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                                            <FontAwesomeIcon icon={faGlobe} /> {bourse.country}
-                                        </div>
-                                    )}
-                                    {bourse.university && (
-                                        <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                                            <FontAwesomeIcon icon={faUniversity} /> {bourse.university}
-                                        </div>
-                                    )}
-                                    {bourse.type && (
-                                        <div style={{ 
-                                            fontSize: '0.8rem', 
-                                            color: '#4f46e5', 
-                                            marginTop: '0.25rem',
-                                            background: '#eef2ff',
-                                            padding: '0.2rem 0.6rem',
-                                            borderRadius: '12px',
-                                            display: 'inline-block'
-                                        }}>
-                                            {bourse.type}
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div className="test-card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    {bourse.link && (
-                                        <button
-                                            className="apply-btn"
-                                            onClick={() => window.open(bourse.link, '_blank')}
-                                            style={{
-                                                padding: '0.5rem 1rem',
-                                                background: '#059669',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                cursor: 'pointer',
-                                                fontSize: '0.9rem'
-                                            }}
-                                        >
-                                            🔗 Voir la bourse
-                                        </button>
-                                    )}
-                                    <button
-                                        className="remove-btn"
-                                        onClick={async () => {
-                                            try {
-                                                await bourseService.removeSavedScholarship(bourse.id);
-                                                console.log('✅ Bourse supprimée de l\'API');
-                                            } catch (error) {
-                                                console.warn('⚠️ Erreur suppression API:', error);
-                                            }
-                                            
-                                            const updated = savedBourses.filter(s => s.id !== bourse.id);
-                                            localStorage.setItem('savedScholarships', JSON.stringify(updated));
-                                            setSavedBourses(updated);
-                                            setRefreshKey(prev => prev + 1);
-                                            
-                                            setSaveMessage({
-                                                id: bourse.id,
-                                                text: ' Bourse retirée des favoris',
-                                                type: 'info'
-                                            });
-                                            setTimeout(() => setSaveMessage(null), 3000);
-                                        }}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: '#ef4444',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontSize: '0.9rem'
-                                        }}
-                                    >
-                                         Retirer
-                                    </button>
-                                </div>
                             </div>
-                        ))
+
+                            {loadingBourses ? (
+                                <div className="loading-container">
+                                    <div className="simple-loader"></div>
+                                    <p>Synchronisation des bourses sauvegardées...</p>
+                                    <p style={{ fontSize: '0.9rem', color: '#6b7280' }}>
+                                        {syncProgress.current} / {syncProgress.total} bourses
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="tests-list">
+                                    {savedBourses.length === 0 ? (
+                                        <div className="advice-card">
+                                            <p>Aucune bourse sauvegardée pour le moment.</p>
+                                            <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                                                Explorez les bourses disponibles et sauvegardez celles qui vous intéressent.
+                                            </p>
+                                            <button 
+                                                className="generate-btn" 
+                                                onClick={() => navigate('/scholarships')}
+                                                style={{ marginTop: '1rem' }}
+                                            >
+                                                Découvrir les bourses
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        savedBourses.map((bourse) => (
+                                            <div 
+                                                key={bourse.id} 
+                                                className="test-card saved" 
+                                                style={{ 
+                                                    borderLeft: '4px solid #10b981',
+                                                    background: 'linear-gradient(to right, #f0fdf4, #ffffff)'
+                                                }}
+                                            >
+                                                <div className="test-card-header">
+                                                    <div>
+                                                        <h4>
+                                                            {bourse.emoji ? `${bourse.emoji} ` : '🎓 '}
+                                                            {bourse.title || bourse.name || 'Bourse sans nom'}
+                                                        </h4>
+                                                        <div className="test-type">
+                                                            {bourse.description || 'Aucune description'}
+                                                        </div>
+                                                    </div>
+                                                    <span className="status-badge completed" style={{ 
+                                                        background: '#10b981', 
+                                                        color: 'white',
+                                                        padding: '0.25rem 0.75rem',
+                                                        borderRadius: '20px',
+                                                        fontSize: '0.8rem'
+                                                    }}>
+                                                        💾 Sauvegardée
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="test-card-body">
+                                                    <div className="test-meta">
+                                                        <IconCalendar /> 
+                                                        Sauvegardée le {formatDate(bourse.savedAt || bourse.unlockedAt || new Date().toISOString())}
+                                                    </div>
+                                                    {bourse.amount && (
+                                                        <div className="test-score-large">
+                                                            <span className="score-number" style={{ fontSize: '1.2rem' }}>
+                                                                {bourse.amount}
+                                                            </span>
+                                                            <span className="score-max">💰</span>
+                                                        </div>
+                                                    )}
+                                                    {bourse.country && (
+                                                        <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                                                            🌍 {bourse.country}
+                                                        </div>
+                                                    )}
+                                                    {bourse.university && (
+                                                        <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                                                            🏛️ {bourse.university}
+                                                        </div>
+                                                    )}
+                                                    {bourse.type && (
+                                                        <div style={{ 
+                                                            fontSize: '0.8rem', 
+                                                            color: '#4f46e5', 
+                                                            marginTop: '0.25rem',
+                                                            background: '#eef2ff',
+                                                            padding: '0.2rem 0.6rem',
+                                                            borderRadius: '12px',
+                                                            display: 'inline-block'
+                                                        }}>
+                                                            {bourse.type}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="test-card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                    {bourse.link && (
+                                                        <button
+                                                            className="apply-btn"
+                                                            onClick={() => window.open(bourse.link, '_blank')}
+                                                            style={{
+                                                                padding: '0.5rem 1rem',
+                                                                background: '#059669',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '6px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.9rem'
+                                                            }}
+                                                        >
+                                                            🔗 Voir la bourse
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className="remove-btn"
+                                                        onClick={async () => {
+                                                            try {
+                                                                await bourseService.removeSavedScholarship(bourse.id);
+                                                                console.log('✅ Bourse supprimée de l\'API');
+                                                            } catch (error) {
+                                                                console.warn('⚠️ Erreur suppression API:', error);
+                                                            }
+                                                            
+                                                            const updated = savedBourses.filter(s => s.id !== bourse.id);
+                                                            localStorage.setItem('savedScholarships', JSON.stringify(updated));
+                                                            setSavedBourses(updated);
+                                                            setRefreshKey(prev => prev + 1);
+                                                            
+                                                            setSaveMessage({
+                                                                id: bourse.id,
+                                                                text: '🗑️ Bourse retirée des favoris',
+                                                                type: 'info'
+                                                            });
+                                                            setTimeout(() => setSaveMessage(null), 3000);
+                                                        }}
+                                                        style={{
+                                                            padding: '0.5rem 1rem',
+                                                            background: '#ef4444',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '0.9rem'
+                                                        }}
+                                                    >
+                                                        ❌ Retirer
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </section>
                     )}
-                </div>
-            </>
-        )}
-    </section>
-)}
 
                     {activeMenu === 'profile' && (
                         <section>
