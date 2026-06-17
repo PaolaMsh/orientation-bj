@@ -366,7 +366,7 @@ function RapportPhase1() {
                 </div>
 
                 <div className="Buttons">
-                    <button className="button" onClick={() => navigate('/tests-orientations')}>
+                    <button className="button" onClick={() => navigate('/phaseText')}>
                         Nouveau test
                     </button>
 
