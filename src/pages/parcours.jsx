@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import '../styles/parcours.css';
 import api from '../services/api';
 import { bourseService } from '../services/bourseService';
+import { faGlobe, faUniversity, faMoneyBill, faBookmark, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 
 const IconUser = () => (
     <svg
@@ -902,7 +903,6 @@ export default function EspacePersonnel() {
                         </section>
                     )}
 
-                    // src/pages/EspacePersonnel.js - Section Bourses corrigée avec compteur
 
 {/* ✅ SECTION BOURSES CORRIGÉE AVEC RÉCUPÉRATION DEPUIS LA BASE DE DONNÉES */}
 {activeMenu === 'bourses' && (
@@ -948,30 +948,9 @@ export default function EspacePersonnel() {
                         gap: '0.5rem'
                     }}
                 >
-                    {loadingBourses ? (
-                        <>
-                            <span className="btn-spinner"></span>
-                            {syncProgress.current}/{syncProgress.total}
-                        </>
-                    ) : (
-                        '🔄 Synchroniser'
-                    )}
+                    
                 </button>
-                <button 
-                    className="generate-btn" 
-                    onClick={() => navigate('/scholarships')}
-                    style={{
-                        background: '#4f46e5',
-                        color: 'white',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                    }}
-                >
-                    + Voir toutes les bourses
-                </button>
+                
             </div>
         </div>
 
@@ -1039,7 +1018,7 @@ export default function EspacePersonnel() {
                                 <div className="test-card-header">
                                     <div>
                                         <h4>
-                                            {bourse.emoji ? `${bourse.emoji} ` : '🎓 '}
+                                            {bourse.emoji ? `${bourse.emoji} ` : <FontAwesomeIcon icon={faGraduationCap} />}
                                             {bourse.title || bourse.name || 'Bourse sans nom'}
                                         </h4>
                                         <div className="test-type">
@@ -1053,13 +1032,14 @@ export default function EspacePersonnel() {
                                         borderRadius: '20px',
                                         fontSize: '0.8rem'
                                     }}>
-                                        💾 Sauvegardée
+                                        <FontAwesomeIcon icon={faBookmark} />
+                                         Sauvegardée
                                     </span>
                                 </div>
                                 
                                 <div className="test-card-body">
                                     <div className="test-meta">
-                                        <IconCalendar /> 
+                                        <FontAwesomeIcon icon={faCalendar} /> 
                                         Sauvegardée le {formatDate(bourse.savedAt || bourse.unlockedAt || new Date().toISOString())}
                                     </div>
                                     {bourse.amount && (
@@ -1067,17 +1047,17 @@ export default function EspacePersonnel() {
                                             <span className="score-number" style={{ fontSize: '1.2rem' }}>
                                                 {bourse.amount}
                                             </span>
-                                            <span className="score-max">💰</span>
+                                            <span className="score-max"><FontAwesomeIcon icon={faMoneyBill} /></span>
                                         </div>
                                     )}
                                     {bourse.country && (
                                         <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                                            🌍 {bourse.country}
+                                            <FontAwesomeIcon icon={faGlobe} /> {bourse.country}
                                         </div>
                                     )}
                                     {bourse.university && (
                                         <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                                            🏛️ {bourse.university}
+                                            <FontAwesomeIcon icon={faUniversity} /> {bourse.university}
                                         </div>
                                     )}
                                     {bourse.type && (
@@ -1130,7 +1110,7 @@ export default function EspacePersonnel() {
                                             
                                             setSaveMessage({
                                                 id: bourse.id,
-                                                text: '🗑️ Bourse retirée des favoris',
+                                                text: ' Bourse retirée des favoris',
                                                 type: 'info'
                                             });
                                             setTimeout(() => setSaveMessage(null), 3000);
@@ -1145,7 +1125,7 @@ export default function EspacePersonnel() {
                                             fontSize: '0.9rem'
                                         }}
                                     >
-                                        ❌ Retirer
+                                         Retirer
                                     </button>
                                 </div>
                             </div>
