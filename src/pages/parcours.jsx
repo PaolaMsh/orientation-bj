@@ -964,7 +964,6 @@ export default function EspacePersonnel() {
             </div>
         ) : (
             <>
-                {/* ✅ AFFICHAGE DU NOMBRE DE BOURSES SAUVEGARDÉES */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
