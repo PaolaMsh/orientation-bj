@@ -132,14 +132,12 @@ const Scholarships = () => {
         };
     };
 
-    // Fonction corrigée pour sauvegarder une bourse
     const handleSaveScholarship = async (scholarship, e) => {
         e.stopPropagation();
         
         try {
             const token = localStorage.getItem('token');
             
-            // Vérifier d'abord si la bourse est déjà sauvegardée
             const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
             const alreadySaved = savedScholarships.some(s => s.id === scholarship.id);
             
@@ -155,10 +153,8 @@ const Scholarships = () => {
             
             if (token) {
                 try {
-                    // Appel API corrigé - passer uniquement l'ID
                     await bourseService.saveScholarship(scholarship.id);
                     
-                    // Sauvegarder aussi localement pour un accès hors ligne
                     const scholarshipToSave = mapScholarshipForSaving(scholarship);
                     const saved = saveScholarship(scholarshipToSave);
                     
@@ -172,7 +168,6 @@ const Scholarships = () => {
                 } catch (apiError) {
                     console.warn('Échec de la sauvegarde API, utilisation du stockage local uniquement:', apiError);
                     
-                    // Vérifier le code d'erreur pour un message approprié
                     if (apiError.response?.status === 403) {
                         setSavedMessage({ 
                             id: scholarship.id, 
@@ -183,7 +178,6 @@ const Scholarships = () => {
                         return;
                     }
                     
-                    // Fallback vers le stockage local
                     const scholarshipToSave = mapScholarshipForSaving(scholarship);
                     const saved = saveScholarship(scholarshipToSave);
                     if (saved) {
@@ -195,7 +189,6 @@ const Scholarships = () => {
                     }
                 }
             } else {
-                // Pas de token, sauvegarde locale uniquement
                 const scholarshipToSave = mapScholarshipForSaving(scholarship);
                 const saved = saveScholarship(scholarshipToSave);
                 if (saved) {
@@ -219,7 +212,6 @@ const Scholarships = () => {
         }
     };
 
-    // Récupérer toutes les bourses
     const fetchAllScholarships = async () => {
         setLoading(true);
         setError(null);
@@ -245,7 +237,6 @@ const Scholarships = () => {
         }
     };
 
-    // Fonction de recherche
     const performSearch = async (query) => {
         if (!query.trim()) {
             setAllScholarships([]);
@@ -275,7 +266,6 @@ const Scholarships = () => {
         }
     };
 
-    // Filtrer et paginer les résultats
     const filterAndPaginate = () => {
         let filtered = [...allScholarships];
         
@@ -295,7 +285,6 @@ const Scholarships = () => {
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
     };
 
-    // Debounce pour la recherche
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if (searchTerm.trim() !== '') {
@@ -308,19 +297,16 @@ const Scholarships = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    // Appliquer les filtres quand les données changent
     useEffect(() => {
         if (allScholarships.length > 0 || searchTerm === '') {
             filterAndPaginate();
         }
     }, [allScholarships, selectedCountry, selectedLevel, currentPage]);
 
-    // Réinitialiser la page quand les filtres changent
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, selectedCountry, selectedLevel]);
 
-    // Chargement initial
     useEffect(() => {
         fetchAllScholarships();
     }, []);
@@ -366,7 +352,6 @@ const Scholarships = () => {
 
     return (
         <div className="scholarships-page">
-            {/* Hero Section */}
             <section className="scholarships-hero">
                 <div className="hero-bg-pattern"></div>
                 <div className="container">
@@ -394,7 +379,6 @@ const Scholarships = () => {
                 </div>
             </section>
 
-            {/* Search & Filters */}
             <div className="search-section">
                 <div className="container">
                     <div className="search-container">
@@ -455,7 +439,6 @@ const Scholarships = () => {
                 </div>
             </div>
 
-            {/* Scholarships Grid */}
             <div className="scholarships-section">
                 <div className="container">
                     <div className="results-info">

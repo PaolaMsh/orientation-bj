@@ -5,6 +5,13 @@ import { jsPDF } from 'jspdf';
 import '../styles/parcours.css';
 import api from '../services/api';
 import { bourseService } from '../services/bourseService';
+import {
+    faGlobe,
+    faUniversity,
+    faMoneyBill,
+    faBookmark,
+    faGraduationCap,
+} from '@fortawesome/free-solid-svg-icons';
 
 const IconUser = () => (
     <svg
@@ -1244,9 +1251,13 @@ export default function EspacePersonnel() {
                                                 <div className="test-card-header">
                                                     <div>
                                                         <h4>
-                                                            {bourse.emoji
-                                                                ? `${bourse.emoji} `
-                                                                : '🎓 '}
+                                                            {bourse.emoji ? (
+                                                                `${bourse.emoji} `
+                                                            ) : (
+                                                                <FontAwesomeIcon
+                                                                    icon={faGraduationCap}
+                                                                />
+                                                            )}
                                                             {bourse.title ||
                                                                 bourse.name ||
                                                                 'Bourse sans nom'}
@@ -1266,7 +1277,8 @@ export default function EspacePersonnel() {
                                                             fontSize: '0.8rem',
                                                         }}
                                                     >
-                                                        💾 Sauvegardée
+                                                        <FontAwesomeIcon icon={faBookmark} />
+                                                        Sauvegardée
                                                     </span>
                                                 </div>
 
@@ -1288,7 +1300,11 @@ export default function EspacePersonnel() {
                                                             >
                                                                 {bourse.amount}
                                                             </span>
-                                                            <span className="score-max">💰</span>
+                                                            <span className="score-max">
+                                                                <FontAwesomeIcon
+                                                                    icon={faMoneyBillWave}
+                                                                />
+                                                            </span>
                                                         </div>
                                                     )}
                                                     {bourse.country && (
@@ -1299,7 +1315,10 @@ export default function EspacePersonnel() {
                                                                 marginTop: '0.5rem',
                                                             }}
                                                         >
-                                                            🌍 {bourse.country}
+                                                            <FontAwesomeIcon
+                                                                icon={faMapMarkerAlt}
+                                                            />
+                                                            {bourse.country}
                                                         </div>
                                                     )}
                                                     {bourse.university && (
@@ -1309,7 +1328,10 @@ export default function EspacePersonnel() {
                                                                 color: '#6b7280',
                                                             }}
                                                         >
-                                                            🏛️ {bourse.university}
+                                                            <FontAwesomeIcon
+                                                                icon={faGraduationCap}
+                                                            />
+                                                            {bourse.university}
                                                         </div>
                                                     )}
                                                     {bourse.type && (
@@ -1363,9 +1385,7 @@ export default function EspacePersonnel() {
                                                                 await bourseService.removeSavedScholarship(
                                                                     bourse.id,
                                                                 );
-                                                                console.log(
-                                                                    "✅ Bourse supprimée de l'API",
-                                                                );
+                                                                console.log('Bourse supprimée ');
                                                             } catch (error) {
                                                                 console.warn(
                                                                     '⚠️ Erreur suppression API:',
@@ -1385,7 +1405,7 @@ export default function EspacePersonnel() {
 
                                                             setSaveMessage({
                                                                 id: bourse.id,
-                                                                text: '🗑️ Bourse retirée des favoris',
+                                                                text: ' Bourse retirée des favoris',
                                                                 type: 'info',
                                                             });
                                                             setTimeout(
@@ -1403,7 +1423,7 @@ export default function EspacePersonnel() {
                                                             fontSize: '0.9rem',
                                                         }}
                                                     >
-                                                        ❌ Retirer
+                                                        Retirer
                                                     </button>
                                                 </div>
                                             </div>

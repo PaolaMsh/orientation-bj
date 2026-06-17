@@ -516,7 +516,6 @@ const MetiersPorteurs = () => {
             <section className="formation-section">
                 <div className="formation-container">
                     <h2 className="formation-title">
-                        <IconTarget size={24} style={{ marginRight: '10px' }} />
                         Comment se former ?
                     </h2>
                     <div className="formation-grid">
