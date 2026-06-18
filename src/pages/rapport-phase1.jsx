@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/orientations.css';
-import { recommendationService } from '../services/recommendationServe';
+import { recommendationService } from '../services/recommendationService';
 import api from '../services/api';
 
 const IconInfo = () => (
@@ -49,76 +49,110 @@ const IconGrid = ({ size = 18 }) => (
     </svg>
 );
 
-const IconHome = ({ size = 20 }) => (
-    <svg
-        width={size}
-        height={size}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-    >
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-);
-
-const handlePrint = () => {
-    window.print();
-};
-
 function RapportPhase1() {
     const navigate = useNavigate();
     const location = useLocation();
     const [rapportData, setRapportData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [assessmentId, setAssessmentId] = useState(null);
     const [recommendations, setRecommendations] = useState({
         formations: [],
         metiers: [],
         ecoles: [],
     });
 
+    // Fonction pour récupérer les recommandations
+    const fetchRecommendations = async (id, phase1Code) => {
+        try {
+            const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'IND';
+            const leadingLetter = String(code).charAt(0).toUpperCase();
+
+            console.log('Code RIASEC Phase 1:', code);
+            console.log('Première lettre (axe dominant):', leadingLetter);
+
+            const recoData = await recommendationService.getRiasecRecommendations(
+                id,
+                leadingLetter,
+            );
+            console.log("Recommandations pour l'axe", leadingLetter, ':', recoData);
+
+            const axisMapping = {
+                R: 'REALISTIC',
+                I: 'INVESTIGATIVE',
+                A: 'ARTISTIC',
+                S: 'SOCIAL',
+                E: 'ENTERPRISING',
+                C: 'CONVENTIONAL',
+            };
+            const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
+
+            const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
+
+            setRecommendations({
+                formations: axisRecos.formations || [],
+                metiers: axisRecos.metiers || [],
+                ecoles: axisRecos.ecoles || [],
+            });
+        } catch (err) {
+            console.error('Erreur chargement recommandations:', err);
+            setRecommendations({
+                formations: ['Information non disponible'],
+                metiers: ['Information non disponible'],
+                ecoles: ['Information non disponible'],
+            });
+        }
+    };
+
     useEffect(() => {
         const fetchRapport = async () => {
             try {
+                // 1. Vérifier si les données sont dans location.state
                 const stateResults = location.state?.phaseResults;
                 if (stateResults) {
                     setRapportData(stateResults);
-                    await fetchRecommendations(stateResults.assessmentId);
+                    const id = stateResults.assessmentId;
+                    setAssessmentId(id);
+                    await fetchRecommendations(id, stateResults.phase1Code);
                     return;
                 }
 
+                // 2. Vérifier si les données sont dans localStorage
                 const storedReport = localStorage.getItem('phase1_report_data');
                 if (storedReport) {
                     const parsed = JSON.parse(storedReport);
                     setRapportData(parsed);
-                    await fetchRecommendations(parsed.assessmentId);
+                    const id = parsed.assessmentId;
+                    setAssessmentId(id);
+                    await fetchRecommendations(id, parsed.phase1Code);
                     return;
                 }
 
-                const assessmentId =
+                // 3. Récupérer depuis l'API
+                const assessmentIdFromState = 
                     location.state?.assessmentId || localStorage.getItem('assessment_id');
-                const sessionToken =
+                const sessionToken = 
                     location.state?.sessionToken || localStorage.getItem('session_token');
 
-                if (!assessmentId) {
+                if (!assessmentIdFromState) {
                     setError('Identifiant de test non trouvé');
                     return;
                 }
 
+                setAssessmentId(assessmentIdFromState);
+
                 let response;
                 try {
-                    response = await api.get(`/results/by-assessment/${assessmentId}`);
+                    response = await api.get(`/results/by-assessment/${assessmentIdFromState}`);
                 } catch (byAssessmentErr) {
                     response = await api.get('/results/phase1', {
-                        params: { assessmentId, sessionToken },
+                        params: { assessmentId: assessmentIdFromState, sessionToken },
                     });
                 }
 
                 const data = response?.data;
                 setRapportData(data);
-                await fetchRecommendations(assessmentId);
+                await fetchRecommendations(assessmentIdFromState, data?.phase1Code);
             } catch (err) {
                 console.error('Erreur lors du chargement du rapport:', err);
                 setError(err.message || 'Erreur lors du chargement du rapport');
@@ -127,47 +161,40 @@ function RapportPhase1() {
             }
         };
 
-        const fetchRecommendations = async (assessmentId) => {
-            try {
-                // Récupérer le code RIASEC de la Phase 1
-                const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
-                const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
-
-                console.log('Code RIASEC Phase 1:', phase1Code);
-                console.log('Première lettre (axe dominant):', leadingLetter);
-
-                // Appeler le service avec le code RIASEC pour filtrer
-                const recoData = await recommendationService.getRiasecRecommendations(
-                    assessmentId,
-                    leadingLetter,
-                );
-                console.log("Recommandations pour l'axe", leadingLetter, ':', recoData);
-
-                // Extraire les recommandations pour l'axe dominant
-                const axisMapping = {
-                    R: 'REALISTIC',
-                    I: 'INVESTIGATIVE',
-                    A: 'ARTISTIC',
-                    S: 'SOCIAL',
-                    E: 'ENTERPRISING',
-                    C: 'CONVENTIONAL',
-                };
-                const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
-
-                const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
-
-                setRecommendations({
-                    formations: axisRecos.formations || [],
-                    metiers: axisRecos.metiers || [],
-                    ecoles: axisRecos.ecoles || [],
-                });
-            } catch (err) {
-                console.error('Erreur chargement recommandations:', err);
-            }
-        };
-
         fetchRapport();
     }, [location.state]);
+
+    // ✅ Fonction pour reprendre le test existant
+    const handleResumeTest = () => {
+        if (assessmentId) {
+            navigate('/phaseText', {
+                state: { 
+                    assessmentId: assessmentId,
+                    resume: true,
+                    phase: 'phase1'
+                }
+            });
+        } else {
+            navigate('/tests-orientations');
+        }
+    };
+
+    // ✅ Fonction pour refaire un nouveau test
+    const handleNewTest = () => {
+        // Supprimer les données de l'ancien test
+        localStorage.removeItem('phase1_report_data');
+        localStorage.removeItem('assessment_id');
+        localStorage.removeItem('phase1_responses');
+        localStorage.removeItem('phase1_progress');
+        
+        // Naviguer vers un nouveau test
+        navigate('/phaseText', {
+            state: { 
+                newTest: true,
+                phase: 'phase1'
+            }
+        });
+    };
 
     if (loading) {
         return (
@@ -187,8 +214,11 @@ function RapportPhase1() {
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p>Erreur: {error}</p>
-                        <button onClick={() => navigate('/tests-orientations')} className="button">
+                        <p style={{ color: '#dc2626' }}>Erreur: {error}</p>
+                        <button 
+                            onClick={() => navigate('/tests-orientations')} 
+                            className="button"
+                        >
                             Retour
                         </button>
                     </div>
@@ -203,7 +233,10 @@ function RapportPhase1() {
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <p>Aucune donnée disponible</p>
-                        <button onClick={() => navigate('/tests-orientations')} className="button">
+                        <button 
+                            onClick={() => navigate('/tests-orientations')} 
+                            className="button"
+                        >
                             Retour
                         </button>
                     </div>
@@ -271,14 +304,36 @@ function RapportPhase1() {
                         </div>
                     </div>
                 </div>
-                <div  style={{ padding: '2rem',display: 'flex', flexDirection: 'row',border: '1px solid #ddd' , boxShadow: '0 2px 5px rgba(0,0,0,0.1)', borderRadius: '10px', marginBottom: '2rem',marginTop: '2rem' }} className="ria-hero-section">
+                
+                <div 
+                    style={{ 
+                        padding: '2rem', 
+                        display: 'flex', 
+                        flexDirection: 'row', 
+                        border: '1px solid #ddd', 
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)', 
+                        borderRadius: '10px', 
+                        marginBottom: '2rem', 
+                        marginTop: '2rem' 
+                    }} 
+                    className="ria-hero-section"
+                >
                     <div className="ria-section-header">
-                        <strong style={{ marginRight: '1rem' }} className="ria-section-title">Votre Profil Dominant</strong>
+                        <strong style={{ marginRight: '1rem' }} className="ria-section-title">
+                            Votre Profil Dominant
+                        </strong>
                     </div>
 
-                    <div  style={{ display: 'flex', flexDirection: 'row',marginRight: '1rem' }} className="ria-hero-card">
-                        <div style={{ marginRight: '1rem' }} className="ria-hero-score">{primaryAxis.label || 'Non déterminé'}</div>
-                        <div className="ria-hero-value">{primaryAxis.score || 0}/100</div>
+                    <div 
+                        style={{ display: 'flex', flexDirection: 'row', marginRight: '1rem' }} 
+                        className="ria-hero-card"
+                    >
+                        <div style={{ marginRight: '1rem' }} className="ria-hero-score">
+                            {primaryAxis.label || 'Non déterminé'}
+                        </div>
+                        <div className="ria-hero-value">
+                            {primaryAxis.score || 0}/100
+                        </div>
                     </div>
                 </div>
 
@@ -365,12 +420,18 @@ function RapportPhase1() {
                     </div>
                 </div>
 
-                <div className="Buttons">
-                    <button className="button" onClick={() => navigate('/phaseText')}>
+                <div className="Buttons" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
+                    {/* ✅ Bouton pour reprendre le test existant */}
+                    <button className="button" onClick={handleResumeTest}>
+                        Reprendre le test
+                    </button>
+
+                    {/* ✅ Bouton pour refaire un nouveau test */}
+                    <button className="button" onClick={handleNewTest}>
                         Nouveau test
                     </button>
 
-                   <button className="button" onClick={() => navigate('/universites-formations')}>
+                    <button className="button" onClick={() => navigate('/universites-formations')}>
                         Voir les écoles
                     </button>  
                 </div>
