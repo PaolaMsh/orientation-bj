@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import '../styles/parcours.css';
 import api from '../services/api';
 import { bourseService } from '../services/bourseService';
+import { recommendationService } from '../services/recommendationService';
 
 const IconUser = () => (
     <svg
