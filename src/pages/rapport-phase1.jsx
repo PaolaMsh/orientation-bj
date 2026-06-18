@@ -49,6 +49,20 @@ const IconGrid = ({ size = 18 }) => (
     </svg>
 );
 
+const IconHome = ({ size = 20 }) => (
+    <svg
+        width={size}
+        height={size}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+    >
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+);
+
 function RapportPhase1() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -62,21 +76,24 @@ function RapportPhase1() {
         ecoles: [],
     });
 
-    // Fonction pour récupérer les recommandations
+    // ✅ Fonction pour récupérer les recommandations
     const fetchRecommendations = async (id, phase1Code) => {
         try {
+            // Récupérer le code RIASEC de la Phase 1
             const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'IND';
             const leadingLetter = String(code).charAt(0).toUpperCase();
 
             console.log('Code RIASEC Phase 1:', code);
             console.log('Première lettre (axe dominant):', leadingLetter);
 
+            // Appeler le service avec le code RIASEC pour filtrer
             const recoData = await recommendationService.getRiasecRecommendations(
                 id,
                 leadingLetter,
             );
             console.log("Recommandations pour l'axe", leadingLetter, ':', recoData);
 
+            // Extraire les recommandations pour l'axe dominant
             const axisMapping = {
                 R: 'REALISTIC',
                 I: 'INVESTIGATIVE',
@@ -96,6 +113,7 @@ function RapportPhase1() {
             });
         } catch (err) {
             console.error('Erreur chargement recommandations:', err);
+            // Ne pas bloquer l'affichage du rapport si les recommandations échouent
             setRecommendations({
                 formations: ['Information non disponible'],
                 metiers: ['Information non disponible'],
@@ -143,8 +161,10 @@ function RapportPhase1() {
 
                 let response;
                 try {
+                    // Essayer d'abord l'endpoint principal
                     response = await api.get(`/results/by-assessment/${assessmentIdFromState}`);
                 } catch (byAssessmentErr) {
+                    // Fallback vers l'endpoint phase1
                     response = await api.get('/results/phase1', {
                         params: { assessmentId: assessmentIdFromState, sessionToken },
                     });
@@ -164,9 +184,10 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
-    // ✅ Fonction pour reprendre le test existant
+    // ✅ Fonction pour reprendre le test
     const handleResumeTest = () => {
         if (assessmentId) {
+            // Naviguer vers le test avec l'ID de l'assessment
             navigate('/phaseText', {
                 state: { 
                     assessmentId: assessmentId,
@@ -175,18 +196,17 @@ function RapportPhase1() {
                 }
             });
         } else {
+            // Si pas d'ID, aller vers la page de sélection
             navigate('/tests-orientations');
         }
     };
 
-    // ✅ Fonction pour refaire un nouveau test
+    // ✅ Fonction pour recommencer un nouveau test
     const handleNewTest = () => {
         // Supprimer les données de l'ancien test
         localStorage.removeItem('phase1_report_data');
         localStorage.removeItem('assessment_id');
         localStorage.removeItem('phase1_responses');
-        localStorage.removeItem('phase1_progress');
-        
         // Naviguer vers un nouveau test
         navigate('/phaseText', {
             state: { 
@@ -218,6 +238,15 @@ function RapportPhase1() {
                         <button 
                             onClick={() => navigate('/tests-orientations')} 
                             className="button"
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                background: '#4f46e5',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                marginTop: '1rem'
+                            }}
                         >
                             Retour
                         </button>
@@ -236,6 +265,15 @@ function RapportPhase1() {
                         <button 
                             onClick={() => navigate('/tests-orientations')} 
                             className="button"
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                background: '#4f46e5',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                marginTop: '1rem'
+                            }}
                         >
                             Retour
                         </button>
@@ -420,24 +458,90 @@ function RapportPhase1() {
                     </div>
                 </div>
 
-                <div className="Buttons" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
+                <div className="Buttons" style={{ 
+                    display: 'flex', 
+                    gap: '1rem', 
+                    flexWrap: 'wrap', 
+                    marginTop: '2rem',
+                    justifyContent: 'center'
+                }}>
                     {/* ✅ Bouton pour reprendre le test existant */}
-                    <button className="button" onClick={handleResumeTest}>
-                        Reprendre le test
+                    <button 
+                        className="button" 
+                        onClick={handleResumeTest}
+                        style={{ 
+                            background: '#4f46e5',
+                            color: 'white',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        🔄 Reprendre le test
                     </button>
 
-                    {/* ✅ Bouton pour refaire un nouveau test */}
-                    <button className="button" onClick={handleNewTest}>
-                        Nouveau test
+                    {/* ✅ Bouton pour commencer un nouveau test */}
+                    <button 
+                        className="button" 
+                        onClick={handleNewTest}
+                        style={{ 
+                            background: '#10b981',
+                            color: 'white',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        ➕ Nouveau test
                     </button>
 
-                    <button className="button" onClick={() => navigate('/universites-formations')}>
-                        Voir les écoles
+                    <button 
+                        className="button" 
+                        onClick={() => navigate('/universites-formations')}
+                        style={{ 
+                            background: '#8b5cf6',
+                            color: 'white',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        🎓 Voir les écoles
                     </button>  
                 </div>
+
+                {/* ✅ Affichage de l'ID du test (utile pour le debug) */}
+                {assessmentId && (
+                    <div style={{ 
+                        marginTop: '1.5rem', 
+                        padding: '0.75rem',
+                        background: '#f3f4f6',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
+                        color: '#6b7280',
+                        textAlign: 'center'
+                    }}>
+                        ID du test : {assessmentId}
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-export default RapportPhase1;
+export default RapportPhase1
