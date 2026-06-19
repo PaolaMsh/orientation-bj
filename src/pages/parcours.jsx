@@ -5,7 +5,6 @@ import '../styles/parcours.css';
 import api from '../services/api';
 import { bourseService } from '../services/bourseService';
 import { recommendationService } from '../services/recommendationService';
-import { treasureMapService } from '../services/treasureMapService';
 
 const IconUser = () => (
     <svg
@@ -188,20 +187,7 @@ const MENU_ITEMS = [
     { id: 'profile', label: 'Profil', icon: <IconUser /> },
 ];
 
-const MONTHS = [
-    'Jan',
-    'Fév',
-    'Mar',
-    'Avr',
-    'Mai',
-    'Juin',
-    'Juil',
-    'Aoû',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Déc',
-];
+const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 const STATUS_LABELS = {
     completed: 'Terminé',
@@ -261,9 +247,7 @@ function buildAssessmentCode(assessment) {
 
 function flattenAssessments(historyData) {
     const sessions = Array.isArray(historyData?.sessions) ? historyData.sessions : [];
-    const directAssessments = Array.isArray(historyData?.assessments)
-        ? historyData.assessments
-        : [];
+    const directAssessments = Array.isArray(historyData?.assessments) ? historyData.assessments : [];
 
     const sessionAssessments = sessions.flatMap((session) => {
         const assessments = Array.isArray(session.assessments) ? session.assessments : [];
@@ -276,9 +260,7 @@ function flattenAssessments(historyData) {
                 shareToken: session.shareToken || null,
                 type: assessment.type || 'RIASEC',
                 title: buildAssessmentTitle(assessment),
-                date: formatDate(
-                    assessment.completedAt || assessment.startedAt || session.createdAt,
-                ),
+                date: formatDate(assessment.completedAt || assessment.startedAt || session.createdAt),
                 completedAt: assessment.completedAt || null,
                 startedAt: assessment.startedAt || null,
                 status: status,
@@ -307,9 +289,7 @@ function flattenAssessments(historyData) {
             shareToken: historyData?.shareToken || null,
             type: assessment.type || 'RIASEC',
             title: buildAssessmentTitle(assessment),
-            date: formatDate(
-                assessment.completedAt || assessment.startedAt || historyData?.createdAt,
-            ),
+            date: formatDate(assessment.completedAt || assessment.startedAt || historyData?.createdAt),
             completedAt: assessment.completedAt || null,
             startedAt: assessment.startedAt || null,
             status: status,
@@ -338,26 +318,14 @@ function flattenAssessments(historyData) {
 
 function buildEvolution(assessments) {
     const completed = assessments.filter((assessment) => assessment.status === 'completed');
-    const averageScore =
-        completed.length > 0
-            ? Math.round(
-                  completed.reduce(
-                      (sum, assessment) => sum + Number(assessment.completionPercentage || 0),
-                      0,
-                  ) / completed.length,
-              )
-            : 0;
-    const bestScore =
-        completed.length > 0
-            ? Math.max(
-                  ...completed.map((assessment) => Number(assessment.completionPercentage || 0)),
-              )
-            : 0;
+    const averageScore = completed.length > 0
+        ? Math.round(completed.reduce((sum, assessment) => sum + Number(assessment.completionPercentage || 0), 0) / completed.length)
+        : 0;
+    const bestScore = completed.length > 0
+        ? Math.max(...completed.map((assessment) => Number(assessment.completionPercentage || 0)))
+        : 0;
     const currentMonth = new Date().getMonth();
-    const months = Array.from(
-        { length: 4 },
-        (_, index) => MONTHS[Math.max(0, currentMonth - 3 + index)],
-    );
+    const months = Array.from({ length: 4 }, (_, index) => MONTHS[Math.max(0, currentMonth - 3 + index)]);
 
     const progression = months.map((month) => {
         const match = completed.find((assessment) => {
@@ -368,13 +336,7 @@ function buildEvolution(assessments) {
         return { month, score: match ? Number(match.completionPercentage || 0) : null };
     });
 
-    return {
-        testsCompleted: completed.length,
-        totalTests: assessments.length,
-        averageScore,
-        bestScore,
-        progression,
-    };
+    return { testsCompleted: completed.length, totalTests: assessments.length, averageScore, bestScore, progression };
 }
 
 export default function EspacePersonnel() {
@@ -388,7 +350,7 @@ export default function EspacePersonnel() {
     const [loadingRecos, setLoadingRecos] = useState({});
     const [savingScholarship, setSavingScholarship] = useState(null);
     const [saveMessage, setSaveMessage] = useState(null);
-
+    
     // ✅ États pour les bourses sauvegardées depuis la base de données
     const [savedBourses, setSavedBourses] = useState([]);
     const [loadingBourses, setLoadingBourses] = useState(false);
@@ -402,31 +364,20 @@ export default function EspacePersonnel() {
     const userInfo = useMemo(() => {
         const firstName = historyData?.firstName || '';
         const lastName = historyData?.lastName || '';
-        const displayName =
-            historyData?.displayName || [firstName, lastName].filter(Boolean).join(' ').trim();
-        return {
-            name: displayName || historyData?.email || 'Utilisateur',
-            email: historyData?.email || '',
-            bio: historyData?.bio || null,
-        };
+        const displayName = historyData?.displayName || [firstName, lastName].filter(Boolean).join(' ').trim();
+        return { name: displayName || historyData?.email || 'Utilisateur', email: historyData?.email || '', bio: historyData?.bio || null };
     }, [historyData]);
 
-    const completedAssessments = assessments.filter(
-        (assessment) => assessment.status === 'completed',
-    );
-    const inProgressAssessments = assessments.filter(
-        (assessment) => assessment.status === 'in_progress',
-    );
-    const notStartedAssessments = assessments.filter(
-        (assessment) => assessment.status === 'not_started',
-    );
+    const completedAssessments = assessments.filter((assessment) => assessment.status === 'completed');
+    const inProgressAssessments = assessments.filter((assessment) => assessment.status === 'in_progress');
+    const notStartedAssessments = assessments.filter((assessment) => assessment.status === 'not_started');
     const latestAssessment = assessments[0] || null;
 
     // ✅ Fonction pour charger toutes les bourses sauvegardées depuis la base de données
     const loadSavedScholarshipsFromDB = useCallback(async () => {
         setLoadingBourses(true);
         setSyncProgress({ current: 0, total: 0 });
-
+        
         try {
             // Récupérer les IDs depuis localStorage
             const localSaved = localStorage.getItem('savedScholarships');
@@ -435,25 +386,23 @@ export default function EspacePersonnel() {
                 setLoadingBourses(false);
                 return;
             }
-
+            
             const savedItems = JSON.parse(localSaved);
             setSyncProgress({ current: 0, total: savedItems.length });
-
+            
             // Récupérer chaque bourse depuis l'API
             const boursesList = [];
             const errors = [];
-
+            
             for (let i = 0; i < savedItems.length; i++) {
                 const item = savedItems[i];
                 const scholarshipId = item.id || item;
-
+                
                 try {
-                    console.log(
-                        `📤 Récupération bourse ${i + 1}/${savedItems.length}: ${scholarshipId}`,
-                    );
-
+                    console.log(`📤 Récupération bourse ${i+1}/${savedItems.length}: ${scholarshipId}`);
+                    
                     const response = await bourseService.getSpecificSavedScholarship(scholarshipId);
-
+                    
                     // Combiner les données
                     const apiData = response.data || response;
                     boursesList.push({
@@ -469,7 +418,7 @@ export default function EspacePersonnel() {
                         emoji: apiData.emoji || item.emoji || '🎓',
                         savedAt: item.savedAt || new Date().toISOString(),
                         ...item,
-                        ...(apiData.data || apiData),
+                        ...(apiData.data || apiData)
                     });
                 } catch (error) {
                     console.warn(`⚠️ Erreur bourse ${scholarshipId}:`, error);
@@ -477,15 +426,16 @@ export default function EspacePersonnel() {
                     // Garder la version locale
                     boursesList.push(item);
                 }
-
+                
                 setSyncProgress({ current: i + 1, total: savedItems.length });
             }
-
+            
             console.log(`✅ ${boursesList.length} bourses récupérées (${errors.length} erreurs)`);
-
+            
             // Mettre à jour localStorage avec les données fraîches
             localStorage.setItem('savedScholarships', JSON.stringify(boursesList));
             setSavedBourses(boursesList);
+            
         } catch (error) {
             console.error('❌ Erreur chargement bourses:', error);
             // Fallback vers localStorage
@@ -504,101 +454,90 @@ export default function EspacePersonnel() {
     }, [activeMenu, refreshKey, loadSavedScholarshipsFromDB]);
 
     // ✅ Fonction pour sauvegarder une bourse
-    const saveScholarship = useCallback(
-        async (scholarshipId) => {
-            if (!scholarshipId) return;
+    const saveScholarship = useCallback(async (scholarshipId) => {
+        if (!scholarshipId) return;
 
-            setSavingScholarship(scholarshipId);
+        setSavingScholarship(scholarshipId);
 
+        try {
+            console.log('📝 Sauvegarde de la bourse ID:', scholarshipId);
+            
+            const response = await api.post(`/users/me/scholarship/${scholarshipId}`);
+            
+            console.log('✅ Bourse sauvegardée avec succès:', response.data);
+            
+            setSaveMessage({
+                id: scholarshipId,
+                text: '✓ Bourse sauvegardée avec succès !',
+                type: 'success',
+            });
+            
+            // Mettre à jour le localStorage
             try {
-                console.log('📝 Sauvegarde de la bourse ID:', scholarshipId);
-
-                const response = await api.post(`/users/me/scholarship/${scholarshipId}`);
-
-                console.log('✅ Bourse sauvegardée avec succès:', response.data);
-
-                setSaveMessage({
-                    id: scholarshipId,
-                    text: '✓ Bourse sauvegardée avec succès !',
-                    type: 'success',
-                });
-
-                // Mettre à jour le localStorage
-                try {
-                    const savedScholarships = JSON.parse(
-                        localStorage.getItem('savedScholarships') || '[]',
-                    );
-                    if (!savedScholarships.some((s) => s.id === scholarshipId)) {
-                        const bourse = bourses.find((b) => b.id === scholarshipId);
-                        if (bourse) {
-                            savedScholarships.push({
-                                id: bourse.id,
-                                name: bourse.name,
-                                title: bourse.name,
-                                description: bourse.description,
-                                unlockedAt: bourse.unlockedAt,
-                                savedAt: new Date().toISOString(),
-                                emoji: bourse.emoji || '🎓',
-                                pointsValue: bourse.pointsValue || 0,
-                            });
-                            localStorage.setItem(
-                                'savedScholarships',
-                                JSON.stringify(savedScholarships),
-                            );
-                            console.log('📦 Bourse ajoutée au localStorage');
-                        }
+                const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
+                if (!savedScholarships.some(s => s.id === scholarshipId)) {
+                    const bourse = bourses.find(b => b.id === scholarshipId);
+                    if (bourse) {
+                        savedScholarships.push({
+                            id: bourse.id,
+                            name: bourse.name,
+                            title: bourse.name,
+                            description: bourse.description,
+                            unlockedAt: bourse.unlockedAt,
+                            savedAt: new Date().toISOString(),
+                            emoji: bourse.emoji || '🎓',
+                            pointsValue: bourse.pointsValue || 0
+                        });
+                        localStorage.setItem('savedScholarships', JSON.stringify(savedScholarships));
+                        console.log('📦 Bourse ajoutée au localStorage');
                     }
-                } catch (storageError) {
-                    console.warn('⚠️ Erreur de sauvegarde locale:', storageError);
                 }
-
-                // Rafraîchir la liste
-                setRefreshKey((prev) => prev + 1);
-
-                setTimeout(() => setSaveMessage(null), 3000);
-                return { success: true, data: response.data };
-            } catch (error) {
-                console.error('❌ Erreur lors de la sauvegarde:', error);
-
-                let errorMessage = '✗ Erreur lors de la sauvegarde';
-
-                if (error.response) {
-                    switch (error.response.status) {
-                        case 403:
-                            errorMessage =
-                                "⛔ Vous n'avez pas les droits pour sauvegarder cette bourse";
-                            break;
-                        case 404:
-                            errorMessage = '❌ Bourse non trouvée';
-                            break;
-                        case 401:
-                            errorMessage = '🔒 Veuillez vous reconnecter';
-                            break;
-                        case 409:
-                            errorMessage = 'ℹ️ Cette bourse est déjà dans vos favoris';
-                            break;
-                        default:
-                            errorMessage =
-                                error.response.data?.message || '✗ Erreur lors de la sauvegarde';
-                    }
-                } else if (error.request) {
-                    errorMessage =
-                        '⚠️ Impossible de contacter le serveur. Vérifiez votre connexion.';
-                }
-
-                setSaveMessage({
-                    id: scholarshipId,
-                    text: errorMessage,
-                    type: 'error',
-                });
-                setTimeout(() => setSaveMessage(null), 3000);
-                return { success: false, error: error.response?.data?.message || error.message };
-            } finally {
-                setSavingScholarship(null);
+            } catch (storageError) {
+                console.warn('⚠️ Erreur de sauvegarde locale:', storageError);
             }
-        },
-        [bourses],
-    );
+            
+            // Rafraîchir la liste
+            setRefreshKey(prev => prev + 1);
+            
+            setTimeout(() => setSaveMessage(null), 3000);
+            return { success: true, data: response.data };
+        } catch (error) {
+            console.error('❌ Erreur lors de la sauvegarde:', error);
+            
+            let errorMessage = '✗ Erreur lors de la sauvegarde';
+            
+            if (error.response) {
+                switch (error.response.status) {
+                    case 403:
+                        errorMessage = '⛔ Vous n\'avez pas les droits pour sauvegarder cette bourse';
+                        break;
+                    case 404:
+                        errorMessage = '❌ Bourse non trouvée';
+                        break;
+                    case 401:
+                        errorMessage = '🔒 Veuillez vous reconnecter';
+                        break;
+                    case 409:
+                        errorMessage = 'ℹ️ Cette bourse est déjà dans vos favoris';
+                        break;
+                    default:
+                        errorMessage = error.response.data?.message || '✗ Erreur lors de la sauvegarde';
+                }
+            } else if (error.request) {
+                errorMessage = '⚠️ Impossible de contacter le serveur. Vérifiez votre connexion.';
+            }
+            
+            setSaveMessage({
+                id: scholarshipId,
+                text: errorMessage,
+                type: 'error',
+            });
+            setTimeout(() => setSaveMessage(null), 3000);
+            return { success: false, error: error.response?.data?.message || error.message };
+        } finally {
+            setSavingScholarship(null);
+        }
+    }, [bourses]);
 
     const loadRecommendations = useCallback(async (assessmentId) => {
         if (!assessmentId) return null;
@@ -608,7 +547,7 @@ export default function EspacePersonnel() {
         try {
             const response = await api.get(
                 `/users/me/assessments/${assessmentId}/recommendations`,
-                { params: { limit: 10 } },
+                { params: { limit: 10 } }
             );
             return response.data;
         } catch (error) {
@@ -647,10 +586,7 @@ export default function EspacePersonnel() {
             if (apiError.name === 'CanceledError' || apiError.code === 'ERR_CANCELED') {
                 setError('Le chargement a pris trop de temps. Réessayez dans quelques instants.');
             } else {
-                setError(
-                    apiError.response?.data?.message ||
-                        'Impossible de charger votre espace personnel.',
-                );
+                setError(apiError.response?.data?.message || 'Impossible de charger votre espace personnel.');
             }
         } finally {
             window.clearTimeout(timeoutId);
@@ -662,121 +598,63 @@ export default function EspacePersonnel() {
         loadHistory();
     }, [loadHistory]);
 
-    // Supprimez la deuxième définition de exportAssessmentPdf et gardez uniquement celle-ci :
-
     const exportAssessmentPdf = useCallback(async (assessment) => {
-    if (!assessment) return;
+        if (!assessment) return;
 
-    setSavingPdfId(assessment.id);
+        setSavingPdfId(assessment.id);
 
-    try {
-        console.log('📄 Téléchargement du rapport pour:', assessment.assessmentId);
-        console.log('🔑 Session Token:', assessment.sessionToken);
-
-        // Étape 1: Générer la treasure map d'abord
-        let treasureMapData;
         try {
-            // Essayer de récupérer la treasure map existante
-            const response = await api.get(`/treasure-map/by-token/${assessment.sessionToken}`);
-            treasureMapData = response.data;
-            console.log('✅ Treasure map existante récupérée:', treasureMapData);
-        } catch (error) {
-            if (error.response?.status === 404) {
-                // Pas de treasure map, on en génère une
-                console.log('🔄 Génération de la treasure map...');
-                const generateResponse = await api.post('/treasure-map', {
-                    sessionToken: assessment.sessionToken,
-                    assessmentId: assessment.assessmentId,
-                    generatePdf: true
-                });
-                treasureMapData = generateResponse.data;
-                console.log('✅ Treasure map générée:', treasureMapData);
-            } else {
-                throw error;
-            }
-        }
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-        // Étape 2: Récupérer le PDF avec le shareToken
-        if (treasureMapData.shareToken) {
-            console.log('📄 Récupération du PDF avec shareToken:', treasureMapData.shareToken);
-            
-            const pdfResponse = await api.get(`/treasure-map/pdf/${treasureMapData.shareToken}`, {
-                responseType: 'blob',
-                headers: {
-                    'Accept': 'application/pdf'
-                }
-            });
+            const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
+            const code = assessment.code || 'N/A';
 
-            // Créer un lien de téléchargement
-            const url = window.URL.createObjectURL(pdfResponse.data);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Rapport_${assessment.type || 'RIASEC'}_${assessment.assessmentId}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Nettoyer
-            setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-            }, 100);
+            pdf.setFillColor(51, 71, 223);
+            pdf.rect(0, 0, 210, 42, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(20);
+            pdf.text(title, 20, 20);
+            pdf.setFontSize(10);
+            pdf.text(`Date: ${assessment.date}`, 20, 31);
 
-            console.log('✅ Rapport téléchargé avec succès');
-            
-            setSaveMessage({
-                id: assessment.id,
-                text: '✅ Rapport téléchargé avec succès !',
-                type: 'success'
-            });
-            setTimeout(() => setSaveMessage(null), 3000);
-        } else {
-            throw new Error('Aucun shareToken disponible');
-        }
+            pdf.setTextColor(17, 24, 39);
+            pdf.setFontSize(14);
+            pdf.text(`Code: ${code}`, 20, 55);
+            pdf.setFontSize(11);
+            pdf.text(`Statut: ${STATUS_LABELS[assessment.status] || assessment.status}`, 20, 65);
+            pdf.text(`Cohérence: ${assessment.consistencyLevel || 'Non renseignée'}`, 20, 73);
+            pdf.text(`Complétion: ${assessment.completionPercentage}%`, 20, 81);
 
-    } catch (error) {
-        console.error('❌ Erreur lors du téléchargement:', error);
-        
-        // 🔄 Fallback: Utiliser le PDF simple généré par jsPDF
-        try {
-            console.log('📄 Utilisation du fallback PDF...');
-            await generateSimplePdf(assessment);
-        } catch (fallbackError) {
-            console.error('❌ Erreur fallback:', fallbackError);
-            setSaveMessage({
-                id: assessment.id,
-                text: '❌ Erreur lors du téléchargement. Veuillez réessayer.',
-                type: 'error'
-            });
-            setTimeout(() => setSaveMessage(null), 3000);
-        }
-    } finally {
-        setSavingPdfId(null);
-    }
-}, [api]);
+            pdf.setFontSize(12);
+            pdf.text('Sources du rapport', 20, 97);
+            pdf.setFontSize(10);
+            pdf.text(`Session: ${assessment.sessionToken || 'non disponible'}`, 20, 106);
+            pdf.text(`Assessment ID: ${assessment.assessmentId}`, 20, 114);
 
-    const openAssessment = useCallback(
-        (assessment) => {
-            if (!assessment) return;
-
-            if (assessment.type === 'PHASE1') {
-                navigate('/rapport-phase1', {
-                    state: {
-                        assessmentId: assessment.assessmentId,
-                        sessionToken: assessment.sessionToken,
-                    },
-                });
-                return;
+            if (assessment.hasTreasureMap) {
+                pdf.text('Carte au trésor disponible.', 20, 126);
             }
 
-            navigate('/orientations', {
-                state: {
-                    assessmentId: assessment.assessmentId,
-                    sessionToken: assessment.sessionToken,
-                },
+            pdf.save(`${title.replace(/\s/g, '_')}_${assessment.assessmentId}.pdf`);
+        } finally {
+            setSavingPdfId(null);
+        }
+    }, []);
+
+    const openAssessment = useCallback((assessment) => {
+        if (!assessment) return;
+
+        if (assessment.type === 'PHASE1') {
+            navigate('/rapport-phase1', {
+                state: { assessmentId: assessment.assessmentId, sessionToken: assessment.sessionToken }
             });
-        },
-        [navigate],
-    );
+            return;
+        }
+
+        navigate('/orientations', {
+            state: { assessmentId: assessment.assessmentId, sessionToken: assessment.sessionToken }
+        });
+    }, [navigate]);
 
     const resumeAssessment = useCallback(() => {
         navigate('/tests-orientations');
@@ -798,9 +676,7 @@ export default function EspacePersonnel() {
             <div className="espace-container">
                 <div className="loading-container">
                     <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</p>
-                    <button className="new-test-btn" onClick={loadHistory}>
-                        Réessayer
-                    </button>
+                    <button className="new-test-btn" onClick={loadHistory}>Réessayer</button>
                 </div>
             </div>
         );
@@ -841,12 +717,8 @@ export default function EspacePersonnel() {
                     </nav>
 
                     <div className="sidebar-footer">
-                        <button className="help-btn" onClick={() => navigate('/support')}>
-                            Aide
-                        </button>
-                        <button className="support-btn" onClick={() => navigate('/contact')}>
-                            Contact
-                        </button>
+                        <button className="help-btn" onClick={() => navigate('/support')}>Aide</button>
+                        <button className="support-btn" onClick={() => navigate('/contact')}>Contact</button>
                     </div>
                 </aside>
 
@@ -854,45 +726,22 @@ export default function EspacePersonnel() {
                     {activeMenu === 'dashboard' && (
                         <section>
                             <div className="section-header">
-                                <h2>
-                                    <IconDashboard /> Vue d'ensemble
-                                </h2>
-                                <button className="new-test-btn" onClick={resumeAssessment}>
-                                    Nouveau test
-                                </button>
+                                <h2><IconDashboard /> Vue d'ensemble</h2>
+                                <button className="new-test-btn" onClick={resumeAssessment}>Nouveau test</button>
                             </div>
 
                             <div className="stats-grid">
                                 <div className="stat-card">
-                                    <div className="stat-icon">
-                                        <IconHistory />
-                                    </div>
-                                    <div>
-                                        <div className="stat-number">
-                                            {evolutionData.totalTests}
-                                        </div>
-                                        <div className="stat-label">Total des évaluations</div>
-                                    </div>
+                                    <div className="stat-icon"><IconHistory /></div>
+                                    <div><div className="stat-number">{evolutionData.totalTests}</div><div className="stat-label">Total des évaluations</div></div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-icon">
-                                        <IconChart />
-                                    </div>
-                                    <div>
-                                        <div className="stat-number">
-                                            {evolutionData.averageScore}
-                                        </div>
-                                        <div className="stat-label">Moyenne de complétion</div>
-                                    </div>
+                                    <div className="stat-icon"><IconChart /></div>
+                                    <div><div className="stat-number">{evolutionData.averageScore}</div><div className="stat-label">Moyenne de complétion</div></div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-icon">
-                                        <IconTrophy />
-                                    </div>
-                                    <div>
-                                        <div className="stat-number">{evolutionData.bestScore}</div>
-                                        <div className="stat-label">Meilleur score</div>
-                                    </div>
+                                    <div className="stat-icon"><IconTrophy /></div>
+                                    <div><div className="stat-number">{evolutionData.bestScore}</div><div className="stat-label">Meilleur score</div></div>
                                 </div>
                             </div>
 
@@ -902,13 +751,9 @@ export default function EspacePersonnel() {
                                     <div className="test-result">
                                         <div className="test-info">
                                             <strong>{latestAssessment.title}</strong>
-                                            <div className="test-date">
-                                                <IconCalendar /> {latestAssessment.date}
-                                            </div>
+                                            <div className="test-date"><IconCalendar /> {latestAssessment.date}</div>
                                         </div>
-                                        <div className="test-score-badge">
-                                            {latestAssessment.completionPercentage}%
-                                        </div>
+                                        <div className="test-score-badge">{latestAssessment.completionPercentage}%</div>
                                     </div>
                                 ) : (
                                     <p>Aucun test trouvé dans votre historique.</p>
@@ -916,21 +761,10 @@ export default function EspacePersonnel() {
                             </div>
 
                             {inProgressAssessments.length > 0 && (
-                                <div
-                                    className="advice-card"
-                                    style={{ marginTop: '1rem', borderLeft: '4px solid #f59e0b' }}
-                                >
+                                <div className="advice-card" style={{ marginTop: '1rem', borderLeft: '4px solid #f59e0b' }}>
                                     <h3>📝 Tests en cours</h3>
-                                    <p>
-                                        Vous avez {inProgressAssessments.length} test(s) à terminer.
-                                    </p>
-                                    <button
-                                        className="new-test-btn"
-                                        onClick={resumeAssessment}
-                                        style={{ marginTop: '0.5rem' }}
-                                    >
-                                        Continuer le test
-                                    </button>
+                                    <p>Vous avez {inProgressAssessments.length} test(s) à terminer.</p>
+                                    <button className="new-test-btn" onClick={resumeAssessment} style={{ marginTop: '0.5rem' }}>Continuer le test</button>
                                 </div>
                             )}
                         </section>
@@ -939,63 +773,37 @@ export default function EspacePersonnel() {
                     {activeMenu === 'tests' && (
                         <section>
                             <div className="section-header">
-                                <h2>
-                                    <IconHistory /> Mes tests
-                                </h2>
-                                <button className="new-test-btn" onClick={resumeAssessment}>
-                                    Nouveau test
-                                </button>
+                                <h2><IconHistory /> Mes tests</h2>
+                                <button className="new-test-btn" onClick={resumeAssessment}>Nouveau test</button>
                             </div>
 
                             <div className="tests-list">
                                 {assessments.length === 0 ? (
-                                    <div className="advice-card">
-                                        <p>Aucun test disponible pour le moment.</p>
-                                    </div>
+                                    <div className="advice-card"><p>Aucun test disponible pour le moment.</p></div>
                                 ) : (
                                     assessments.map((assessment) => (
-                                        <div
-                                            key={assessment.id}
-                                            className={`test-card ${assessment.status !== 'completed' ? 'pending' : ''}`}
-                                        >
+                                        <div key={assessment.id} className={`test-card ${assessment.status !== 'completed' ? 'pending' : ''}`}>
                                             <div className="test-card-header">
                                                 <div>
                                                     <h4>{assessment.title}</h4>
-                                                    <div className="test-type">
-                                                        {assessment.type}{' '}
-                                                        {assessment.code
-                                                            ? `- ${assessment.code}`
-                                                            : ''}
-                                                    </div>
+                                                    <div className="test-type">{assessment.type} {assessment.code ? `- ${assessment.code}` : ''}</div>
                                                 </div>
-                                                <span
-                                                    className={`status-badge ${assessment.status === 'completed' ? 'completed' : assessment.status === 'in_progress' ? 'in-progress' : assessment.status === 'not_started' ? 'not-started' : 'pending'}`}
-                                                >
-                                                    {STATUS_LABELS[assessment.status] ||
-                                                        assessment.status}
+                                                <span className={`status-badge ${assessment.status === 'completed' ? 'completed' : assessment.status === 'in_progress' ? 'in-progress' : assessment.status === 'not_started' ? 'not-started' : 'pending'}`}>
+                                                    {STATUS_LABELS[assessment.status] || assessment.status}
                                                 </span>
                                             </div>
 
                                             <div className="test-card-body">
-                                                <div className="test-meta">
-                                                    <IconCalendar /> {assessment.date}
-                                                </div>
+                                                <div className="test-meta"><IconCalendar /> {assessment.date}</div>
                                                 <div className="test-score-large">
-                                                    <span className="score-number">
-                                                        {assessment.completionPercentage}
-                                                    </span>
+                                                    <span className="score-number">{assessment.completionPercentage}</span>
                                                     <span className="score-max">%</span>
                                                 </div>
                                             </div>
 
                                             <div className="test-card-footer">
                                                 {assessment.status === 'in_progress' && (
-                                                    <button
-                                                        className="generate-btn"
-                                                        onClick={resumeAssessment}
-                                                    >
-                                                        Continuer
-                                                    </button>
+                                                    <button className="generate-btn" onClick={resumeAssessment}>Continuer</button>
                                                 )}
                                             </div>
                                         </div>
@@ -1008,19 +816,13 @@ export default function EspacePersonnel() {
                     {activeMenu === 'reports' && (
                         <section className="reports-content">
                             <div className="section-header">
-                                <h2>
-                                    <IconFile /> Rapports
-                                </h2>
-                                <button className="generate-btn" onClick={resumeAssessment}>
-                                    Nouveau rapport
-                                </button>
+                                <h2><IconFile /> Rapports</h2>
+                                <button className="generate-btn" onClick={resumeAssessment}>Nouveau rapport</button>
                             </div>
 
                             <div className="reports-grid">
                                 {completedAssessments.length === 0 ? (
-                                    <div className="advice-card">
-                                        <p>Aucun rapport générable pour le moment.</p>
-                                    </div>
+                                    <div className="advice-card"><p>Aucun rapport générable pour le moment.</p></div>
                                 ) : (
                                     completedAssessments.map((assessment) => {
                                         const recos = recommendations[assessment.id];
@@ -1028,180 +830,70 @@ export default function EspacePersonnel() {
 
                                         return (
                                             <div key={assessment.id} className="report-card">
-                                                <div className="report-icon">
-                                                    <IconFile />
-                                                </div>
+                                                <div className="report-icon"><IconFile /></div>
                                                 <div className="report-info">
                                                     <h4>{assessment.title}</h4>
                                                     <div className="report-meta">
-                                                        <span>
-                                                            <IconCalendar /> {assessment.date}
-                                                        </span>
-                                                        <span>
-                                                            <IconLoader />{' '}
-                                                            {assessment.completionPercentage}%
-                                                        </span>
+                                                        <span><IconCalendar /> {assessment.date}</span>
+                                                        <span><IconLoader /> {assessment.completionPercentage}%</span>
                                                     </div>
                                                     {assessment.phase2Code && (
-                                                        <div className="report-code-badge">
-                                                            <strong>Code RIASEC:</strong>{' '}
-                                                            {assessment.phase2Code}
-                                                        </div>
+                                                        <div className="report-code-badge"><strong>Code RIASEC:</strong> {assessment.phase2Code}</div>
                                                     )}
                                                     <div className="report-recommendations">
                                                         {isLoading ? (
                                                             <div className="reco-loading">
                                                                 <div className="loader-small"></div>
-                                                                <span>
-                                                                    Chargement des
-                                                                    recommandations...
-                                                                </span>
+                                                                <span>Chargement des recommandations...</span>
                                                             </div>
                                                         ) : recos ? (
                                                             <>
-                                                                {recos.careers &&
-                                                                    recos.careers.length > 0 && (
-                                                                        <div className="reco-section">
-                                                                            <div className="reco-title">
-                                                                                🎯 Métiers
-                                                                                recommandés
-                                                                            </div>
-                                                                            <ul className="reco-list">
-                                                                                {recos.careers
-                                                                                    .slice(0, 5)
-                                                                                    .map(
-                                                                                        (
-                                                                                            career,
-                                                                                            idx,
-                                                                                        ) => (
-                                                                                            <li
-                                                                                                key={
-                                                                                                    idx
-                                                                                                }
-                                                                                            >
-                                                                                                <span className="reco-icon">
-                                                                                                    💼
-                                                                                                </span>
-                                                                                                {typeof career ===
-                                                                                                'string'
-                                                                                                    ? career
-                                                                                                    : career.name}
-                                                                                            </li>
-                                                                                        ),
-                                                                                    )}
-                                                                            </ul>
-                                                                        </div>
-                                                                    )}
-                                                                {recos.trainings &&
-                                                                    recos.trainings.length > 0 && (
-                                                                        <div className="reco-section">
-                                                                            <div className="reco-title">
-                                                                                📚 Formations
-                                                                                recommandées
-                                                                            </div>
-                                                                            <ul className="reco-list">
-                                                                                {recos.trainings
-                                                                                    .slice(0, 5)
-                                                                                    .map(
-                                                                                        (
-                                                                                            training,
-                                                                                            idx,
-                                                                                        ) => (
-                                                                                            <li
-                                                                                                key={
-                                                                                                    idx
-                                                                                                }
-                                                                                            >
-                                                                                                <span className="reco-icon">
-                                                                                                    🏫
-                                                                                                </span>
-                                                                                                {typeof training ===
-                                                                                                'string'
-                                                                                                    ? training
-                                                                                                    : training.name}
-                                                                                            </li>
-                                                                                        ),
-                                                                                    )}
-                                                                            </ul>
-                                                                        </div>
-                                                                    )}
-                                                                {recos.schools &&
-                                                                    recos.schools.length > 0 && (
-                                                                        <div className="reco-section">
-                                                                            <div className="reco-title">
-                                                                                🎓 Écoles /
-                                                                                Universités
-                                                                            </div>
-                                                                            <ul className="reco-list">
-                                                                                {recos.schools
-                                                                                    .slice(0, 5)
-                                                                                    .map(
-                                                                                        (
-                                                                                            school,
-                                                                                            idx,
-                                                                                        ) => (
-                                                                                            <li
-                                                                                                key={
-                                                                                                    idx
-                                                                                                }
-                                                                                            >
-                                                                                                <span className="reco-icon">
-                                                                                                    🏛️
-                                                                                                </span>
-                                                                                                {typeof school ===
-                                                                                                'string'
-                                                                                                    ? school
-                                                                                                    : school.name}
-                                                                                            </li>
-                                                                                        ),
-                                                                                    )}
-                                                                            </ul>
-                                                                        </div>
-                                                                    )}
+                                                                {recos.careers && recos.careers.length > 0 && (
+                                                                    <div className="reco-section">
+                                                                        <div className="reco-title">🎯 Métiers recommandés</div>
+                                                                        <ul className="reco-list">
+                                                                            {recos.careers.slice(0, 5).map((career, idx) => (
+                                                                                <li key={idx}><span className="reco-icon">💼</span>{typeof career === 'string' ? career : career.name}</li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                )}
+                                                                {recos.trainings && recos.trainings.length > 0 && (
+                                                                    <div className="reco-section">
+                                                                        <div className="reco-title">📚 Formations recommandées</div>
+                                                                        <ul className="reco-list">
+                                                                            {recos.trainings.slice(0, 5).map((training, idx) => (
+                                                                                <li key={idx}><span className="reco-icon">🏫</span>{typeof training === 'string' ? training : training.name}</li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                )}
+                                                                {recos.schools && recos.schools.length > 0 && (
+                                                                    <div className="reco-section">
+                                                                        <div className="reco-title">🎓 Écoles / Universités</div>
+                                                                        <ul className="reco-list">
+                                                                            {recos.schools.slice(0, 5).map((school, idx) => (
+                                                                                <li key={idx}><span className="reco-icon">🏛️</span>{typeof school === 'string' ? school : school.name}</li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                )}
                                                             </>
                                                         ) : (
                                                             <div className="reco-empty">
-                                                                <button
-                                                                    className="load-reco-btn"
-                                                                    onClick={async () => {
-                                                                        const data =
-                                                                            await loadRecommendations(
-                                                                                assessment.assessmentId,
-                                                                            );
-                                                                        if (data) {
-                                                                            setRecommendations(
-                                                                                (prev) => ({
-                                                                                    ...prev,
-                                                                                    [assessment.id]:
-                                                                                        data,
-                                                                                }),
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Voir les métiers et formations
-                                                                </button>
+                                                                <button className="load-reco-btn" onClick={async () => {
+                                                                    const data = await loadRecommendations(assessment.assessmentId);
+                                                                    if (data) {
+                                                                        setRecommendations((prev) => ({ ...prev, [assessment.id]: data }));
+                                                                    }
+                                                                }}>Voir les métiers et formations</button>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
                                                 <div className="report-actions">
-                                                    <button
-                                                        className="action-icon"
-                                                        onClick={() => openAssessment(assessment)}
-                                                        title="Voir"
-                                                    >
-                                                        <IconEye />
-                                                    </button>
-                                                    <button
-                                                        className="action-icon"
-                                                        onClick={() =>
-                                                            exportAssessmentPdf(assessment)
-                                                        }
-                                                        title="Télécharger"
-                                                    >
-                                                        <IconDownload />
-                                                    </button>
+                                                    <button className="action-icon" onClick={() => openAssessment(assessment)} title="Voir"><IconEye /></button>
+                                                    <button className="action-icon" onClick={() => exportAssessmentPdf(assessment)} title="Télécharger"><IconDownload /></button>
                                                 </div>
                                             </div>
                                         );
@@ -1218,6 +910,7 @@ export default function EspacePersonnel() {
                                 <h2>
                                     <IconTrophy /> Mes bourses sauvegardées
                                 </h2>
+                                
                             </div>
 
                             {loadingBourses ? (
@@ -1233,18 +926,11 @@ export default function EspacePersonnel() {
                                     {savedBourses.length === 0 ? (
                                         <div className="advice-card">
                                             <p>Aucune bourse sauvegardée pour le moment.</p>
-                                            <p
-                                                style={{
-                                                    fontSize: '0.9rem',
-                                                    color: '#666',
-                                                    marginTop: '0.5rem',
-                                                }}
-                                            >
-                                                Explorez les bourses disponibles et sauvegardez
-                                                celles qui vous intéressent.
+                                            <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                                                Explorez les bourses disponibles et sauvegardez celles qui vous intéressent.
                                             </p>
-                                            <button
-                                                className="generate-btn"
+                                            <button 
+                                                className="generate-btn" 
                                                 onClick={() => navigate('/scholarships')}
                                                 style={{ marginTop: '1rem' }}
                                             >
@@ -1253,117 +939,78 @@ export default function EspacePersonnel() {
                                         </div>
                                     ) : (
                                         savedBourses.map((bourse) => (
-                                            <div
-                                                key={bourse.id}
-                                                className="test-card saved"
-                                                style={{
+                                            <div 
+                                                key={bourse.id} 
+                                                className="test-card saved" 
+                                                style={{ 
                                                     borderLeft: '4px solid #10b981',
-                                                    background:
-                                                        'linear-gradient(to right, #f0fdf4, #ffffff)',
+                                                    background: 'linear-gradient(to right, #f0fdf4, #ffffff)'
                                                 }}
                                             >
                                                 <div className="test-card-header">
                                                     <div>
                                                         <h4>
-                                                            {bourse.emoji
-                                                                ? `${bourse.emoji} `
-                                                                : '🎓 '}
-                                                            {bourse.title ||
-                                                                bourse.name ||
-                                                                'Bourse sans nom'}
+                                                            {bourse.emoji ? `${bourse.emoji} ` : '🎓 '}
+                                                            {bourse.title || bourse.name || 'Bourse sans nom'}
                                                         </h4>
                                                         <div className="test-type">
-                                                            {bourse.description ||
-                                                                'Aucune description'}
+                                                            {bourse.description || 'Aucune description'}
                                                         </div>
                                                     </div>
-                                                    <span
-                                                        className="status-badge completed"
-                                                        style={{
-                                                            background: '#10b981',
-                                                            color: 'white',
-                                                            padding: '0.25rem 0.75rem',
-                                                            borderRadius: '20px',
-                                                            fontSize: '0.8rem',
-                                                        }}
-                                                    >
+                                                    <span className="status-badge completed" style={{ 
+                                                        background: '#10b981', 
+                                                        color: 'white',
+                                                        padding: '0.25rem 0.75rem',
+                                                        borderRadius: '20px',
+                                                        fontSize: '0.8rem'
+                                                    }}>
                                                         💾 Sauvegardée
                                                     </span>
                                                 </div>
-
+                                                
                                                 <div className="test-card-body">
                                                     <div className="test-meta">
-                                                        <IconCalendar />
-                                                        Sauvegardée le{' '}
-                                                        {formatDate(
-                                                            bourse.savedAt ||
-                                                                bourse.unlockedAt ||
-                                                                new Date().toISOString(),
-                                                        )}
+                                                        <IconCalendar /> 
+                                                        Sauvegardée le {formatDate(bourse.savedAt || bourse.unlockedAt || new Date().toISOString())}
                                                     </div>
                                                     {bourse.amount && (
                                                         <div className="test-score-large">
-                                                            <span
-                                                                className="score-number"
-                                                                style={{ fontSize: '1.2rem' }}
-                                                            >
+                                                            <span className="score-number" style={{ fontSize: '1.2rem' }}>
                                                                 {bourse.amount}
                                                             </span>
                                                             <span className="score-max">💰</span>
                                                         </div>
                                                     )}
                                                     {bourse.country && (
-                                                        <div
-                                                            style={{
-                                                                fontSize: '0.85rem',
-                                                                color: '#6b7280',
-                                                                marginTop: '0.5rem',
-                                                            }}
-                                                        >
+                                                        <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.5rem' }}>
                                                             🌍 {bourse.country}
                                                         </div>
                                                     )}
                                                     {bourse.university && (
-                                                        <div
-                                                            style={{
-                                                                fontSize: '0.85rem',
-                                                                color: '#6b7280',
-                                                            }}
-                                                        >
+                                                        <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
                                                             🏛️ {bourse.university}
                                                         </div>
                                                     )}
                                                     {bourse.type && (
-                                                        <div
-                                                            style={{
-                                                                fontSize: '0.8rem',
-                                                                color: '#4f46e5',
-                                                                marginTop: '0.25rem',
-                                                                background: '#eef2ff',
-                                                                padding: '0.2rem 0.6rem',
-                                                                borderRadius: '12px',
-                                                                display: 'inline-block',
-                                                            }}
-                                                        >
+                                                        <div style={{ 
+                                                            fontSize: '0.8rem', 
+                                                            color: '#4f46e5', 
+                                                            marginTop: '0.25rem',
+                                                            background: '#eef2ff',
+                                                            padding: '0.2rem 0.6rem',
+                                                            borderRadius: '12px',
+                                                            display: 'inline-block'
+                                                        }}>
                                                             {bourse.type}
                                                         </div>
                                                     )}
                                                 </div>
-
-                                                <div
-                                                    className="test-card-footer"
-                                                    style={{
-                                                        display: 'flex',
-                                                        gap: '0.5rem',
-                                                        flexWrap: 'wrap',
-                                                    }}
-                                                >
+                                                
+                                                <div className="test-card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                     {bourse.link && (
                                                         <button
                                                             className="apply-btn"
-                                                            onClick={() =>
-                                                                window.open(bourse.link, '_blank')
-                                                            }
+                                                            onClick={() => window.open(bourse.link, '_blank')}
                                                             style={{
                                                                 padding: '0.5rem 1rem',
                                                                 background: '#059669',
@@ -1371,7 +1018,7 @@ export default function EspacePersonnel() {
                                                                 border: 'none',
                                                                 borderRadius: '6px',
                                                                 cursor: 'pointer',
-                                                                fontSize: '0.9rem',
+                                                                fontSize: '0.9rem'
                                                             }}
                                                         >
                                                             🔗 Voir la bourse
@@ -1381,38 +1028,23 @@ export default function EspacePersonnel() {
                                                         className="remove-btn"
                                                         onClick={async () => {
                                                             try {
-                                                                await bourseService.removeSavedScholarship(
-                                                                    bourse.id,
-                                                                );
-                                                                console.log(
-                                                                    "✅ Bourse supprimée de l'API",
-                                                                );
+                                                                await bourseService.removeSavedScholarship(bourse.id);
+                                                                console.log('✅ Bourse supprimée de l\'API');
                                                             } catch (error) {
-                                                                console.warn(
-                                                                    '⚠️ Erreur suppression API:',
-                                                                    error,
-                                                                );
+                                                                console.warn('⚠️ Erreur suppression API:', error);
                                                             }
-
-                                                            const updated = savedBourses.filter(
-                                                                (s) => s.id !== bourse.id,
-                                                            );
-                                                            localStorage.setItem(
-                                                                'savedScholarships',
-                                                                JSON.stringify(updated),
-                                                            );
+                                                            
+                                                            const updated = savedBourses.filter(s => s.id !== bourse.id);
+                                                            localStorage.setItem('savedScholarships', JSON.stringify(updated));
                                                             setSavedBourses(updated);
-                                                            setRefreshKey((prev) => prev + 1);
-
+                                                            setRefreshKey(prev => prev + 1);
+                                                            
                                                             setSaveMessage({
                                                                 id: bourse.id,
                                                                 text: '🗑️ Bourse retirée des favoris',
-                                                                type: 'info',
+                                                                type: 'info'
                                                             });
-                                                            setTimeout(
-                                                                () => setSaveMessage(null),
-                                                                3000,
-                                                            );
+                                                            setTimeout(() => setSaveMessage(null), 3000);
                                                         }}
                                                         style={{
                                                             padding: '0.5rem 1rem',
@@ -1421,7 +1053,7 @@ export default function EspacePersonnel() {
                                                             border: 'none',
                                                             borderRadius: '6px',
                                                             cursor: 'pointer',
-                                                            fontSize: '0.9rem',
+                                                            fontSize: '0.9rem'
                                                         }}
                                                     >
                                                         ❌ Retirer
@@ -1438,9 +1070,7 @@ export default function EspacePersonnel() {
                     {activeMenu === 'profile' && (
                         <section>
                             <div className="section-header">
-                                <h2>
-                                    <IconUser /> Profil
-                                </h2>
+                                <h2><IconUser /> Profil</h2>
                             </div>
 
                             <div className="profile-form">
@@ -1455,14 +1085,8 @@ export default function EspacePersonnel() {
                             </div>
 
                             <div className="reports-summary">
-                                <h3>
-                                    <IconCheck /> Résumé
-                                </h3>
-                                <p>
-                                    {completedAssessments.length} test(s) terminé(s),{' '}
-                                    {inProgressAssessments.length} en cours,{' '}
-                                    {notStartedAssessments.length} non commencé(s).
-                                </p>
+                                <h3><IconCheck /> Résumé</h3>
+                                <p>{completedAssessments.length} test(s) terminé(s), {inProgressAssessments.length} en cours, {notStartedAssessments.length} non commencé(s).</p>
                             </div>
                         </section>
                     )}
