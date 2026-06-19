@@ -599,47 +599,259 @@ export default function EspacePersonnel() {
     }, [loadHistory]);
 
     const exportAssessmentPdf = useCallback(async (assessment) => {
-        if (!assessment) return;
+    if (!assessment) return;
 
-        setSavingPdfId(assessment.id);
+    setSavingPdfId(assessment.id);
 
-        try {
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    try {
+        // ✅ Récupérer les recommandations pour le PDF
+        let recos = recommendations[assessment.id];
+        if (!recos) {
+            // Charger les recommandations si pas encore disponibles
+            setLoadingRecos((prev) => ({ ...prev, [assessment.id]: true }));
+            try {
+                const response = await api.get(
+                    `/users/me/assessments/${assessment.assessmentId}/recommendations`,
+                    { params: { limit: 20 } }
+                );
+                recos = response.data;
+                if (recos) {
+                    setRecommendations((prev) => ({ ...prev, [assessment.id]: recos }));
+                }
+            } catch (error) {
+                console.error('Erreur chargement recommandations pour PDF:', error);
+            } finally {
+                setLoadingRecos((prev) => ({ ...prev, [assessment.id]: false }));
+            }
+        }
 
-            const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
-            const code = assessment.code || 'N/A';
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        let yPosition = 20;
 
-            pdf.setFillColor(51, 71, 223);
-            pdf.rect(0, 0, 210, 42, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFontSize(20);
-            pdf.text(title, 20, 20);
-            pdf.setFontSize(10);
-            pdf.text(`Date: ${assessment.date}`, 20, 31);
+        const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
+        const code = assessment.code || 'N/A';
 
-            pdf.setTextColor(17, 24, 39);
-            pdf.setFontSize(14);
-            pdf.text(`Code: ${code}`, 20, 55);
-            pdf.setFontSize(11);
-            pdf.text(`Statut: ${STATUS_LABELS[assessment.status] || assessment.status}`, 20, 65);
-            pdf.text(`Cohérence: ${assessment.consistencyLevel || 'Non renseignée'}`, 20, 73);
-            pdf.text(`Complétion: ${assessment.completionPercentage}%`, 20, 81);
+        // === EN-TÊTE ===
+        pdf.setFillColor(51, 71, 223);
+        pdf.rect(0, 0, 210, 45, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(22);
+        pdf.text(title, 20, 25);
+        pdf.setFontSize(11);
+        pdf.text(`Date: ${assessment.date}`, 20, 36);
 
-            pdf.setFontSize(12);
-            pdf.text('Sources du rapport', 20, 97);
-            pdf.setFontSize(10);
-            pdf.text(`Session: ${assessment.sessionToken || 'non disponible'}`, 20, 106);
-            pdf.text(`Assessment ID: ${assessment.assessmentId}`, 20, 114);
+        yPosition = 55;
 
-            if (assessment.hasTreasureMap) {
-                pdf.text('Carte au trésor disponible.', 20, 126);
+        // === INFORMATIONS DU TEST ===
+        pdf.setTextColor(17, 24, 39);
+        pdf.setFontSize(14);
+        pdf.text(`Code RIASEC: ${code}`, 20, yPosition);
+        yPosition += 10;
+        
+        pdf.setFontSize(11);
+        pdf.text(`Statut: ${STATUS_LABELS[assessment.status] || assessment.status}`, 20, yPosition);
+        yPosition += 8;
+        pdf.text(`Cohérence: ${assessment.consistencyLevel || 'Non renseignée'}`, 20, yPosition);
+        yPosition += 8;
+        pdf.text(`Complétion: ${assessment.completionPercentage}%`, 20, yPosition);
+        yPosition += 8;
+
+        // === SOURCES ===
+        pdf.setFontSize(12);
+        pdf.text('Sources du rapport', 20, yPosition);
+        yPosition += 8;
+        pdf.setFontSize(10);
+        pdf.text(`Session: ${assessment.sessionToken || 'non disponible'}`, 20, yPosition);
+        yPosition += 6;
+        pdf.text(`Assessment ID: ${assessment.assessmentId}`, 20, yPosition);
+        yPosition += 10;
+
+        // === RECOMMANDATIONS ===
+        if (recos) {
+            // --- Métiers recommandés ---
+            if (recos.careers && recos.careers.length > 0) {
+                // Vérifier si on a assez de place pour une nouvelle section
+                if (yPosition > 250) {
+                    pdf.addPage();
+                    yPosition = 20;
+                }
+
+                pdf.setFontSize(13);
+                pdf.setTextColor(51, 71, 223);
+                pdf.text('🎯 Métiers recommandés', 20, yPosition);
+                yPosition += 8;
+                
+                pdf.setFontSize(10);
+                pdf.setTextColor(17, 24, 39);
+                recos.careers.slice(0, 15).forEach((career) => {
+                    const name = typeof career === 'string' ? career : career.name || career;
+                    pdf.text(`• ${name}`, 25, yPosition);
+                    yPosition += 6;
+                    if (yPosition > 275) {
+                        pdf.addPage();
+                        yPosition = 20;
+                    }
+                });
+                yPosition += 4;
             }
 
-            pdf.save(`${title.replace(/\s/g, '_')}_${assessment.assessmentId}.pdf`);
-        } finally {
-            setSavingPdfId(null);
+            // --- Formations recommandées ---
+            if (recos.trainings && recos.trainings.length > 0) {
+                if (yPosition > 250) {
+                    pdf.addPage();
+                    yPosition = 20;
+                }
+
+                pdf.setFontSize(13);
+                pdf.setTextColor(51, 71, 223);
+                pdf.text('📚 Formations recommandées', 20, yPosition);
+                yPosition += 8;
+                
+                pdf.setFontSize(10);
+                pdf.setTextColor(17, 24, 39);
+                recos.trainings.slice(0, 15).forEach((training) => {
+                    const name = typeof training === 'string' ? training : training.name || training;
+                    pdf.text(`• ${name}`, 25, yPosition);
+                    yPosition += 6;
+                    if (yPosition > 275) {
+                        pdf.addPage();
+                        yPosition = 20;
+                    }
+                });
+                yPosition += 4;
+            }
+
+            // --- Écoles / Universités ---
+            if (recos.schools && recos.schools.length > 0) {
+                if (yPosition > 250) {
+                    pdf.addPage();
+                    yPosition = 20;
+                }
+
+                pdf.setFontSize(13);
+                pdf.setTextColor(51, 71, 223);
+                pdf.text('🎓 Écoles / Universités', 20, yPosition);
+                yPosition += 8;
+                
+                pdf.setFontSize(10);
+                pdf.setTextColor(17, 24, 39);
+                recos.schools.slice(0, 15).forEach((school) => {
+                    const name = typeof school === 'string' ? school : school.name || school;
+                    pdf.text(`• ${name}`, 25, yPosition);
+                    yPosition += 6;
+                    if (yPosition > 275) {
+                        pdf.addPage();
+                        yPosition = 20;
+                    }
+                });
+                yPosition += 4;
+            }
+
+            // --- Recommandations par axe RIASEC (si disponibles) ---
+            if (recos.recommendationsByAxis) {
+                const axes = ['REALISTIC', 'INVESTIGATIVE', 'ARTISTIC', 'SOCIAL', 'ENTERPRISING', 'CONVENTIONAL'];
+                const axisLabels = {
+                    REALISTIC: 'Réaliste',
+                    INVESTIGATIVE: 'Investigateur',
+                    ARTISTIC: 'Artistique',
+                    SOCIAL: 'Social',
+                    ENTERPRISING: 'Entreprenant',
+                    CONVENTIONAL: 'Conventionnel'
+                };
+
+                axes.forEach((axis) => {
+                    const axisData = recos.recommendationsByAxis[axis];
+                    if (axisData && (axisData.metiers?.length > 0 || axisData.formations?.length > 0)) {
+                        if (yPosition > 250) {
+                            pdf.addPage();
+                            yPosition = 20;
+                        }
+
+                        pdf.setFontSize(12);
+                        pdf.setTextColor(51, 71, 223);
+                        pdf.text(`📍 Axe ${axisLabels[axis] || axis}`, 20, yPosition);
+                        yPosition += 8;
+
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(17, 24, 39);
+
+                        if (axisData.metiers && axisData.metiers.length > 0) {
+                            pdf.text('Métiers:', 25, yPosition);
+                            yPosition += 6;
+                            axisData.metiers.slice(0, 5).forEach((metier) => {
+                                pdf.text(`  • ${metier}`, 30, yPosition);
+                                yPosition += 5;
+                                if (yPosition > 275) {
+                                    pdf.addPage();
+                                    yPosition = 20;
+                                }
+                            });
+                        }
+
+                        if (axisData.formations && axisData.formations.length > 0) {
+                            if (yPosition > 250) {
+                                pdf.addPage();
+                                yPosition = 20;
+                            }
+                            pdf.text('Formations:', 25, yPosition);
+                            yPosition += 6;
+                            axisData.formations.slice(0, 5).forEach((formation) => {
+                                pdf.text(`  • ${formation}`, 30, yPosition);
+                                yPosition += 5;
+                                if (yPosition > 275) {
+                                    pdf.addPage();
+                                    yPosition = 20;
+                                }
+                            });
+                        }
+                        yPosition += 4;
+                    }
+                });
+            }
+        } else {
+            // Pas de recommandations disponibles
+            pdf.setFontSize(11);
+            pdf.setTextColor(150, 150, 150);
+            pdf.text('Aucune recommandation disponible pour ce test.', 20, yPosition);
+            yPosition += 10;
         }
-    }, []);
+
+        // === Carte au trésor ===
+        if (assessment.hasTreasureMap) {
+            if (yPosition > 270) {
+                pdf.addPage();
+                yPosition = 20;
+            }
+            pdf.setFontSize(12);
+            pdf.setTextColor(51, 71, 223);
+            pdf.text('🗺️ Carte au trésor disponible', 20, yPosition);
+            yPosition += 8;
+        }
+
+        // === PIED DE PAGE ===
+        const pageCount = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(8);
+            pdf.setTextColor(150);
+            pdf.text(
+                `Rapport généré le ${new Date().toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                })} - Page ${i}/${pageCount}`,
+                20,
+                285
+            );
+        }
+
+        pdf.save(`${title.replace(/\s/g, '_')}_${assessment.assessmentId}.pdf`);
+    } catch (error) {
+        console.error('Erreur lors de l\'export PDF:', error);
+    } finally {
+        setSavingPdfId(null);
+    }
+}, [recommendations, api]);
 
     const openAssessment = useCallback((assessment) => {
         if (!assessment) return;
