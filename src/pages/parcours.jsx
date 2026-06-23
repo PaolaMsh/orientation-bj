@@ -957,15 +957,7 @@ export default function EspacePersonnel() {
                                                             {bourse.description || 'Aucune description'}
                                                         </div>
                                                     </div>
-                                                    <span className="status-badge completed" style={{ 
-                                                        background: '#10b981', 
-                                                        color: 'white',
-                                                        padding: '0.25rem 0.75rem',
-                                                        borderRadius: '20px',
-                                                        fontSize: '0.8rem'
-                                                    }}>
-                                                        💾 Sauvegardée
-                                                    </span>
+                                                    
                                                 </div>
                                                 
                                                 <div className="test-card-body">
