@@ -1048,7 +1048,7 @@ export default function EspacePersonnel() {
                                                             fontSize: '0.9rem'
                                                         }}
                                                     >
-                                                        ❌ Retirer
+                                                         Retirer
                                                     </button>
                                                 </div>
                                             </div>
