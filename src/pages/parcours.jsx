@@ -848,16 +848,7 @@ export default function EspacePersonnel() {
                                                             </div>
                                                         ) : recos ? (
                                                             <>
-                                                                {recos.careers && recos.careers.length > 0 && (
-                                                                    <div className="reco-section">
-                                                                        <div className="reco-title">🎯 Métiers recommandés</div>
-                                                                        <ul className="reco-list">
-                                                                            {recos.careers.slice(0, 5).map((career, idx) => (
-                                                                                <li key={idx}><span className="reco-icon">💼</span>{typeof career === 'string' ? career : career.name}</li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
+                                                                
                                                                 {recos.trainings && recos.trainings.length > 0 && (
                                                                     <div className="reco-section">
                                                                         <div className="reco-title">📚 Formations recommandées</div>
