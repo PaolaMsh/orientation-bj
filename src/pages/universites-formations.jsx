@@ -130,7 +130,7 @@ const UniversitiesPage = () => {
                     </div>
                     <div className="results-count">
                         {filteredUniversities.length} résultat
-                        {filteredUniversities.length > 1 ? 's' : ''} trouvé
+                        {filteredUniversities.length > 1 ? 's' : ''} trouvés
                     </div>
                 </div>
 
