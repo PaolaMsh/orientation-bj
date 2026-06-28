@@ -54,20 +54,50 @@ const EmotionSvgs = {
 
 const SectionSvgs = {
     realist: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 17L12 22L20 17M4 12L12 17L20 12M12 2L4 7L12 12L20 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                d="M4 17L12 22L20 17M4 12L12 17L20 12M12 2L4 7L12 12L20 7L12 2Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+            />
         </svg>
     ),
     investigator: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-            <path d="M16 16L21 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
+            <path d="M16 16L21 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
     ),
     artistic: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 4V20M8 8L16 16M8 16L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                d="M12 4V20M8 8L16 16M8 16L16 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+            />
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none" />
         </svg>
     ),
 };
@@ -287,7 +317,7 @@ const Test = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [phase2SectionsCompleted, setPhase2SectionsCompleted] = useState({});
-    
+
     const [batchHistory, setBatchHistory] = useState([]);
     const [savedAnswersHistory, setSavedAnswersHistory] = useState([]);
     const [hasUsedPrevious, setHasUsedPrevious] = useState(false);
@@ -433,7 +463,7 @@ const Test = () => {
                           })),
                       };
             await api.post(endpoint, payload);
-            
+
             setDraftAnswers({});
             const updatedProgress = await resolveProgress(sessionToken, assessmentId);
             return updatedProgress;
@@ -456,45 +486,60 @@ const Test = () => {
 
     const handlePreviousBatch = useCallback(async () => {
         if (batchHistory.length === 0) {
-            const shouldReload = window.confirm("Vous êtes au début du test. Voulez-vous recharger les questions ?");
+            const shouldReload = window.confirm(
+                'Vous êtes au début du test. Voulez-vous recharger les questions ?',
+            );
             if (shouldReload) {
                 await fetchBatch(currentPhase, currentSection, sessionToken, assessmentId);
             }
             return;
         }
-        
+
         setHasUsedPrevious(true);
-        
+
         const previousBatchData = batchHistory[batchHistory.length - 1];
         const previousAnswers = savedAnswersHistory[savedAnswersHistory.length - 1];
-        
-        setBatchHistory(prev => prev.slice(0, -1));
-        setSavedAnswersHistory(prev => prev.slice(0, -1));
-        
+
+        setBatchHistory((prev) => prev.slice(0, -1));
+        setSavedAnswersHistory((prev) => prev.slice(0, -1));
+
         setCurrentBatch(previousBatchData.questions);
         setDraftAnswers(previousAnswers || {});
-        
+
         setCurrentPhase(previousBatchData.phase);
         if (previousBatchData.section) {
             setCurrentSection(previousBatchData.section);
         }
-    }, [batchHistory, savedAnswersHistory, currentPhase, currentSection, sessionToken, assessmentId, fetchBatch]);
+    }, [
+        batchHistory,
+        savedAnswersHistory,
+        currentPhase,
+        currentSection,
+        sessionToken,
+        assessmentId,
+        fetchBatch,
+    ]);
 
     const handleManualNextBatch = useCallback(async () => {
         if (Object.keys(draftAnswers).length !== currentBatch.length) {
             const remaining = currentBatch.length - Object.keys(draftAnswers).length;
-            alert(`Veuillez répondre à toutes les questions avant de continuer (${remaining} restante${remaining > 1 ? 's' : ''})`);
+            alert(
+                `Veuillez répondre à toutes les questions avant de continuer (${remaining} restante${remaining > 1 ? 's' : ''})`,
+            );
             return;
         }
-        
-        setBatchHistory(prev => [...prev, {
-            batchId: Date.now(),
-            phase: currentPhase,
-            section: currentSection,
-            questions: [...currentBatch]
-        }]);
-        setSavedAnswersHistory(prev => [...prev, { ...draftAnswers }]);
-        
+
+        setBatchHistory((prev) => [
+            ...prev,
+            {
+                batchId: Date.now(),
+                phase: currentPhase,
+                section: currentSection,
+                questions: [...currentBatch],
+            },
+        ]);
+        setSavedAnswersHistory((prev) => [...prev, { ...draftAnswers }]);
+
         const progressData = await submitBatch();
         if (!progressData) return;
 
@@ -542,7 +587,16 @@ const Test = () => {
                 if (!success) setError('Impossible de charger la prochaine batch');
             }
         }
-    }, [currentPhase, currentSection, fetchBatch, submitBatch, sessionToken, assessmentId, currentBatch, draftAnswers]);
+    }, [
+        currentPhase,
+        currentSection,
+        fetchBatch,
+        submitBatch,
+        sessionToken,
+        assessmentId,
+        currentBatch,
+        draftAnswers,
+    ]);
 
     const handleAssessmentCompletion = useCallback(async () => {
         try {
@@ -642,15 +696,27 @@ const Test = () => {
     const allAnswered =
         currentBatch.length > 0 && Object.keys(draftAnswers).length === currentBatch.length;
 
-    
     useEffect(() => {
-        if (allAnswered && !submitting && !loadingBatch && currentBatch.length > 0 && !hasUsedPrevious) {
+        if (
+            allAnswered &&
+            !submitting &&
+            !loadingBatch &&
+            currentBatch.length > 0 &&
+            !hasUsedPrevious
+        ) {
             const timer = setTimeout(() => {
                 handleManualNextBatch();
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [allAnswered, submitting, loadingBatch, currentBatch.length, hasUsedPrevious, handleManualNextBatch]);
+    }, [
+        allAnswered,
+        submitting,
+        loadingBatch,
+        currentBatch.length,
+        hasUsedPrevious,
+        handleManualNextBatch,
+    ]);
 
     if (loading)
         return (
@@ -723,9 +789,15 @@ const Test = () => {
                                 />
                             ))}
                         </div>
-                        
-                        {/* Section des boutons de navigation */}
-                        <div className="pagination-nav" style={{ display: 'flex', gap: '15px', justifyContent: 'space-between' }}>
+
+                        <div
+                            className="pagination-nav"
+                            style={{
+                                display: 'flex',
+                                gap: '15px',
+                                justifyContent: 'space-between',
+                            }}
+                        >
                             <button
                                 className="page-nav-btn prev-btn"
                                 onClick={handlePreviousBatch}
@@ -734,7 +806,7 @@ const Test = () => {
                                     flex: 1,
                                     backgroundColor: '#f0f0f0',
                                     color: '#333',
-                                    border: '1px solid #ddd'
+                                    border: '1px solid #ddd',
                                 }}
                             >
                                 ← Page précédente
@@ -752,15 +824,26 @@ const Test = () => {
                                       : `Page suivante (${currentBatch.length - Object.keys(draftAnswers).length} restante${currentBatch.length - Object.keys(draftAnswers).length > 1 ? 's' : ''}) →`}
                             </button>
                         </div>
-                        
-                        {/* Message d'information pour l'auto-défilement */}
+
                         {!hasUsedPrevious && allAnswered && !submitting && (
-                            <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#666' }}>
-                            
-                            </div>
+                            <div
+                                style={{
+                                    textAlign: 'center',
+                                    marginTop: '15px',
+                                    fontSize: '14px',
+                                    color: '#666',
+                                }}
+                            ></div>
                         )}
                         {hasUsedPrevious && (
-                            <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#ff9800' }}>
+                            <div
+                                style={{
+                                    textAlign: 'center',
+                                    marginTop: '15px',
+                                    fontSize: '14px',
+                                    color: '#ff9800',
+                                }}
+                            >
                                 Cliquez sur "Continuer" pour valider vos modifications
                             </div>
                         )}

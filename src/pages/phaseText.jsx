@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
 
-// Émotions
 const EmotionSvgs = {
     sad: (
         <svg
@@ -187,7 +186,6 @@ const PhaseTest = () => {
     const { id } = useParams();
     const phaseId = parseInt(id, 10);
 
-    // Phase 1 = test simple, Phases 2,3,4 = test complet
     const isSimplePhase = phaseId === 1;
     const initialAssessmentType = isSimplePhase ? 'PHASE1' : 'FULL';
 
@@ -323,7 +321,6 @@ const PhaseTest = () => {
     const completePhase = async (token, assessmentIdParam) => {
         setSubmitting(true);
         try {
-            // Calculer les résultats
             try {
                 await api.post('/results/compute', {
                     sessionToken: token,
@@ -333,18 +330,15 @@ const PhaseTest = () => {
                 console.warn('Compute warning (continuing to fetch phase result):', computeErr);
             }
 
-            // Récupérer les résultats via endpoint stable par assessment
             let response;
             try {
                 response = await api.get(`/results/by-assessment/${assessmentIdParam}`);
             } catch (resultErr) {
-                // Fallback legacy
                 response = await api.get(`/results/phase${phaseId}`, {
                     params: { assessmentId: assessmentIdParam, sessionToken: token },
                 });
             }
 
-            // Pour la phase 1, afficher la page de rapport dédiée
             if (phaseId === 1) {
                 localStorage.setItem('assessment_id', String(assessmentIdParam));
                 localStorage.setItem('session_token', String(token));
@@ -366,7 +360,6 @@ const PhaseTest = () => {
             localStorage.removeItem(`phase_${phaseId}_assessment_id`);
         } catch (err) {
             console.error('Error completing phase:', err);
-            // Dernière tentative pour phase 1 : afficher au moins le rapport si possible
             if (phaseId === 1) {
                 try {
                     const fallback = await api.get(`/results/by-assessment/${assessmentIdParam}`);
@@ -402,7 +395,6 @@ const PhaseTest = () => {
 
         setSubmitting(true);
         try {
-            // Utiliser les mêmes endpoints que tests.jsx
             const endpoint = currentPhase === 'PHASE1' ? '/responses/phase1' : '/responses/phase2';
             const payload =
                 currentPhase === 'PHASE2'
@@ -647,11 +639,9 @@ const PhaseTest = () => {
     );
 };
 
-// Composant d'affichage des résultats
 const PhaseResult = ({ phaseId, results, onNewTest }) => {
     const navigate = useNavigate();
 
-    // Phase 1 - Résultats spécifiques
     if (phaseId === 1) {
         return (
             <div className="phase-result-page">

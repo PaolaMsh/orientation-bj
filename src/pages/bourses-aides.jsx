@@ -87,14 +87,16 @@ const Scholarships = () => {
             university: scholarship.university,
             type: scholarship.type,
             level: scholarship.level,
-            deadline: scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('fr-FR') : 'Non spécifiée',
+            deadline: scholarship.deadline
+                ? new Date(scholarship.deadline).toLocaleDateString('fr-FR')
+                : 'Non spécifiée',
             amount: scholarship.amount,
             status: getStatus(scholarship.deadline),
             link: scholarship.applyUrl || scholarship.officialUrl,
             benefits: scholarship.coverage || [],
             conditions: scholarship.requirements || [],
             fields: scholarship.fields || [],
-            savedAt: new Date().toISOString()
+            savedAt: new Date().toISOString(),
         };
     };
 
@@ -111,115 +113,118 @@ const Scholarships = () => {
             title: apiScholarship.title,
             description: apiScholarship.description,
             country: apiScholarship.country,
-            university: apiScholarship.provider || apiScholarship.universities?.[0]?.name || 'Non spécifié',
-            type: apiScholarship.fundingType === 'FULL' ? 'Bourse complète' : 
-                   apiScholarship.fundingType === 'PARTIAL' ? 'Bourse partielle' : 'Bourse',
+            university:
+                apiScholarship.provider || apiScholarship.universities?.[0]?.name || 'Non spécifié',
+            type:
+                apiScholarship.fundingType === 'FULL'
+                    ? 'Bourse complète'
+                    : apiScholarship.fundingType === 'PARTIAL'
+                      ? 'Bourse partielle'
+                      : 'Bourse',
             level: apiScholarship.level,
             deadline: apiScholarship.applicationCloseAt,
-            amount: apiScholarship.amountLabel || 
-                    (apiScholarship.fundingType === 'FULL' ? 'Bourse complète' : 'Bourse partielle'),
+            amount:
+                apiScholarship.amountLabel ||
+                (apiScholarship.fundingType === 'FULL' ? 'Bourse complète' : 'Bourse partielle'),
             coverage: apiScholarship.benefits || [],
             requirements: apiScholarship.conditions || [],
-            languages: apiScholarship.requiredDocuments?.languageRequirement ? 
-                       [apiScholarship.requiredDocuments.languageRequirement] : ['Non spécifié'],
+            languages: apiScholarship.requiredDocuments?.languageRequirement
+                ? [apiScholarship.requiredDocuments.languageRequirement]
+                : ['Non spécifié'],
             fields: apiScholarship.field ? [apiScholarship.field] : [],
-            rating: 4.5, 
+            rating: 4.5,
             applications: apiScholarship.seats || 0,
             applyUrl: apiScholarship.applicationUrl,
             officialUrl: apiScholarship.applicationUrl,
-            beninPartnership: apiScholarship.country === 'Bénin' || apiScholarship.provider?.includes('Bénin'),
+            beninPartnership:
+                apiScholarship.country === 'Bénin' || apiScholarship.provider?.includes('Bénin'),
             artistic: apiScholarship.field?.toLowerCase().includes('art') || false,
         };
     };
 
-    // Fonction corrigée pour sauvegarder une bourse
     const handleSaveScholarship = async (scholarship, e) => {
         e.stopPropagation();
-        
+
         try {
             const token = localStorage.getItem('token');
-            
-            // Vérifier d'abord si la bourse est déjà sauvegardée
+
             const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-            const alreadySaved = savedScholarships.some(s => s.id === scholarship.id);
-            
+            const alreadySaved = savedScholarships.some((s) => s.id === scholarship.id);
+
             if (alreadySaved) {
-                setSavedMessage({ 
-                    id: scholarship.id, 
-                    text: 'ℹ️ Cette bourse est déjà dans vos favoris', 
-                    type: 'info' 
+                setSavedMessage({
+                    id: scholarship.id,
+                    text: 'ℹ️ Cette bourse est déjà dans vos favoris',
+                    type: 'info',
                 });
                 setTimeout(() => setSavedMessage(null), 3000);
                 return;
             }
-            
+
             if (token) {
                 try {
-                    // Appel API corrigé - passer uniquement l'ID
                     await bourseService.saveScholarship(scholarship.id);
-                    
-                    // Sauvegarder aussi localement pour un accès hors ligne
+
                     const scholarshipToSave = mapScholarshipForSaving(scholarship);
                     const saved = saveScholarship(scholarshipToSave);
-                    
+
                     if (saved) {
-                        setSavedMessage({ 
-                            id: scholarship.id, 
-                            text: '✓ Bourse enregistrée avec succès !', 
-                            type: 'success' 
+                        setSavedMessage({
+                            id: scholarship.id,
+                            text: '✓ Bourse enregistrée avec succès !',
+                            type: 'success',
                         });
                     }
                 } catch (apiError) {
-                    console.warn('Échec de la sauvegarde API, utilisation du stockage local uniquement:', apiError);
-                    
-                    // Vérifier le code d'erreur pour un message approprié
+                    console.warn(
+                        'Échec de la sauvegarde API, utilisation du stockage local uniquement:',
+                        apiError,
+                    );
+
                     if (apiError.response?.status === 403) {
-                        setSavedMessage({ 
-                            id: scholarship.id, 
-                            text: '⛔ Vous n\'avez pas les droits pour sauvegarder cette bourse', 
-                            type: 'error' 
+                        setSavedMessage({
+                            id: scholarship.id,
+                            text: "⛔ Vous n'avez pas les droits pour sauvegarder cette bourse",
+                            type: 'error',
                         });
                         setTimeout(() => setSavedMessage(null), 3000);
                         return;
                     }
-                    
-                    // Fallback vers le stockage local
+
                     const scholarshipToSave = mapScholarshipForSaving(scholarship);
                     const saved = saveScholarship(scholarshipToSave);
                     if (saved) {
-                        setSavedMessage({ 
-                            id: scholarship.id, 
-                            text: '✓ Bourse enregistrée !', 
-                            type: 'success' 
+                        setSavedMessage({
+                            id: scholarship.id,
+                            text: '✓ Bourse enregistrée !',
+                            type: 'success',
                         });
                     }
                 }
             } else {
-                // Pas de token, sauvegarde locale uniquement
                 const scholarshipToSave = mapScholarshipForSaving(scholarship);
                 const saved = saveScholarship(scholarshipToSave);
                 if (saved) {
-                    setSavedMessage({ 
-                        id: scholarship.id, 
-                        text: '✓ Bourse enregistrée ! (Connexion requise pour la synchronisation)', 
-                        type: 'success' 
+                    setSavedMessage({
+                        id: scholarship.id,
+                        text: '✓ Bourse enregistrée ! (Connexion requise pour la synchronisation)',
+                        type: 'success',
                     });
                 }
             }
-            
+
             setTimeout(() => setSavedMessage(null), 3000);
         } catch (error) {
             console.error('Erreur lors de la sauvegarde de la bourse:', error);
-            setSavedMessage({ 
-                id: scholarship.id, 
-                text: '❌ Erreur lors de l\'enregistrement. Veuillez réessayer.', 
-                type: 'error' 
+            setSavedMessage({
+                id: scholarship.id,
+                text: "❌ Erreur lors de l'enregistrement. Veuillez réessayer.",
+                type: 'error',
             });
             setTimeout(() => setSavedMessage(null), 3000);
         }
     };
 
-    // Récupérer toutes les bourses
     const fetchAllScholarships = async () => {
         setLoading(true);
         setError(null);
@@ -227,16 +232,19 @@ const Scholarships = () => {
         try {
             const data = await bourseService.getAllScholarships();
             let allScholarshipsData = Array.isArray(data) ? data : data.data || [];
-            
+
             let mappedScholarships = allScholarshipsData.map(mapScholarshipData);
-            
-            const uniqueCountries = [...new Set(mappedScholarships.map(s => s.country).filter(Boolean))];
-            const uniqueLevels = [...new Set(mappedScholarships.map(s => s.level).filter(Boolean))];
-            
+
+            const uniqueCountries = [
+                ...new Set(mappedScholarships.map((s) => s.country).filter(Boolean)),
+            ];
+            const uniqueLevels = [
+                ...new Set(mappedScholarships.map((s) => s.level).filter(Boolean)),
+            ];
+
             setCountries(['all', ...uniqueCountries]);
             setLevels(['all', ...uniqueLevels]);
             setAllScholarships(mappedScholarships);
-            
         } catch (err) {
             console.error('Erreur:', err);
             setError(err.message);
@@ -245,7 +253,6 @@ const Scholarships = () => {
         }
     };
 
-    // Fonction de recherche
     const performSearch = async (query) => {
         if (!query.trim()) {
             setAllScholarships([]);
@@ -258,15 +265,16 @@ const Scholarships = () => {
             const results = await bourseService.searchScholarships(query);
             let data = Array.isArray(results) ? results : results.data || [];
             let mappedResults = data.map(mapScholarshipData);
-            
+
             setAllScholarships(mappedResults);
-            
-            const uniqueCountries = [...new Set(mappedResults.map(s => s.country).filter(Boolean))];
-            const uniqueLevels = [...new Set(mappedResults.map(s => s.level).filter(Boolean))];
-            
+
+            const uniqueCountries = [
+                ...new Set(mappedResults.map((s) => s.country).filter(Boolean)),
+            ];
+            const uniqueLevels = [...new Set(mappedResults.map((s) => s.level).filter(Boolean))];
+
             setCountries(['all', ...uniqueCountries]);
             setLevels(['all', ...uniqueLevels]);
-            
         } catch (err) {
             console.error('Erreur recherche:', err);
             setError('Aucun résultat trouvé');
@@ -275,27 +283,25 @@ const Scholarships = () => {
         }
     };
 
-    // Filtrer et paginer les résultats
     const filterAndPaginate = () => {
         let filtered = [...allScholarships];
-        
+
         if (selectedCountry !== 'all') {
-            filtered = filtered.filter(s => s.country === selectedCountry);
+            filtered = filtered.filter((s) => s.country === selectedCountry);
         }
-        
+
         if (selectedLevel !== 'all') {
-            filtered = filtered.filter(s => s.level === selectedLevel);
+            filtered = filtered.filter((s) => s.level === selectedLevel);
         }
-        
+
         const start = (currentPage - 1) * itemsPerPage;
         const paginatedData = filtered.slice(start, start + itemsPerPage);
-        
+
         setScholarships(paginatedData);
         setTotalResults(filtered.length);
         setTotalPages(Math.ceil(filtered.length / itemsPerPage));
     };
 
-    // Debounce pour la recherche
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if (searchTerm.trim() !== '') {
@@ -308,19 +314,16 @@ const Scholarships = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    // Appliquer les filtres quand les données changent
     useEffect(() => {
         if (allScholarships.length > 0 || searchTerm === '') {
             filterAndPaginate();
         }
     }, [allScholarships, selectedCountry, selectedLevel, currentPage]);
 
-    // Réinitialiser la page quand les filtres changent
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, selectedCountry, selectedLevel]);
 
-    // Chargement initial
     useEffect(() => {
         fetchAllScholarships();
     }, []);
@@ -366,7 +369,6 @@ const Scholarships = () => {
 
     return (
         <div className="scholarships-page">
-            {/* Hero Section */}
             <section className="scholarships-hero">
                 <div className="hero-bg-pattern"></div>
                 <div className="container">
@@ -394,7 +396,6 @@ const Scholarships = () => {
                 </div>
             </section>
 
-            {/* Search & Filters */}
             <div className="search-section">
                 <div className="container">
                     <div className="search-container">
@@ -455,12 +456,16 @@ const Scholarships = () => {
                 </div>
             </div>
 
-            {/* Scholarships Grid */}
             <div className="scholarships-section">
                 <div className="container">
                     <div className="results-info">
-                        <span>{totalResults} bourse{totalResults > 1 ? 's' : ''} trouvée{totalResults > 1 ? 's' : ''}</span>
-                        {searching && <span className="searching-badge">Recherche en cours...</span>}
+                        <span>
+                            {totalResults} bourse{totalResults > 1 ? 's' : ''} trouvée
+                            {totalResults > 1 ? 's' : ''}
+                        </span>
+                        {searching && (
+                            <span className="searching-badge">Recherche en cours...</span>
+                        )}
                     </div>
 
                     <div className="scholarships-grid">
@@ -474,7 +479,7 @@ const Scholarships = () => {
                                         <FontAwesomeIcon icon={faAward} />
                                         <span>{scholarship.type || 'Bourse'}</span>
                                     </div>
-                                    <button 
+                                    <button
                                         className="save-btn"
                                         onClick={(e) => handleSaveScholarship(scholarship, e)}
                                         title="Enregistrer cette bourse"
@@ -539,15 +544,20 @@ const Scholarships = () => {
 
                                     {scholarship.deadline && (
                                         <div className="deadline">
-                                            <div className={`deadline-badge ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}>
+                                            <div
+                                                className={`deadline-badge ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}
+                                            >
                                                 <FontAwesomeIcon icon={faCalendarAlt} />
                                                 <span>
                                                     Date limite: {formatDate(scholarship.deadline)}
                                                 </span>
                                             </div>
                                             <div className="days-left">
-                                                <span className={`days ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}>
-                                                    {getDaysLeft(scholarship.deadline)} jours restants
+                                                <span
+                                                    className={`days ${getDaysLeft(scholarship.deadline) <= 30 ? 'urgent' : ''}`}
+                                                >
+                                                    {getDaysLeft(scholarship.deadline)} jours
+                                                    restants
                                                 </span>
                                             </div>
                                         </div>
@@ -556,15 +566,31 @@ const Scholarships = () => {
                                     <div className="card-footer">
                                         <button
                                             className="details-btn"
-                                            onClick={() => setExpandedCard(expandedCard === scholarship.id ? null : scholarship.id)}
+                                            onClick={() =>
+                                                setExpandedCard(
+                                                    expandedCard === scholarship.id
+                                                        ? null
+                                                        : scholarship.id,
+                                                )
+                                            }
                                         >
-                                            {expandedCard === scholarship.id ? 'Voir moins' : 'Voir les détails'}
-                                            <FontAwesomeIcon icon={expandedCard === scholarship.id ? faChevronUp : faChevronDown} />
+                                            {expandedCard === scholarship.id
+                                                ? 'Voir moins'
+                                                : 'Voir les détails'}
+                                            <FontAwesomeIcon
+                                                icon={
+                                                    expandedCard === scholarship.id
+                                                        ? faChevronUp
+                                                        : faChevronDown
+                                                }
+                                            />
                                         </button>
                                         {scholarship.applyUrl && (
                                             <button
                                                 className="apply-btn"
-                                                onClick={() => window.open(scholarship.applyUrl, '_blank')}
+                                                onClick={() =>
+                                                    window.open(scholarship.applyUrl, '_blank')
+                                                }
                                             >
                                                 Postuler
                                                 <FontAwesomeIcon icon={faExternalLinkAlt} />
@@ -575,53 +601,64 @@ const Scholarships = () => {
 
                                 {expandedCard === scholarship.id && (
                                     <div className="card-expanded slide-down">
-                                        {scholarship.coverage && scholarship.coverage.length > 0 && (
-                                            <div className="expanded-section">
-                                                <h4>
-                                                    <FontAwesomeIcon icon={faCheckCircle} />
-                                                    Avantages de la bourse
-                                                </h4>
-                                                <ul>
-                                                    {scholarship.coverage.map((item, i) => (
-                                                        <li key={i}>
-                                                            <FontAwesomeIcon icon={faCheckCircle} className="check-icon" />
-                                                            {item}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {scholarship.requirements && scholarship.requirements.length > 0 && (
-                                            <div className="expanded-section">
-                                                <h4>
-                                                    <FontAwesomeIcon icon={faFileAlt} />
-                                                    Conditions d'éligibilité
-                                                </h4>
-                                                <ul>
-                                                    {scholarship.requirements.map((req, i) => (
-                                                        <li key={i}>
-                                                            <FontAwesomeIcon icon={faCheckCircle} className="check-icon" />
-                                                            {req}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {scholarship.languages && scholarship.languages.length > 0 && (
-                                            <div className="expanded-section">
-                                                <h4>
-                                                    <FontAwesomeIcon icon={faLanguage} />
-                                                    Langues requises
-                                                </h4>
-                                                <div className="languages">
-                                                    {scholarship.languages.map((lang, i) => (
-                                                        <span key={i} className="language-tag">{lang}</span>
-                                                    ))}
+                                        {scholarship.coverage &&
+                                            scholarship.coverage.length > 0 && (
+                                                <div className="expanded-section">
+                                                    <h4>
+                                                        <FontAwesomeIcon icon={faCheckCircle} />
+                                                        Avantages de la bourse
+                                                    </h4>
+                                                    <ul>
+                                                        {scholarship.coverage.map((item, i) => (
+                                                            <li key={i}>
+                                                                <FontAwesomeIcon
+                                                                    icon={faCheckCircle}
+                                                                    className="check-icon"
+                                                                />
+                                                                {item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+
+                                        {scholarship.requirements &&
+                                            scholarship.requirements.length > 0 && (
+                                                <div className="expanded-section">
+                                                    <h4>
+                                                        <FontAwesomeIcon icon={faFileAlt} />
+                                                        Conditions d'éligibilité
+                                                    </h4>
+                                                    <ul>
+                                                        {scholarship.requirements.map((req, i) => (
+                                                            <li key={i}>
+                                                                <FontAwesomeIcon
+                                                                    icon={faCheckCircle}
+                                                                    className="check-icon"
+                                                                />
+                                                                {req}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                        {scholarship.languages &&
+                                            scholarship.languages.length > 0 && (
+                                                <div className="expanded-section">
+                                                    <h4>
+                                                        <FontAwesomeIcon icon={faLanguage} />
+                                                        Langues requises
+                                                    </h4>
+                                                    <div className="languages">
+                                                        {scholarship.languages.map((lang, i) => (
+                                                            <span key={i} className="language-tag">
+                                                                {lang}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                         {scholarship.fields && scholarship.fields.length > 0 && (
                                             <div className="expanded-section">
@@ -631,7 +668,9 @@ const Scholarships = () => {
                                                 </h4>
                                                 <div className="fields">
                                                     {scholarship.fields.map((field, i) => (
-                                                        <span key={i} className="field-tag">{field}</span>
+                                                        <span key={i} className="field-tag">
+                                                            {field}
+                                                        </span>
                                                     ))}
                                                 </div>
                                             </div>
@@ -639,12 +678,23 @@ const Scholarships = () => {
 
                                         <div className="expanded-actions">
                                             {scholarship.officialUrl && (
-                                                <button className="btn-primary" onClick={() => window.open(scholarship.officialUrl, '_blank')}>
+                                                <button
+                                                    className="btn-primary"
+                                                    onClick={() =>
+                                                        window.open(
+                                                            scholarship.officialUrl,
+                                                            '_blank',
+                                                        )
+                                                    }
+                                                >
                                                     <FontAwesomeIcon icon={faFileAlt} />
                                                     Site officiel
                                                 </button>
                                             )}
-                                            <button className="btn-secondary" onClick={() => setExpandedCard(null)}>
+                                            <button
+                                                className="btn-secondary"
+                                                onClick={() => setExpandedCard(null)}
+                                            >
                                                 <FontAwesomeIcon icon={faInfoCircle} />
                                                 Fermer
                                             </button>
@@ -665,11 +715,19 @@ const Scholarships = () => {
 
                     {totalPages > 1 && (
                         <div className="pagination">
-                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
                                 Précédent
                             </button>
-                            <span>Page {currentPage} / {totalPages}</span>
-                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                            <span>
+                                Page {currentPage} / {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
                                 Suivant
                             </button>
                         </div>
