@@ -76,7 +76,6 @@ const UniversitiesPage = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, universities]);
 
-    // Gestionnaire d'erreur d'image
     const handleImageError = (id) => {
         console.log(`Erreur de chargement pour l'image ${id}`);
         setImageErrors(prev => ({
