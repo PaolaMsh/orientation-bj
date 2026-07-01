@@ -210,6 +210,14 @@ const STATUS_LABELS = {
     unknown: 'Inconnu',
 };
 
+const riasecCode =
+                resultData.phase2Code ||
+                Object.entries(scores)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 3)
+                    .map(([key]) => key[0])
+                    .join('');
+
 function formatDate(value) {
     if (!value) return 'Date inconnue';
     const date = new Date(value);
