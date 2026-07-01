@@ -179,27 +179,7 @@ function RapportPhase1() {
         }
     };
 
-    // ✅ Fonction pour recommencer le MÊME test depuis le début
-    const handleRestartTest = () => {
-        if (assessmentId) {
-            // Supprimer uniquement les réponses sauvegardées pour ce test
-            localStorage.removeItem(`phase1_responses_${assessmentId}`);
-            localStorage.removeItem(`phase1_progress_${assessmentId}`);
-            localStorage.removeItem('phase1_current_question');
-            
-            // Naviguer vers le test avec l'ID existant mais en mode restart
-            navigate('/phaseText', {
-                state: { 
-                    assessmentId: assessmentId,
-                    restart: true,  // 🔄 Indique qu'on recommence le test
-                    phase: 'phase1'
-                }
-            });
-        } else {
-            // Si pas d'ID, aller vers la page de sélection
-            navigate('/tests-orientations');
-        }
-    };
+   
 
     // ✅ Fonction pour un tout nouveau test (avec un nouvel ID)
     const handleNewTest = () => {
@@ -449,10 +429,7 @@ function RapportPhase1() {
                         Reprendre le test
                     </button>
 
-                    {/* ✅ Bouton pour recommencer le MÊME test depuis le début */}
-                    <button className="button" onClick={handleRestartTest} style={{ background: '#f59e0b', color: 'white' }}>
-                        🔄 Recommencer le test
-                    </button>
+                    
 
                     {/* ✅ Bouton pour un tout nouveau test (nouvel ID) */}
                     <button className="button" onClick={handleNewTest}>
