@@ -210,6 +210,14 @@ const STATUS_LABELS = {
     unknown: 'Inconnu',
 };
 
+const response = await fetch(`${API_BASE_URL}/results/by-assessment/${id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+
 const resultData = await response.json();
 
 const riasecCode =
