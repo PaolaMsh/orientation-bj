@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
 
@@ -52,9 +52,24 @@ const EmotionSvgs = {
 };
 
 const PHASE2_SECTIONS = [
-    { name: 'OCCUPATIONS', label: 'Réaliste', icon: '🔧', description: 'Travail pratique et technique' },
-    { name: 'APTITUDES', label: 'Investigateur', icon: '🔬', description: 'Exploration et analyse' },
-    { name: 'PERSONALITY', label: 'Artistique', icon: '🎨', description: 'Créativité et expression' },
+    {
+        name: 'OCCUPATIONS',
+        label: 'Réaliste',
+        icon: '🔧',
+        description: 'Travail pratique et technique',
+    },
+    {
+        name: 'APTITUDES',
+        label: 'Investigateur',
+        icon: '🔬',
+        description: 'Exploration et analyse',
+    },
+    {
+        name: 'PERSONALITY',
+        label: 'Artistique',
+        icon: '🎨',
+        description: 'Créativité et expression',
+    },
 ];
 
 const BATCH_SIZE = 6;
@@ -65,8 +80,15 @@ const Spinner = ({ size = 40 }) => (
     </div>
 );
 
-const ProgressHeader = ({ currentPhase, currentSection, completionPercentage, draftCount, batchSize }) => {
-    const section = currentPhase === 'PHASE2' ? PHASE2_SECTIONS.find(s => s.name === currentSection) : null;
+const ProgressHeader = ({
+    currentPhase,
+    currentSection,
+    completionPercentage,
+    draftCount,
+    batchSize,
+}) => {
+    const section =
+        currentPhase === 'PHASE2' ? PHASE2_SECTIONS.find((s) => s.name === currentSection) : null;
     return (
         <div className="test-header">
             <div className="logo-section">
@@ -75,18 +97,27 @@ const ProgressHeader = ({ currentPhase, currentSection, completionPercentage, dr
             <div className="progress-section">
                 <div className="phase-indicator">
                     <span className="phase-name">
-                        {currentPhase === 'PHASE1' ? 'Phase 1 - Intérêts' : `Phase 2 - ${section?.label || currentSection}`}
+                        {currentPhase === 'PHASE1'
+                            ? 'Phase 1 - Intérêts'
+                            : `Phase 2 - ${section?.label || currentSection}`}
                     </span>
                     <span className="phase-desc">
-                        {currentPhase === 'PHASE1' ? 'Évaluation de vos intérêts professionnels' : section?.description || 'Évaluation approfondie'}
+                        {currentPhase === 'PHASE1'
+                            ? 'Évaluation de vos intérêts professionnels'
+                            : section?.description || 'Évaluation approfondie'}
                     </span>
                 </div>
                 <div className="progress-stats">
-                    <span>{draftCount}/{batchSize} questions</span>
+                    <span>
+                        {draftCount}/{batchSize} questions
+                    </span>
                     <span>{Math.round(completionPercentage)}%</span>
                 </div>
                 <div className="progress-bar-container">
-                    <div className="progress-bar-fill" style={{ width: `${completionPercentage}%` }} />
+                    <div
+                        className="progress-bar-fill"
+                        style={{ width: `${completionPercentage}%` }}
+                    />
                 </div>
             </div>
         </div>
@@ -122,7 +153,7 @@ const QuestionCard = ({ question, value, onAnswer, currentPhase, currentSection 
             {question.subtext && <p className="question-subtext">{question.subtext}</p>}
             <div className="emotion-slider">
                 <div className="slider-options">
-                    {options.map(opt => (
+                    {options.map((opt) => (
                         <button
                             key={opt.value}
                             className={`emotion-btn ${value === opt.value ? 'active' : ''}`}
@@ -140,7 +171,7 @@ const QuestionCard = ({ question, value, onAnswer, currentPhase, currentSection 
 };
 
 const formatQuestions = (data, phase, section) => {
-    return data.map(q => ({
+    return data.map((q) => ({
         id: q.id,
         text: q.text,
         subtext: q.subtext || null,
@@ -152,7 +183,6 @@ const formatQuestions = (data, phase, section) => {
 
 const PhaseTest = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const { id } = useParams();
     const phaseId = parseInt(id, 10);
 
@@ -173,21 +203,6 @@ const PhaseTest = () => {
     const [phaseCompleted, setPhaseCompleted] = useState(false);
     const [phase2SectionsCompleted, setPhase2SectionsCompleted] = useState({});
     const [phaseResults, setPhaseResults] = useState(null);
-
-    // ✅ Nettoyage du localStorage au montage
-    useEffect(() => {
-        const cleanup = () => {
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && (key.startsWith('phase1_') || key === 'assessment_id' || key === 'session_token')) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-        };
-        cleanup();
-    }, []);
 
     const resolveProgress = useCallback(async (token, assessmentIdParam) => {
         try {
@@ -212,17 +227,10 @@ const PhaseTest = () => {
                 return null;
             }
 
-            // ✅ Vérifier si c'est un nouveau test
-            const isNewTest = location.state?.newTest === true;
-            if (isNewTest) {
-                localStorage.removeItem(`phase_${phaseId}_session_token`);
-                localStorage.removeItem(`phase_${phaseId}_assessment_id`);
-            }
-
             const existingSessionToken = localStorage.getItem(`phase_${phaseId}_session_token`);
             const existingAssessmentId = localStorage.getItem(`phase_${phaseId}_assessment_id`);
 
-            if (existingSessionToken && existingAssessmentId && !phaseCompleted && !isNewTest) {
+            if (existingSessionToken && existingAssessmentId && !phaseCompleted) {
                 return { sessionToken: existingSessionToken, assessmentId: existingAssessmentId };
             }
 
@@ -251,62 +259,77 @@ const PhaseTest = () => {
             setError(err.response?.data?.message || "Impossible d'initialiser le test");
             return null;
         }
-    }, [phaseId, initialAssessmentType, isSimplePhase, phaseCompleted, location.state]);
+    }, [phaseId, initialAssessmentType, isSimplePhase, phaseCompleted]);
 
-    const fetchBatch = useCallback(async (phase, section = null, tokenParam = null, assessmentIdParam = null) => {
-        setLoadingBatch(true);
-        const tokenToUse = tokenParam || sessionToken;
-        const assessmentIdToUse = assessmentIdParam || assessmentId;
+    const fetchBatch = useCallback(
+        async (phase, section = null, tokenParam = null, assessmentIdParam = null) => {
+            setLoadingBatch(true);
+            const tokenToUse = tokenParam || sessionToken;
+            const assessmentIdToUse = assessmentIdParam || assessmentId;
 
-        try {
-            let response;
-            if (phase === 'PHASE1') {
-                response = await api.get('/questions/phase1', {
-                    params: { sessionToken: tokenToUse, assessmentId: assessmentIdToUse, lang: 'fr', take: BATCH_SIZE },
-                });
-            } else if (phase === 'PHASE2' && section) {
-                response = await api.get('/questions/phase2', {
-                    params: { sessionToken: tokenToUse, assessmentId: assessmentIdToUse, section, lang: 'fr', take: BATCH_SIZE },
-                });
-            } else throw new Error('Phase ou section invalide');
+            try {
+                let response;
+                if (phase === 'PHASE1') {
+                    response = await api.get('/questions/phase1', {
+                        params: {
+                            sessionToken: tokenToUse,
+                            assessmentId: assessmentIdToUse,
+                            lang: 'fr',
+                            take: BATCH_SIZE,
+                        },
+                    });
+                } else if (phase === 'PHASE2' && section) {
+                    response = await api.get('/questions/phase2', {
+                        params: {
+                            sessionToken: tokenToUse,
+                            assessmentId: assessmentIdToUse,
+                            section,
+                            lang: 'fr',
+                            take: BATCH_SIZE,
+                        },
+                    });
+                } else throw new Error('Phase ou section invalide');
 
-            if (response?.data && response.data.length > 0) {
-                const formatted = formatQuestions(response.data, phase, section);
-                setCurrentBatch(formatted);
-                setDraftAnswers({});
-                return true;
-            }
+                if (response?.data && response.data.length > 0) {
+                    const formatted = formatQuestions(response.data, phase, section);
+                    setCurrentBatch(formatted);
+                    setDraftAnswers({});
+                    return true;
+                }
 
-            await completePhase(tokenToUse, assessmentIdToUse);
-            return false;
-        } catch (err) {
-            console.error('Fetch batch error:', err);
-            const message = err.response?.data?.message || err.message || '';
-            if (String(message).toLowerCase().includes('aucun test actif') || String(message).toLowerCase().includes('no active')) {
                 await completePhase(tokenToUse, assessmentIdToUse);
                 return false;
+            } catch (err) {
+                console.error('Fetch batch error:', err);
+                const message = err.response?.data?.message || err.message || '';
+                if (
+                    String(message).toLowerCase().includes('aucun test actif') ||
+                    String(message).toLowerCase().includes('no active')
+                ) {
+                    await completePhase(tokenToUse, assessmentIdToUse);
+                    return false;
+                }
+                setError(err.response?.data?.message || 'Impossible de charger les questions');
+                return false;
+            } finally {
+                setLoadingBatch(false);
             }
-            setError(err.response?.data?.message || 'Impossible de charger les questions');
-            return false;
-        } finally {
-            setLoadingBatch(false);
-        }
-    }, [sessionToken, assessmentId]);
+        },
+        [sessionToken, assessmentId],
+    );
 
     const completePhase = async (token, assessmentIdParam) => {
         setSubmitting(true);
         try {
-            // 1. Calculer les résultats
             try {
                 await api.post('/results/compute', {
                     sessionToken: token,
                     assessmentId: assessmentIdParam,
                 });
             } catch (computeErr) {
-                console.warn('Compute warning (continuing):', computeErr);
+                console.warn('Compute warning (continuing to fetch phase result):', computeErr);
             }
 
-            // 2. Récupérer les résultats
             let response;
             try {
                 response = await api.get(`/results/by-assessment/${assessmentIdParam}`);
@@ -316,7 +339,6 @@ const PhaseTest = () => {
                 });
             }
 
-            // 3. Stocker les données et rediriger
             if (phaseId === 1) {
                 localStorage.setItem('assessment_id', String(assessmentIdParam));
                 localStorage.setItem('session_token', String(token));
@@ -333,6 +355,7 @@ const PhaseTest = () => {
 
             setPhaseResults(response.data);
             setPhaseCompleted(true);
+
             localStorage.removeItem(`phase_${phaseId}_session_token`);
             localStorage.removeItem(`phase_${phaseId}_assessment_id`);
         } catch (err) {
@@ -341,7 +364,10 @@ const PhaseTest = () => {
                 try {
                     const fallback = await api.get(`/results/by-assessment/${assessmentIdParam}`);
                     localStorage.setItem('assessment_id', String(assessmentIdParam));
-                    localStorage.setItem('phase1_report_data', JSON.stringify(fallback?.data || {}));
+                    localStorage.setItem(
+                        'phase1_report_data',
+                        JSON.stringify(fallback?.data || {}),
+                    );
                     navigate('/rapport-phase1', {
                         state: {
                             phaseResults: fallback?.data,
@@ -361,28 +387,38 @@ const PhaseTest = () => {
 
     const submitBatch = useCallback(async () => {
         if (Object.keys(draftAnswers).length !== currentBatch.length) {
-            alert(`Veuillez répondre à toutes les questions (${currentBatch.length - Object.keys(draftAnswers).length} restantes)`);
+            alert(
+                `Veuillez répondre à toutes les questions (${currentBatch.length - Object.keys(draftAnswers).length} restantes)`,
+            );
             return null;
         }
 
         setSubmitting(true);
         try {
             const endpoint = currentPhase === 'PHASE1' ? '/responses/phase1' : '/responses/phase2';
-            const payload = currentPhase === 'PHASE2' ? {
-                sessionToken,
-                assessmentId,
-                responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
-                    questionId: Number(questionId),
-                    responseValue: currentSection === 'APTITUDES' ? Math.min(3, Math.max(1, Number(answer.value))) : Number(answer.value) === 0 ? 0 : 1,
-                })),
-            } : {
-                sessionToken,
-                assessmentId,
-                responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
-                    questionId: Number(questionId),
-                    responseValue: answer.value,
-                })),
-            };
+            const payload =
+                currentPhase === 'PHASE2'
+                    ? {
+                          sessionToken,
+                          assessmentId,
+                          responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
+                              questionId: Number(questionId),
+                              responseValue:
+                                  currentSection === 'APTITUDES'
+                                      ? Math.min(3, Math.max(1, Number(answer.value)))
+                                      : Number(answer.value) === 0
+                                        ? 0
+                                        : 1,
+                          })),
+                      }
+                    : {
+                          sessionToken,
+                          assessmentId,
+                          responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
+                              questionId: Number(questionId),
+                              responseValue: answer.value,
+                          })),
+                      };
 
             await api.post(endpoint, payload);
             setDraftAnswers({});
@@ -395,7 +431,15 @@ const PhaseTest = () => {
         } finally {
             setSubmitting(false);
         }
-    }, [draftAnswers, currentBatch, currentPhase, currentSection, sessionToken, assessmentId, resolveProgress]);
+    }, [
+        draftAnswers,
+        currentBatch,
+        currentPhase,
+        currentSection,
+        sessionToken,
+        assessmentId,
+        resolveProgress,
+    ]);
 
     const handleBatchComplete = useCallback(async () => {
         const progressData = await submitBatch();
@@ -417,7 +461,7 @@ const PhaseTest = () => {
             await fetchBatch('PHASE2', PHASE2_SECTIONS[0].name, sessionToken, assessmentId);
         } else if (newPhase === 'PHASE2' && previousPhase === 'PHASE2') {
             if (progressData.currentSection !== currentSection) {
-                setPhase2SectionsCompleted(prev => ({ ...prev, [currentSection]: true }));
+                setPhase2SectionsCompleted((prev) => ({ ...prev, [currentSection]: true }));
                 setCurrentSection(progressData.currentSection);
                 await fetchBatch('PHASE2', progressData.currentSection, sessionToken, assessmentId);
             } else {
@@ -427,7 +471,7 @@ const PhaseTest = () => {
     }, [currentPhase, currentSection, fetchBatch, submitBatch, sessionToken, assessmentId]);
 
     const handleAnswer = useCallback((questionId, value) => {
-        setDraftAnswers(prev => ({ ...prev, [questionId]: { value } }));
+        setDraftAnswers((prev) => ({ ...prev, [questionId]: { value } }));
     }, []);
 
     useEffect(() => {
@@ -438,33 +482,59 @@ const PhaseTest = () => {
             if (sessionData) {
                 setSessionToken(sessionData.sessionToken);
                 setAssessmentId(sessionData.assessmentId);
-                const progressData = await resolveProgress(sessionData.sessionToken, sessionData.assessmentId);
+                const progressData = await resolveProgress(
+                    sessionData.sessionToken,
+                    sessionData.assessmentId,
+                );
                 const phase = progressData.currentPhase || 'PHASE1';
-                const section = progressData.currentSection || (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
-                await fetchBatch(phase, section, sessionData.sessionToken, sessionData.assessmentId);
+                const section =
+                    progressData.currentSection ||
+                    (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
+                await fetchBatch(
+                    phase,
+                    section,
+                    sessionData.sessionToken,
+                    sessionData.assessmentId,
+                );
             }
             setLoading(false);
         };
         loadPhase();
     }, [phaseId, initializeSession, fetchBatch, resolveProgress]);
 
-    const allAnswered = currentBatch.length > 0 && Object.keys(draftAnswers).length === currentBatch.length;
+    const allAnswered =
+        currentBatch.length > 0 && Object.keys(draftAnswers).length === currentBatch.length;
 
     useEffect(() => {
-        if (allAnswered && !submitting && !loadingBatch && !phaseCompleted && currentBatch.length > 0) {
+        if (
+            allAnswered &&
+            !submitting &&
+            !loadingBatch &&
+            !phaseCompleted &&
+            currentBatch.length > 0
+        ) {
             const timer = setTimeout(() => {
                 handleBatchComplete();
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [allAnswered, submitting, loadingBatch, phaseCompleted, currentBatch.length, handleBatchComplete]);
+    }, [
+        allAnswered,
+        submitting,
+        loadingBatch,
+        phaseCompleted,
+        currentBatch.length,
+        handleBatchComplete,
+    ]);
 
     if (loading) {
         return (
             <div className="test-page">
                 <div className="test-container">
                     <Spinner />
-                    <p style={{ textAlign: 'center', marginTop: '20px' }}>Chargement de la Phase {phaseId}...</p>
+                    <p style={{ textAlign: 'center', marginTop: '20px' }}>
+                        Chargement de la Phase {phaseId}...
+                    </p>
                 </div>
             </div>
         );
@@ -483,7 +553,7 @@ const PhaseTest = () => {
                     setCurrentBatch([]);
                     setDraftAnswers({});
                     setPhase2SectionsCompleted({});
-                    navigate(`/phaseText/${phaseId}`, { state: { newTest: true } });
+                    window.location.reload();
                 }}
             />
         );
@@ -515,25 +585,29 @@ const PhaseTest = () => {
 
                 {currentPhase === 'PHASE2' && (
                     <div className="phase2-sections-indicator">
-                        {PHASE2_SECTIONS.map(section => (
+                        {PHASE2_SECTIONS.map((section) => (
                             <div
                                 key={section.name}
                                 className={`section-badge ${section.name === currentSection ? 'active' : ''} ${phase2SectionsCompleted[section.name] ? 'completed' : ''}`}
                             >
                                 <span className="section-icon">{section.icon}</span>
                                 <span className="section-name">{section.label}</span>
-                                {phase2SectionsCompleted[section.name] && <span className="section-check">✓</span>}
+                                {phase2SectionsCompleted[section.name] && (
+                                    <span className="section-check">✓</span>
+                                )}
                             </div>
                         ))}
                     </div>
                 )}
+
+                
 
                 {loadingBatch ? (
                     <Spinner size={30} />
                 ) : (
                     <>
                         <div className="questions-grid">
-                            {currentBatch.map(q => (
+                            {currentBatch.map((q) => (
                                 <QuestionCard
                                     key={q.id}
                                     question={q}
@@ -551,7 +625,11 @@ const PhaseTest = () => {
                                 disabled={!allAnswered || submitting || loadingBatch}
                                 style={{ width: '100%' }}
                             >
-                                {submitting ? 'Envoi...' : allAnswered ? 'Continuer →' : 'Page suivante →'}
+                                {submitting
+                                    ? 'Envoi...'
+                                    : allAnswered
+                                      ? 'Continuer →'
+                                      : 'Page suivante →'}
                             </button>
                         </div>
                     </>
@@ -564,56 +642,84 @@ const PhaseTest = () => {
 const PhaseResult = ({ phaseId, results, onNewTest }) => {
     const navigate = useNavigate();
 
-    // ✅ Fonction pour un nouveau test
-    const handleNewTest = () => {
-        if (onNewTest) {
-            onNewTest();
-        } else {
-            localStorage.removeItem(`phase_${phaseId}_session_token`);
-            localStorage.removeItem(`phase_${phaseId}_assessment_id`);
-            navigate(`/phaseText/${phaseId}`, { state: { newTest: true } });
-        }
-    };
-
     if (phaseId === 1) {
         return (
             <div className="phase-result-page">
                 <div className="phase-result-container">
                     <div className="phase-result-header">
-                        <h1>🎯 Résultat de la Phase 1 - Amorçage</h1>
+                        <h1> Résultat de la Phase 1 - Amorçage</h1>
                         <p>Voici votre profil de personnalité basé sur vos réponses</p>
                     </div>
 
                     <div className="result-card">
                         <h3>Votre code de profil</h3>
                         <div className="profile-code-display">
-                            <span className="code-badge-large">{results?.phase1Code || results?.code || 'PEN'}</span>
+                            <span className="code-badge-large">
+                                {results?.phase1Code || results?.code || 'PEN'}
+                            </span>
                         </div>
                         <p className="profile-description">
-                            {results?.description || 'Vous êtes curieux, analytique et aimez explorer de nouveaux horizons.'}
+                            {results?.description ||
+                                'Vous êtes curieux, analytique et aimez explorer de nouveaux horizons.'}
                         </p>
                     </div>
 
                     <div className="result-card">
-                        <h3>💪 Vos traits dominants</h3>
+                        <h3> Vos traits dominants</h3>
                         <div className="traits-list">
-                            {(results?.traits || ['Curiosité intellectuelle', "Capacité d'analyse", 'Autonomie']).map((trait, i) => (
-                                <div key={i} className="trait-badge">{trait}</div>
+                            {(
+                                results?.traits || [
+                                    'Curiosité intellectuelle',
+                                    "Capacité d'analyse",
+                                    'Autonomie',
+                                ]
+                            ).map((trait, i) => (
+                                <div key={i} className="trait-badge">
+                                    {trait}
+                                </div>
                             ))}
                         </div>
                     </div>
 
-                    
+                    <div className="phase-result-actions">
+                        <button
+                            className="btn-secondary"
+                            onClick={() => navigate('/tests-orientations')}
+                        >
+                            ← Retour
+                        </button>
+                        <button className="btn-primary" onClick={onNewTest}>
+                            Refaire la phase
+                        </button>
+                        <button className="btn-outline" onClick={() => navigate('/tests')}>
+                            Test complet
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    const scores = results?.phase2Scores || results?.scores || { I: 88, E: 72, S: 78, R: 65, A: 55, C: 45 };
+    const scores = results?.phase2Scores ||
+        results?.scores || { I: 88, E: 72, S: 78, R: 65, A: 55, C: 45 };
     const code = results?.phase2Code || results?.code || 'IES';
-    const names = { I: 'Investigateur', E: 'Entreprenant', S: 'Social', R: 'Réaliste', A: 'Artistique', C: 'Conventionnel' };
+    const names = {
+        I: 'Investigateur',
+        E: 'Entreprenant',
+        S: 'Social',
+        R: 'Réaliste',
+        A: 'Artistique',
+        C: 'Conventionnel',
+    };
     const icons = { I: '🔬', E: '💼', S: '👥', R: '🔧', A: '🎨', C: '📋' };
-    const colors = { I: '#3b82f6', E: '#f59e0b', S: '#10b981', R: '#ef4444', A: '#ec4899', C: '#8b5cf6' };
+    const colors = {
+        I: '#3b82f6',
+        E: '#f59e0b',
+        S: '#10b981',
+        R: '#ef4444',
+        A: '#ec4899',
+        C: '#8b5cf6',
+    };
 
     const phaseTitles = {
         2: { title: 'Phase 2 - Aptitudes', subtitle: 'Voici votre profil RIASEC détaillé' },
@@ -632,10 +738,13 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
                 </div>
 
                 <div className="result-card">
-                    <h3>📝 Votre code RIASEC</h3>
+                    <h3> Votre code RIASEC</h3>
                     <div className="riasec-code-display">
                         {code.split('').map((letter, i) => (
-                            <span key={i} className={`riasec-letter letter-${letter.toLowerCase()}`}>
+                            <span
+                                key={i}
+                                className={`riasec-letter letter-${letter.toLowerCase()}`}
+                            >
                                 {letter}
                             </span>
                         ))}
@@ -652,13 +761,29 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
                                 <span className="score-value">{score}%</span>
                             </div>
                             <div className="score-bar-container">
-                                <div className="score-bar-fill" style={{ width: `${score}%`, background: colors[key] }} />
+                                <div
+                                    className="score-bar-fill"
+                                    style={{ width: `${score}%`, background: colors[key] }}
+                                ></div>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                
+                <div className="phase-result-actions">
+                    <button
+                        className="btn-secondary"
+                        onClick={() => navigate('/tests-orientations')}
+                    >
+                        ← Retour
+                    </button>
+                    <button className="btn-primary" onClick={onNewTest}>
+                        Refaire la phase
+                    </button>
+                    <button className="btn-outline" onClick={() => navigate('/tests')}>
+                        Test complet
+                    </button>
+                </div>
             </div>
         </div>
     );

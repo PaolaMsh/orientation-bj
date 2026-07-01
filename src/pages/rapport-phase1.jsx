@@ -4,6 +4,51 @@ import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
 import api from '../services/api';
 
+const IconInfo = () => (
+    <svg
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+    >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+);
+
+const IconSearch = ({ size = 20 }) => (
+    <svg
+        width={size}
+        height={size}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+    >
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+);
+
+const IconGrid = ({ size = 18 }) => (
+    <svg
+        width={size}
+        height={size}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+    >
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+);
+
 function RapportPhase1() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -26,7 +71,10 @@ function RapportPhase1() {
             console.log('Code RIASEC Phase 1:', code);
             console.log('Première lettre (axe dominant):', leadingLetter);
 
-            const recoData = await recommendationService.getRiasecRecommendations(id, leadingLetter);
+            const recoData = await recommendationService.getRiasecRecommendations(
+                id,
+                leadingLetter,
+            );
             console.log("Recommandations pour l'axe", leadingLetter, ':', recoData);
 
             const axisMapping = {
@@ -38,6 +86,7 @@ function RapportPhase1() {
                 C: 'CONVENTIONAL',
             };
             const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
+
             const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
 
             setRecommendations({
@@ -80,8 +129,10 @@ function RapportPhase1() {
                 }
 
                 // 3. Récupérer depuis l'API
-                const assessmentIdFromState = location.state?.assessmentId || localStorage.getItem('assessment_id');
-                const sessionToken = location.state?.sessionToken || localStorage.getItem('session_token');
+                const assessmentIdFromState = 
+                    location.state?.assessmentId || localStorage.getItem('assessment_id');
+                const sessionToken = 
+                    location.state?.sessionToken || localStorage.getItem('session_token');
 
                 if (!assessmentIdFromState) {
                     setError('Identifiant de test non trouvé');
@@ -113,6 +164,61 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
+    // ✅ Fonction pour reprendre le test existant (là où on s'était arrêté)
+    const handleResumeTest = () => {
+        if (assessmentId) {
+            navigate('/phaseText', {
+                state: { 
+                    assessmentId: assessmentId,
+                    resume: true,
+                    phase: 'phase1'
+                }
+            });
+        } else {
+            navigate('/tests-orientations');
+        }
+    };
+
+    // ✅ Fonction pour recommencer le MÊME test depuis le début
+    const handleRestartTest = () => {
+        if (assessmentId) {
+            // Supprimer uniquement les réponses sauvegardées pour ce test
+            localStorage.removeItem(`phase1_responses_${assessmentId}`);
+            localStorage.removeItem(`phase1_progress_${assessmentId}`);
+            localStorage.removeItem('phase1_current_question');
+            
+            // Naviguer vers le test avec l'ID existant mais en mode restart
+            navigate('/phaseText', {
+                state: { 
+                    assessmentId: assessmentId,
+                    restart: true,  // 🔄 Indique qu'on recommence le test
+                    phase: 'phase1'
+                }
+            });
+        } else {
+            // Si pas d'ID, aller vers la page de sélection
+            navigate('/tests-orientations');
+        }
+    };
+
+    // ✅ Fonction pour un tout nouveau test (avec un nouvel ID)
+    const handleNewTest = () => {
+        // Supprimer toutes les données
+        localStorage.removeItem('phase1_report_data');
+        localStorage.removeItem('assessment_id');
+        localStorage.removeItem('phase1_responses');
+        localStorage.removeItem('phase1_progress');
+        localStorage.removeItem('phase1_current_question');
+        
+        // Naviguer vers un nouveau test
+        navigate('/phaseText', {
+            state: { 
+                newTest: true,
+                phase: 'phase1'
+            }
+        });
+    };
+
     if (loading) {
         return (
             <div className="ori-page">
@@ -132,7 +238,10 @@ function RapportPhase1() {
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <p style={{ color: '#dc2626' }}>Erreur: {error}</p>
-                        <button onClick={() => navigate('/tests-orientations')} className="button">
+                        <button 
+                            onClick={() => navigate('/tests-orientations')} 
+                            className="button"
+                        >
                             Retour
                         </button>
                     </div>
@@ -147,7 +256,10 @@ function RapportPhase1() {
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <p>Aucune donnée disponible</p>
-                        <button onClick={() => navigate('/tests-orientations')} className="button">
+                        <button 
+                            onClick={() => navigate('/tests-orientations')} 
+                            className="button"
+                        >
                             Retour
                         </button>
                     </div>
@@ -204,104 +316,152 @@ function RapportPhase1() {
     return (
         <div className="ori-page">
             <div className="ori-wrapper">
-                <h1 style={{ marginTop: '2rem', marginBottom: '2rem' }}>Votre Rapport - Phase 1</h1>
+                <div className="ori-header">
+                    <div className="ori-header-content">
+                        <div className="ori-logo-section">
+                            <div>
+                                <h1 style={{ marginTop: '7rem' }} className="orientations-header">
+                                    Votre Rapport - Phase 1
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div 
+                    style={{ 
+                        padding: '2rem', 
+                        display: 'flex', 
+                        flexDirection: 'row', 
+                        border: '1px solid #ddd', 
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)', 
+                        borderRadius: '10px', 
+                        marginBottom: '2rem', 
+                        marginTop: '2rem' 
+                    }} 
+                    className="ria-hero-section"
+                >
+                    <div className="ria-section-header">
+                        <strong style={{ marginRight: '1rem' }} className="ria-section-title">
+                            Votre Profil Dominant
+                        </strong>
+                    </div>
 
-                {/* Profil dominant */}
-                <div style={{
-                    padding: '1.5rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    border: '1px solid #ddd',
-                    borderRadius: '10px',
-                    marginBottom: '2rem'
-                }}>
-                    <strong>Votre Profil Dominant</strong>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 'bold' }}>{primaryAxis.label || 'Non déterminé'}</span>
-                        <span style={{ color: '#0d9488', fontWeight: 'bold' }}>{primaryAxis.score || 0}/100</span>
+                    <div 
+                        style={{ display: 'flex', flexDirection: 'row', marginRight: '1rem' }} 
+                        className="ria-hero-card"
+                    >
+                        <div style={{ marginRight: '1rem' }} className="ria-hero-score">
+                            {primaryAxis.label || 'Non déterminé'}
+                        </div>
+                        <div className="ria-hero-value">
+                            {primaryAxis.score || 0}/100
+                        </div>
                     </div>
                 </div>
 
-                {/* Définition */}
-                <div style={{ padding: '1.5rem', border: '1px solid #ddd', borderRadius: '10px', marginBottom: '2rem' }}>
-                    <h3>Définition & caractéristiques</h3>
-                    <p>{def.text}</p>
-                    <p><strong>Caractéristiques :</strong> {def.traits}</p>
-                </div>
-
-                {/* Interprétation */}
-                <div style={{
-                    padding: '1.5rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '10px',
-                    marginBottom: '2rem',
-                    backgroundColor: '#f9fafb'
-                }}>
-                    <h3>Interprétation personnalisée</h3>
-                    <p>
-                        Votre score ({primaryAxis.score}/100) indique une forte affinité avec l'axe {primaryAxis.label}.
-                        Vous vous épanouissez dans les environnements qui valorisent
-                        {primaryAxis.label === 'Réaliste'
-                            ? " l'action concrète et les résultats tangibles"
-                            : primaryAxis.label === 'Entreprenant'
-                                ? " le leadership et la prise d'initiative"
-                                : primaryAxis.label === 'Investigateur'
-                                    ? " l'analyse et la résolution de problèmes"
-                                    : primaryAxis.label === 'Artistique'
-                                        ? " la créativité et l'expression personnelle"
-                                        : primaryAxis.label === 'Social'
-                                            ? " l'aide aux autres et la collaboration"
-                                            : " l'organisation et la précision"}.
+                <div className="ria-def-card">
+                    <div className="ria-def-title">
+                        <IconInfo /> Définition &amp; caractéristiques
+                    </div>
+                    <p className="ria-def-text">{def.text}</p>
+                    <p className="ria-def-traits">
+                        <strong>Caractéristiques :</strong> {def.traits}
                     </p>
                 </div>
 
-                {/* Recommandations */}
-                <div style={{ padding: '1.5rem', border: '1px solid #ddd', borderRadius: '10px', marginBottom: '2rem' }}>
-                    <h3>Formations & métiers recommandés</h3>
-
-                    <div>
-                        <h4>Formations</h4>
-                        <ul>
-                            {recommendations.formations.length > 0 ? (
-                                recommendations.formations.map((f, i) => <li key={i}>{f}</li>)
-                            ) : (
-                                <li>Chargement des formations...</li>
-                            )}
-                        </ul>
+                <div className="ria-interp-card">
+                    <div className="ria-interp-title">
+                        <IconSearch size={16} /> Interprétation personnalisée
                     </div>
+                    <p className="ria-interp-text">
+                        Votre score ({primaryAxis.score}/100) indique une forte affinité avec l'axe{' '}
+                        {primaryAxis.label}. Vous vous épanouissez dans les environnements qui
+                        valorisent
+                        {primaryAxis.label === 'Réaliste'
+                            ? " l'action concrète et les résultats tangibles"
+                            : primaryAxis.label === 'Entreprenant'
+                              ? " le leadership et la prise d'initiative"
+                              : primaryAxis.label === 'Investigateur'
+                                ? " l'analyse et la résolution de problèmes"
+                                : primaryAxis.label === 'Artistique'
+                                  ? " la créativité et l'expression personnelle"
+                                  : primaryAxis.label === 'Social'
+                                    ? " l'aide aux autres et la collaboration"
+                                    : " l'organisation et la précision"}
+                        .
+                    </p>
+                </div>
 
-                    <div>
-                        <h4>Métiers</h4>
-                        <ul>
-                            {recommendations.metiers.length > 0 ? (
-                                recommendations.metiers.map((m, i) => <li key={i}>{m}</li>)
-                            ) : (
-                                <li>Chargement des métiers...</li>
-                            )}
-                        </ul>
+                <div className="ria-def-card">
+                    <div className="ria-reco-title">
+                        <IconGrid /> Formations &amp; métiers recommandés
                     </div>
-
-                    <div>
-                        <h4>Écoles</h4>
-                        <ul>
-                            {recommendations.ecoles.length > 0 ? (
-                                recommendations.ecoles.map((e, i) => <li key={i}>{e}</li>)
-                            ) : (
-                                <li>Chargement des écoles...</li>
-                            )}
-                        </ul>
+                    <div className="ria-reco-grid">
+                        <div>
+                            <div className="ria-reco-col-label">Formations</div>
+                            <div className="ria-chip-list">
+                                {recommendations.formations.length > 0 ? (
+                                    recommendations.formations.map((f, i) => (
+                                        <span key={i} className="ria-chip">
+                                            {f}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="ria-chip">Chargement des formations...</span>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="ria-reco-col-label">Métiers</div>
+                            <div className="ria-chip-list">
+                                {recommendations.metiers.length > 0 ? (
+                                    recommendations.metiers.map((m, i) => (
+                                        <span key={i} className="ria-chip">
+                                            {m}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="ria-chip">Chargement des métiers...</span>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="ria-reco-col-label">Écoles</div>
+                            <div className="ria-chip-list">
+                                {recommendations.ecoles.length > 0 ? (
+                                    recommendations.ecoles.map((e, i) => (
+                                        <span key={i} className="ria-chip">
+                                            {e}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="ria-chip">Chargement des écoles...</span>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Boutons - navigation simple */}
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
-                    <button className="button" onClick={() => navigate('/phaseText')}>
+                <div className="Buttons" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
+                    {/* ✅ Bouton pour reprendre le test existant (là où on s'était arrêté) */}
+                    <button className="button" onClick={handleResumeTest}>
+                        Reprendre le test
+                    </button>
+
+                    {/* ✅ Bouton pour recommencer le MÊME test depuis le début */}
+                    <button className="button" onClick={handleRestartTest} style={{ background: '#f59e0b', color: 'white' }}>
+                        🔄 Recommencer le test
+                    </button>
+
+                    {/* ✅ Bouton pour un tout nouveau test (nouvel ID) */}
+                    <button className="button" onClick={handleNewTest}>
                         Nouveau test
                     </button>
+
                     <button className="button" onClick={() => navigate('/universites-formations')}>
                         Voir les écoles
-                    </button>
+                    </button>  
                 </div>
             </div>
         </div>
