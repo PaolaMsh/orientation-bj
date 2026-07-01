@@ -164,6 +164,8 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
+    
+
     // ✅ Fonction pour reprendre le test existant (là où on s'était arrêté)
     const handleResumeTest = () => {
         if (assessmentId) {
@@ -178,46 +180,92 @@ function RapportPhase1() {
             navigate('/tests-orientations');
         }
     };
+// Dans PhaseText.js, dans le useEffect principal
+useEffect(() => {
+    const locationState = location.state || {};
+    const { assessmentId, restart, newTest, resume, phase } = locationState;
 
+    // 🔄 Si c'est un RESTART (même ID, mais on recommence)
+    if (restart && assessmentId) {
+        // Réinitialiser l'état du test
+        setQuestions([]);
+        setCurrentQuestionIndex(0);
+        setAnswers({});
+        setLoading(false);
+        setCurrentAssessmentId(assessmentId);
+        // Charger les questions depuis le début
+        loadQuestions(assessmentId);
+        return;
+    }
+
+    // 🆕 Si c'est un NOUVEAU TEST
+    if (newTest) {
+        // Créer un nouvel ID
+        const newId = `test_${Date.now()}`;
+        setCurrentAssessmentId(newId);
+        setQuestions([]);
+        setCurrentQuestionIndex(0);
+        setAnswers({});
+        setLoading(false);
+        // Charger les questions pour le nouveau test
+        loadQuestions(newId);
+        return;
+    }
+
+    // 📌 Si c'est une REPRISE (resume)
+    if (resume && assessmentId) {
+        setCurrentAssessmentId(assessmentId);
+        loadSavedProgress(assessmentId);
+        return;
+    }
+
+    // Sinon, comportement normal...
+    // ...
+}, [location.state]);
     // ✅ Fonction pour recommencer le MÊME test depuis le début
-    const handleRestartTest = () => {
-        if (assessmentId) {
-            // Supprimer uniquement les réponses sauvegardées pour ce test
-            localStorage.removeItem(`phase1_responses_${assessmentId}`);
-            localStorage.removeItem(`phase1_progress_${assessmentId}`);
-            localStorage.removeItem('phase1_current_question');
-            
-            // Naviguer vers le test avec l'ID existant mais en mode restart
-            navigate('/phaseText', {
-                state: { 
-                    assessmentId: assessmentId,
-                    restart: true,  // 🔄 Indique qu'on recommence le test
-                    phase: 'phase1'
-                }
-            });
-        } else {
-            // Si pas d'ID, aller vers la page de sélection
-            navigate('/tests-orientations');
-        }
-    };
-
-    // ✅ Fonction pour un tout nouveau test (avec un nouvel ID)
-    const handleNewTest = () => {
-        // Supprimer toutes les données
+const handleRestartTest = () => {
+    if (assessmentId) {
+        // 1. Supprimer toutes les données du test en cours
+        localStorage.removeItem(`phase1_responses_${assessmentId}`);
+        localStorage.removeItem(`phase1_progress_${assessmentId}`);
+        localStorage.removeItem(`phase1_current_question_${assessmentId}`);
         localStorage.removeItem('phase1_report_data');
-        localStorage.removeItem('assessment_id');
-        localStorage.removeItem('phase1_responses');
-        localStorage.removeItem('phase1_progress');
         localStorage.removeItem('phase1_current_question');
         
-        // Naviguer vers un nouveau test
+        // 2. Naviguer vers le test avec un flag "restart"
         navigate('/phaseText', {
             state: { 
-                newTest: true,
+                assessmentId: assessmentId,
+                restart: true,
                 phase: 'phase1'
             }
         });
-    };
+    } else {
+        navigate('/tests-orientations');
+    }
+};
+
+// ✅ Fonction pour un tout nouveau test (avec un nouvel ID)
+const handleNewTest = () => {
+    // 1. Supprimer TOUTES les données de test du localStorage
+    // On supprime tout ce qui concerne les tests phase1
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('phase1_') || key === 'assessment_id' || key === 'session_token')) {
+            keysToRemove.push(key);
+        }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // 2. Naviguer vers un nouveau test (sans ID)
+    navigate('/phaseText', {
+        state: { 
+            newTest: true,
+            phase: 'phase1'
+        }
+    });
+};
 
     if (loading) {
         return (
