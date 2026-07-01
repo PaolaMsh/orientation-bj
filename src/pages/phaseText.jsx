@@ -603,17 +603,7 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
                         </div>
                     </div>
 
-                    <div className="phase-result-actions">
-                        <button className="btn-secondary" onClick={() => navigate('/tests-orientations')}>
-                            ← Retour
-                        </button>
-                        <button className="btn-primary" onClick={handleNewTest}>
-                            Refaire la phase
-                        </button>
-                        <button className="btn-outline" onClick={() => navigate('/tests')}>
-                            Test complet
-                        </button>
-                    </div>
+                    
                 </div>
             </div>
         );
@@ -668,17 +658,7 @@ const PhaseResult = ({ phaseId, results, onNewTest }) => {
                     ))}
                 </div>
 
-                <div className="phase-result-actions">
-                    <button className="btn-secondary" onClick={() => navigate('/tests-orientations')}>
-                        ← Retour
-                    </button>
-                    <button className="btn-primary" onClick={handleNewTest}>
-                        Refaire la phase
-                    </button>
-                    <button className="btn-outline" onClick={() => navigate('/tests')}>
-                        Test complet
-                    </button>
-                </div>
+                
             </div>
         </div>
     );
