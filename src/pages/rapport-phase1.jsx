@@ -194,22 +194,7 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
-    // ============ FONCTIONS DE NAVIGATION ============
-
-    // ✅ Reprendre le test existant (là où on s'était arrêté)
-    const handleResumeTest = () => {
-        if (assessmentId) {
-            navigate('/phase1-test', {
-                state: { 
-                    assessmentId: assessmentId,
-                    resume: true,
-                    phase: 'phase1'
-                }
-            });
-        } else {
-            navigate('/tests-orientations');
-        }
-    };
+  
 
     // ✅ Nouveau test (avec nettoyage complet)
     const handleNewTest = () => {
@@ -224,7 +209,7 @@ function RapportPhase1() {
         localStorage.removeItem('session_token');
         
         // Naviguer vers un nouveau test Phase 1
-        navigate('/phase1-test', {
+        navigate('/phase1Test', {
             state: { 
                 newTest: true,
                 phase: 'phase1'
@@ -353,9 +338,7 @@ function RapportPhase1() {
                             <h1 className="orientations-header" style={{ marginTop: '7rem' }}>
                                 🎯 Votre Rapport - Phase 1
                             </h1>
-                            <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
-                                Analyse de vos intérêts professionnels (Code: {phase1Code})
-                            </p>
+                            
                         </div>
                     </div>
                 </div>
@@ -498,10 +481,7 @@ function RapportPhase1() {
                     marginTop: '2rem',
                     justifyContent: 'center'
                 }}>
-                    {/* ✅ Reprendre le test existant */}
-                    <button className="button button-secondary" onClick={handleResumeTest}>
-                        🔄 Reprendre le test
-                    </button>
+                    
 
                     {/* ✅ Nouveau test (avec nettoyage) */}
                     <button className="button" onClick={handleNewTest}>
@@ -524,11 +504,7 @@ function RapportPhase1() {
                     fontSize: '0.9rem',
                     color: '#6b7280'
                 }}>
-                    <p>
-                        💡 Ce rapport est basé sur vos réponses à la Phase 1. 
-                        Vous pouvez soit <strong>reprendre</strong> le test là où vous vous êtes arrêté,
-                        soit <strong>recommencer</strong> un nouveau test.
-                    </p>
+                    
                 </div>
             </div>
         </div>
