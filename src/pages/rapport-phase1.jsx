@@ -4,7 +4,6 @@ import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
 import api from '../services/api';
 
-// ============ ICÔNES SVG ============
 const IconInfo = () => (
     <svg
         width="20"
@@ -64,12 +63,10 @@ const IconHome = ({ size = 18 }) => (
     </svg>
 );
 
-// ============ COMPOSANT PRINCIPAL ============
 function RapportPhase1() {
     const navigate = useNavigate();
     const location = useLocation();
-    
-    // États
+
     const [rapportData, setRapportData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -80,7 +77,6 @@ function RapportPhase1() {
         ecoles: [],
     });
 
-    // ============ RÉCUPÉRATION DES RECOMMANDATIONS ============
     const fetchRecommendations = async (id, phase1Code) => {
         try {
             const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'IND';
@@ -128,7 +124,7 @@ function RapportPhase1() {
         const fetchRapport = async () => {
             try {
                 setLoading(true);
-                
+
                 // 1. Vérifier les données dans location.state
                 const stateResults = location.state?.phaseResults;
                 if (stateResults) {
@@ -155,9 +151,9 @@ function RapportPhase1() {
                 }
 
                 // 3. Récupérer depuis l'API
-                const assessmentIdFromState = 
+                const assessmentIdFromState =
                     location.state?.assessmentId || localStorage.getItem('assessment_id');
-                const sessionToken = 
+                const sessionToken =
                     location.state?.sessionToken || localStorage.getItem('session_token');
 
                 if (!assessmentIdFromState) {
@@ -166,7 +162,7 @@ function RapportPhase1() {
                     return;
                 }
 
-                console.log('🔍 Récupération des données depuis l\'API...');
+                console.log("🔍 Récupération des données depuis l'API...");
                 setAssessmentId(assessmentIdFromState);
 
                 let response;
@@ -182,7 +178,6 @@ function RapportPhase1() {
                 const data = response?.data;
                 setRapportData(data);
                 await fetchRecommendations(assessmentIdFromState, data?.phase1Code);
-                
             } catch (err) {
                 console.error('❌ Erreur lors du chargement du rapport:', err);
                 setError(err.message || 'Erreur lors du chargement du rapport');
@@ -194,7 +189,9 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
-  
+    localStorage.setItem('assessment_id', String(assessmentIdParam));
+    localStorage.setItem('session_token', String(token));
+    localStorage.setItem('phase1_report_data', JSON.stringify(reportData));
 
     // ✅ Nouveau test (avec nettoyage complet)
     const handleNewTest = () => {
@@ -207,13 +204,13 @@ function RapportPhase1() {
         localStorage.removeItem('phase1_current_question');
         localStorage.removeItem('assessment_id');
         localStorage.removeItem('session_token');
-        
+
         // Naviguer vers un nouveau test Phase 1
         navigate('/phase1Test', {
-            state: { 
+            state: {
                 newTest: true,
-                phase: 'phase1'
-            }
+                phase: 'phase1',
+            },
         });
     };
 
@@ -242,13 +239,8 @@ function RapportPhase1() {
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p style={{ color: '#dc2626', marginBottom: '20px' }}>
-                            ❌ Erreur: {error}
-                        </p>
-                        <button 
-                            onClick={() => navigate('/tests-orientations')} 
-                            className="button"
-                        >
+                        <p style={{ color: '#dc2626', marginBottom: '20px' }}>❌ Erreur: {error}</p>
+                        <button onClick={() => navigate('/tests-orientations')} className="button">
                             Retour
                         </button>
                     </div>
@@ -264,8 +256,8 @@ function RapportPhase1() {
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <p>Aucune donnée disponible pour ce test.</p>
-                        <button 
-                            onClick={() => navigate('/tests-orientations')} 
+                        <button
+                            onClick={() => navigate('/tests-orientations')}
                             className="button"
                             style={{ marginTop: '20px' }}
                         >
@@ -279,7 +271,7 @@ function RapportPhase1() {
 
     // ============ PRÉPARATION DES DONNÉES ============
     const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
-    
+
     const axisFromCode = {
         R: { code: 'REALISTIC', label: 'Réaliste' },
         I: { code: 'INVESTIGATIVE', label: 'Investigateur' },
@@ -288,10 +280,10 @@ function RapportPhase1() {
         E: { code: 'ENTERPRISING', label: 'Entreprenant' },
         C: { code: 'CONVENTIONAL', label: 'Conventionnel' },
     };
-    
+
     const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
     const fallbackAxis = axisFromCode[leadingLetter] || axisFromCode.I;
-    
+
     const primaryAxis = rapportData.primaryAxis || {
         ...fallbackAxis,
         score: 100,
@@ -338,23 +330,22 @@ function RapportPhase1() {
                             <h1 className="orientations-header" style={{ marginTop: '7rem' }}>
                                 🎯 Votre Rapport - Phase 1
                             </h1>
-                            
                         </div>
                     </div>
                 </div>
-                
+
                 {/* ===== PROFIL DOMINANT ===== */}
-                <div 
-                    style={{ 
-                        padding: '2rem', 
-                        display: 'flex', 
-                        flexDirection: 'row', 
-                        border: '1px solid #ddd', 
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)', 
-                        borderRadius: '10px', 
-                        marginBottom: '2rem', 
-                        marginTop: '2rem' 
-                    }} 
+                <div
+                    style={{
+                        padding: '2rem',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        border: '1px solid #ddd',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                        borderRadius: '10px',
+                        marginBottom: '2rem',
+                        marginTop: '2rem',
+                    }}
                     className="ria-hero-section"
                 >
                     <div className="ria-section-header">
@@ -363,16 +354,14 @@ function RapportPhase1() {
                         </strong>
                     </div>
 
-                    <div 
-                        style={{ display: 'flex', flexDirection: 'row', marginRight: '1rem' }} 
+                    <div
+                        style={{ display: 'flex', flexDirection: 'row', marginRight: '1rem' }}
                         className="ria-hero-card"
                     >
                         <div style={{ marginRight: '1rem' }} className="ria-hero-score">
                             {primaryAxis.label || 'Non déterminé'}
                         </div>
-                        <div className="ria-hero-value">
-                            {primaryAxis.score || 0}/100
-                        </div>
+                        <div className="ria-hero-value">{primaryAxis.score || 0}/100</div>
                     </div>
                 </div>
 
@@ -434,7 +423,7 @@ function RapportPhase1() {
                                 )}
                             </div>
                         </div>
-                        
+
                         {/* Métiers */}
                         <div>
                             <div className="ria-reco-col-label">
@@ -452,7 +441,7 @@ function RapportPhase1() {
                                 )}
                             </div>
                         </div>
-                        
+
                         {/* Écoles */}
                         <div>
                             <div className="ria-reco-col-label">
@@ -474,38 +463,39 @@ function RapportPhase1() {
                 </div>
 
                 {/* ===== BOUTONS D'ACTION ===== */}
-                <div className="Buttons" style={{ 
-                    display: 'flex', 
-                    gap: '1rem', 
-                    flexWrap: 'wrap', 
-                    marginTop: '2rem',
-                    justifyContent: 'center'
-                }}>
-                    
-
+                <div
+                    className="Buttons"
+                    style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        flexWrap: 'wrap',
+                        marginTop: '2rem',
+                        justifyContent: 'center',
+                    }}
+                >
                     {/* ✅ Nouveau test (avec nettoyage) */}
                     <button className="button" onClick={handleNewTest}>
-                        🆕 Nouveau test
+                        Nouveau test
                     </button>
 
                     {/* ✅ Voir les écoles */}
                     <button className="button button-outline" onClick={handleViewSchools}>
-                        🏫 Voir les écoles
+                        Voir les écoles
                     </button>
                 </div>
 
                 {/* ===== INFORMATION ===== */}
-                <div style={{ 
-                    marginTop: '2rem', 
-                    padding: '1rem',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: '8px',
-                    textAlign: 'center',
-                    fontSize: '0.9rem',
-                    color: '#6b7280'
-                }}>
-                    
-                </div>
+                <div
+                    style={{
+                        marginTop: '2rem',
+                        padding: '1rem',
+                        backgroundColor: '#f3f4f6',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        fontSize: '0.9rem',
+                        color: '#6b7280',
+                    }}
+                ></div>
             </div>
         </div>
     );

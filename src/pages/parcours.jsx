@@ -586,7 +586,7 @@ export default function EspacePersonnel() {
             if (apiError.name === 'CanceledError' || apiError.code === 'ERR_CANCELED') {
                 setError('Le chargement a pris trop de temps. Réessayez dans quelques instants.');
             } else {
-                setError(apiError.response?.data?.message || 'Impossible de charger votre espace personnel.');
+                setError(apiError.response?.data?.message || 'Veuillez vous reconnecter .Impossible de charger votre espace personnel.');
             }
         } finally {
             window.clearTimeout(timeoutId);
@@ -762,7 +762,7 @@ export default function EspacePersonnel() {
 
                             {inProgressAssessments.length > 0 && (
                                 <div className="advice-card" style={{ marginTop: '1rem', borderLeft: '4px solid #f59e0b' }}>
-                                    <h3>📝 Tests en cours</h3>
+                                    <h3> Tests en cours</h3>
                                     <p>Vous avez {inProgressAssessments.length} test(s) à terminer.</p>
                                     <button className="new-test-btn" onClick={resumeAssessment} style={{ marginTop: '0.5rem' }}>Continuer le test</button>
                                 </div>
