@@ -4,6 +4,7 @@ import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
 import api from '../services/api';
 
+// ============ ICÔNES SVG ============
 const IconInfo = () => (
     <svg
         width="20"
@@ -49,9 +50,26 @@ const IconGrid = ({ size = 18 }) => (
     </svg>
 );
 
+const IconHome = ({ size = 18 }) => (
+    <svg
+        width={size}
+        height={size}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+    >
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+);
+
+// ============ COMPOSANT PRINCIPAL ============
 function RapportPhase1() {
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // États
     const [rapportData, setRapportData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -62,21 +80,22 @@ function RapportPhase1() {
         ecoles: [],
     });
 
-    // Fonction pour récupérer les recommandations
+    // ============ RÉCUPÉRATION DES RECOMMANDATIONS ============
     const fetchRecommendations = async (id, phase1Code) => {
         try {
             const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'IND';
             const leadingLetter = String(code).charAt(0).toUpperCase();
 
-            console.log('Code RIASEC Phase 1:', code);
-            console.log('Première lettre (axe dominant):', leadingLetter);
+            console.log('📊 Code RIASEC Phase 1:', code);
+            console.log('📊 Première lettre (axe dominant):', leadingLetter);
 
             const recoData = await recommendationService.getRiasecRecommendations(
                 id,
                 leadingLetter,
             );
-            console.log("Recommandations pour l'axe", leadingLetter, ':', recoData);
+            console.log('📊 Recommandations reçues:', recoData);
 
+            // Mapping des axes
             const axisMapping = {
                 R: 'REALISTIC',
                 I: 'INVESTIGATIVE',
@@ -90,12 +109,12 @@ function RapportPhase1() {
             const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
 
             setRecommendations({
-                formations: axisRecos.formations || [],
-                metiers: axisRecos.metiers || [],
-                ecoles: axisRecos.ecoles || [],
+                formations: axisRecos.formations || ['Aucune formation disponible'],
+                metiers: axisRecos.metiers || ['Aucun métier disponible'],
+                ecoles: axisRecos.ecoles || ['Aucune école disponible'],
             });
         } catch (err) {
-            console.error('Erreur chargement recommandations:', err);
+            console.error('❌ Erreur chargement recommandations:', err);
             setRecommendations({
                 formations: ['Information non disponible'],
                 metiers: ['Information non disponible'],
@@ -104,27 +123,34 @@ function RapportPhase1() {
         }
     };
 
+    // ============ CHARGEMENT DES DONNÉES ============
     useEffect(() => {
         const fetchRapport = async () => {
             try {
-                // 1. Vérifier si les données sont dans location.state
+                setLoading(true);
+                
+                // 1. Vérifier les données dans location.state
                 const stateResults = location.state?.phaseResults;
                 if (stateResults) {
+                    console.log('📦 Données chargées depuis location.state');
                     setRapportData(stateResults);
                     const id = stateResults.assessmentId;
                     setAssessmentId(id);
                     await fetchRecommendations(id, stateResults.phase1Code);
+                    setLoading(false);
                     return;
                 }
 
-                // 2. Vérifier si les données sont dans localStorage
+                // 2. Vérifier les données dans localStorage
                 const storedReport = localStorage.getItem('phase1_report_data');
                 if (storedReport) {
+                    console.log('📦 Données chargées depuis localStorage');
                     const parsed = JSON.parse(storedReport);
                     setRapportData(parsed);
                     const id = parsed.assessmentId;
                     setAssessmentId(id);
                     await fetchRecommendations(id, parsed.phase1Code);
+                    setLoading(false);
                     return;
                 }
 
@@ -136,15 +162,18 @@ function RapportPhase1() {
 
                 if (!assessmentIdFromState) {
                     setError('Identifiant de test non trouvé');
+                    setLoading(false);
                     return;
                 }
 
+                console.log('🔍 Récupération des données depuis l\'API...');
                 setAssessmentId(assessmentIdFromState);
 
                 let response;
                 try {
                     response = await api.get(`/results/by-assessment/${assessmentIdFromState}`);
                 } catch (byAssessmentErr) {
+                    console.warn('⚠️ Erreur /results/by-assessment, tentative /results/phase1');
                     response = await api.get('/results/phase1', {
                         params: { assessmentId: assessmentIdFromState, sessionToken },
                     });
@@ -153,8 +182,9 @@ function RapportPhase1() {
                 const data = response?.data;
                 setRapportData(data);
                 await fetchRecommendations(assessmentIdFromState, data?.phase1Code);
+                
             } catch (err) {
-                console.error('Erreur lors du chargement du rapport:', err);
+                console.error('❌ Erreur lors du chargement du rapport:', err);
                 setError(err.message || 'Erreur lors du chargement du rapport');
             } finally {
                 setLoading(false);
@@ -164,10 +194,12 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
-    // ✅ Fonction pour reprendre le test existant (là où on s'était arrêté)
+    // ============ FONCTIONS DE NAVIGATION ============
+
+    // ✅ Reprendre le test existant (là où on s'était arrêté)
     const handleResumeTest = () => {
         if (assessmentId) {
-            navigate('/phaseText', {
+            navigate('/phase1-test', {
                 state: { 
                     assessmentId: assessmentId,
                     resume: true,
@@ -179,19 +211,20 @@ function RapportPhase1() {
         }
     };
 
-   
-
-    // ✅ Fonction pour un tout nouveau test (avec un nouvel ID)
+    // ✅ Nouveau test (avec nettoyage complet)
     const handleNewTest = () => {
-        // Supprimer toutes les données
+        // Supprimer toutes les données de la Phase 1
         localStorage.removeItem('phase1_report_data');
-        localStorage.removeItem('assessment_id');
+        localStorage.removeItem('phase1_assessment_id');
+        localStorage.removeItem('phase1_session_token');
         localStorage.removeItem('phase1_responses');
         localStorage.removeItem('phase1_progress');
         localStorage.removeItem('phase1_current_question');
+        localStorage.removeItem('assessment_id');
+        localStorage.removeItem('session_token');
         
-        // Naviguer vers un nouveau test
-        navigate('/phaseText', {
+        // Naviguer vers un nouveau test Phase 1
+        navigate('/phase1-test', {
             state: { 
                 newTest: true,
                 phase: 'phase1'
@@ -199,25 +232,34 @@ function RapportPhase1() {
         });
     };
 
+    // ✅ Voir les écoles / formations
+    const handleViewSchools = () => {
+        navigate('/universites-formations');
+    };
+
+    // ============ AFFICHAGE CHARGEMENT ============
     if (loading) {
         return (
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <div className="spinner"></div>
-                        <p>Calcul de votre rapport...</p>
+                        <p style={{ marginTop: '20px' }}>Calcul de votre rapport Phase 1...</p>
                     </div>
                 </div>
             </div>
         );
     }
 
+    // ============ AFFICHAGE ERREUR ============
     if (error) {
         return (
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p style={{ color: '#dc2626' }}>Erreur: {error}</p>
+                        <p style={{ color: '#dc2626', marginBottom: '20px' }}>
+                            ❌ Erreur: {error}
+                        </p>
                         <button 
                             onClick={() => navigate('/tests-orientations')} 
                             className="button"
@@ -230,15 +272,17 @@ function RapportPhase1() {
         );
     }
 
+    // ============ AUCUNE DONNÉE ============
     if (!rapportData) {
         return (
             <div className="ori-page">
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p>Aucune donnée disponible</p>
+                        <p>Aucune donnée disponible pour ce test.</p>
                         <button 
                             onClick={() => navigate('/tests-orientations')} 
                             className="button"
+                            style={{ marginTop: '20px' }}
                         >
                             Retour
                         </button>
@@ -248,7 +292,9 @@ function RapportPhase1() {
         );
     }
 
+    // ============ PRÉPARATION DES DONNÉES ============
     const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
+    
     const axisFromCode = {
         R: { code: 'REALISTIC', label: 'Réaliste' },
         I: { code: 'INVESTIGATIVE', label: 'Investigateur' },
@@ -257,13 +303,16 @@ function RapportPhase1() {
         E: { code: 'ENTERPRISING', label: 'Entreprenant' },
         C: { code: 'CONVENTIONAL', label: 'Conventionnel' },
     };
+    
     const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
     const fallbackAxis = axisFromCode[leadingLetter] || axisFromCode.I;
+    
     const primaryAxis = rapportData.primaryAxis || {
         ...fallbackAxis,
         score: 100,
     };
 
+    // ============ DÉFINITIONS DES AXES ============
     const definitions = {
         REALISTIC: {
             text: "L'axe Réaliste valorise l'action concrète, la manipulation d'outils, les travaux manuels et techniques. Vous préférez les tâches tangibles, pratiques et bien définies.",
@@ -293,21 +342,25 @@ function RapportPhase1() {
 
     const def = definitions[primaryAxis.code] || definitions.INVESTIGATIVE;
 
+    // ============ RENDU ============
     return (
         <div className="ori-page">
             <div className="ori-wrapper">
+                {/* ===== EN-TÊTE ===== */}
                 <div className="ori-header">
                     <div className="ori-header-content">
                         <div className="ori-logo-section">
-                            <div>
-                                <h1 style={{ marginTop: '7rem' }} className="orientations-header">
-                                    Votre Rapport - Phase 1
-                                </h1>
-                            </div>
+                            <h1 className="orientations-header" style={{ marginTop: '7rem' }}>
+                                🎯 Votre Rapport - Phase 1
+                            </h1>
+                            <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
+                                Analyse de vos intérêts professionnels (Code: {phase1Code})
+                            </p>
                         </div>
                     </div>
                 </div>
                 
+                {/* ===== PROFIL DOMINANT ===== */}
                 <div 
                     style={{ 
                         padding: '2rem', 
@@ -340,6 +393,7 @@ function RapportPhase1() {
                     </div>
                 </div>
 
+                {/* ===== DÉFINITION ===== */}
                 <div className="ria-def-card">
                     <div className="ria-def-title">
                         <IconInfo /> Définition &amp; caractéristiques
@@ -350,6 +404,7 @@ function RapportPhase1() {
                     </p>
                 </div>
 
+                {/* ===== INTERPRÉTATION ===== */}
                 <div className="ria-interp-card">
                     <div className="ria-interp-title">
                         <IconSearch size={16} /> Interprétation personnalisée
@@ -373,13 +428,17 @@ function RapportPhase1() {
                     </p>
                 </div>
 
+                {/* ===== RECOMMANDATIONS ===== */}
                 <div className="ria-def-card">
                     <div className="ria-reco-title">
-                        <IconGrid /> Formations &amp; métiers recommandés
+                        <IconGrid /> Formations, Métiers &amp; Écoles recommandés
                     </div>
                     <div className="ria-reco-grid">
+                        {/* Formations */}
                         <div>
-                            <div className="ria-reco-col-label">Formations</div>
+                            <div className="ria-reco-col-label">
+                                <IconHome size={16} /> Formations
+                            </div>
                             <div className="ria-chip-list">
                                 {recommendations.formations.length > 0 ? (
                                     recommendations.formations.map((f, i) => (
@@ -388,12 +447,16 @@ function RapportPhase1() {
                                         </span>
                                     ))
                                 ) : (
-                                    <span className="ria-chip">Chargement des formations...</span>
+                                    <span className="ria-chip">Aucune formation disponible</span>
                                 )}
                             </div>
                         </div>
+                        
+                        {/* Métiers */}
                         <div>
-                            <div className="ria-reco-col-label">Métiers</div>
+                            <div className="ria-reco-col-label">
+                                <IconSearch size={16} /> Métiers
+                            </div>
                             <div className="ria-chip-list">
                                 {recommendations.metiers.length > 0 ? (
                                     recommendations.metiers.map((m, i) => (
@@ -402,12 +465,16 @@ function RapportPhase1() {
                                         </span>
                                     ))
                                 ) : (
-                                    <span className="ria-chip">Chargement des métiers...</span>
+                                    <span className="ria-chip">Aucun métier disponible</span>
                                 )}
                             </div>
                         </div>
+                        
+                        {/* Écoles */}
                         <div>
-                            <div className="ria-reco-col-label">Écoles</div>
+                            <div className="ria-reco-col-label">
+                                <IconHome size={16} /> Écoles
+                            </div>
                             <div className="ria-chip-list">
                                 {recommendations.ecoles.length > 0 ? (
                                     recommendations.ecoles.map((e, i) => (
@@ -416,21 +483,52 @@ function RapportPhase1() {
                                         </span>
                                     ))
                                 ) : (
-                                    <span className="ria-chip">Chargement des écoles...</span>
+                                    <span className="ria-chip">Aucune école disponible</span>
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="Buttons" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
-                   <button className="button" onClick={() => navigate('/phaseText')}>
-                        Nouveau test
+                {/* ===== BOUTONS D'ACTION ===== */}
+                <div className="Buttons" style={{ 
+                    display: 'flex', 
+                    gap: '1rem', 
+                    flexWrap: 'wrap', 
+                    marginTop: '2rem',
+                    justifyContent: 'center'
+                }}>
+                    {/* ✅ Reprendre le test existant */}
+                    <button className="button button-secondary" onClick={handleResumeTest}>
+                        🔄 Reprendre le test
                     </button>
 
-                    <button className="button" onClick={() => navigate('/universites-formations')}>
-                        Voir les écoles
-                    </button>  
+                    {/* ✅ Nouveau test (avec nettoyage) */}
+                    <button className="button" onClick={handleNewTest}>
+                        🆕 Nouveau test
+                    </button>
+
+                    {/* ✅ Voir les écoles */}
+                    <button className="button button-outline" onClick={handleViewSchools}>
+                        🏫 Voir les écoles
+                    </button>
+                </div>
+
+                {/* ===== INFORMATION ===== */}
+                <div style={{ 
+                    marginTop: '2rem', 
+                    padding: '1rem',
+                    backgroundColor: '#f3f4f6',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    fontSize: '0.9rem',
+                    color: '#6b7280'
+                }}>
+                    <p>
+                        💡 Ce rapport est basé sur vos réponses à la Phase 1. 
+                        Vous pouvez soit <strong>reprendre</strong> le test là où vous vous êtes arrêté,
+                        soit <strong>recommencer</strong> un nouveau test.
+                    </p>
                 </div>
             </div>
         </div>

@@ -9,7 +9,7 @@ import Orientations from './pages/orientations';
 import Support from './pages/support';
 import Test from './pages/tests';
 import Testsorientations from './pages/tests-orientations';
-import PhaseTest from './pages/phaseText';
+import Phase1Test from './pages/phase1Test'; 
 import UniversitiesPage from './pages/universites-formations';
 import HeaderParent from './components/headerParent';
 import Footer from './components/footer';
@@ -91,6 +91,15 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <PhaseTest />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/phase1Test"
+                        element={
+                            <ProtectedRoute>
+                                <Phase1Test />
                             </ProtectedRoute>
                         }
                     />
