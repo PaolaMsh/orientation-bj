@@ -424,15 +424,7 @@ function RapportPhase1() {
                 </div>
 
                 <div className="Buttons" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
-                    {/* ✅ Bouton pour reprendre le test existant (là où on s'était arrêté) */}
-                    <button className="button" onClick={handleResumeTest}>
-                        Reprendre le test
-                    </button>
-
-                    
-
-                    {/* ✅ Bouton pour un tout nouveau test (nouvel ID) */}
-                    <button className="button" onClick={handleNewTest}>
+                   <button className="button" onClick={() => navigate('/phaseText')}>
                         Nouveau test
                     </button>
 
