@@ -86,14 +86,7 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    <Route
-                        path="/tests/phase/:id"
-                        element={
-                            <ProtectedRoute>
-                                <PhaseTest />
-                            </ProtectedRoute>
-                        }
-                    />
+                    
 
                     <Route
                         path="/phase1Test"
