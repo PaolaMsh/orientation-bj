@@ -79,6 +79,8 @@ function RapportPhase1() {
 
     // RapportPhase1.js - fetchRecommendations MODIFIÉ
 
+// RapportPhase1.js - fetchRecommendations MODIFIÉ
+
 const fetchRecommendations = async (id, phase1Code) => {
     try {
         const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'IND';
@@ -87,97 +89,43 @@ const fetchRecommendations = async (id, phase1Code) => {
         console.log('📊 Code RIASEC Phase 1:', code);
         console.log('📊 Première lettre (axe dominant):', leadingLetter);
 
-        // ✅ PRIORITÉ 1 : Vérifier si les recommandations sont dans le rapport (mémoire)
-        if (rapportData?.recommendations) {
-            console.log('📦 Recommandations lues depuis le rapport (mémoire)');
-            const recoData = rapportData.recommendations;
-            
-            const axisMapping = {
-                R: 'REALISTIC', I: 'INVESTIGATIVE', A: 'ARTISTIC',
-                S: 'SOCIAL', E: 'ENTERPRISING', C: 'CONVENTIONAL'
-            };
-            const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
-            const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
-
-            setRecommendations({
-                formations: axisRecos.formations || ['Aucune formation disponible'],
-                metiers: axisRecos.metiers || ['Aucun métier disponible'],
-                ecoles: axisRecos.ecoles || ['Aucune école disponible'],
-            });
-            return;
-        }
-
-        // ✅ PRIORITÉ 2 : Lire depuis la BASE DE DONNÉES
-        try {
-            console.log('🔍 Récupération des recommandations depuis la base de données...');
-            const dbRecos = await recommendationService.getRecommendationsFromDatabase(id);
-            
-            if (dbRecos) {
-                console.log('✅ Recommandations trouvées en base de données');
-                
-                // Mettre à jour le rapport en mémoire
-                if (rapportData) {
-                    rapportData.recommendations = dbRecos;
-                }
-                
-                const axisMapping = {
-                    R: 'REALISTIC', I: 'INVESTIGATIVE', A: 'ARTISTIC',
-                    S: 'SOCIAL', E: 'ENTERPRISING', C: 'CONVENTIONAL'
-                };
-                const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
-                const axisRecos = dbRecos.recommendationsByAxis?.[dominantAxis] || {};
-
-                setRecommendations({
-                    formations: axisRecos.formations || ['Aucune formation disponible'],
-                    metiers: axisRecos.metiers || ['Aucun métier disponible'],
-                    ecoles: axisRecos.ecoles || ['Aucune école disponible'],
-                });
-                return;
-            }
-        } catch (dbError) {
-            console.warn('⚠️ Erreur lecture base de données:', dbError.message);
-        }
-
-        // ✅ PRIORITÉ 3 : Fallback vers l'API (si token valide)
-        console.log('🔍 Récupération des recommandations depuis l\'API...');
-        const recoData = await recommendationService.getRiasecRecommendations(id, leadingLetter);
+        // ✅ UTILISER LA NOUVELLE MÉTHODE AVEC PRIORITÉ BASE DE DONNÉES
+        const recoData = await recommendationService.getRiasecRecommendationsWithDB(id, leadingLetter);
         console.log('📊 Recommandations reçues:', recoData);
 
-        // ✅ Sauvegarder en base pour la prochaine fois
-        try {
-            await recommendationService.saveRecommendationsToDatabase(id, recoData, 'phase1');
-            console.log('✅ Recommandations sauvegardées en base de données');
-        } catch (saveErr) {
-            console.warn('⚠️ Impossible de sauvegarder en base:', saveErr.message);
-        }
-
-        // Mettre à jour le rapport en mémoire
-        if (rapportData) {
-            rapportData.recommendations = recoData;
-        }
-
+        // Mapping des axes
         const axisMapping = {
-            R: 'REALISTIC', I: 'INVESTIGATIVE', A: 'ARTISTIC',
-            S: 'SOCIAL', E: 'ENTERPRISING', C: 'CONVENTIONAL'
+            R: 'REALISTIC',
+            I: 'INVESTIGATIVE',
+            A: 'ARTISTIC',
+            S: 'SOCIAL',
+            E: 'ENTERPRISING',
+            C: 'CONVENTIONAL',
         };
         const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
-        const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {};
+
+        // Vérifier que l'axe existe
+        const axisRecos = recoData.recommendationsByAxis?.[dominantAxis] || {
+            formations: ['Information non disponible'],
+            metiers: ['Information non disponible'],
+            ecoles: ['Information non disponible'],
+        };
 
         setRecommendations({
             formations: axisRecos.formations || ['Aucune formation disponible'],
             metiers: axisRecos.metiers || ['Aucun métier disponible'],
             ecoles: axisRecos.ecoles || ['Aucune école disponible'],
         });
-
+        
     } catch (err) {
         console.error('❌ Erreur chargement recommandations:', err);
         
-        // ✅ Gestion des erreurs avec messages appropriés
+        // ✅ AFFICHER UN MESSAGE CLAIR
         if (err.response?.status === 401) {
             setRecommendations({
-                formations: ['🔒 Veuillez vous reconnecter pour voir les recommandations'],
-                metiers: ['🔒 Veuillez vous reconnecter pour voir les recommandations'],
-                ecoles: ['🔒 Veuillez vous reconnecter pour voir les recommandations'],
+                formations: ['🔒 Veuillez vous reconnecter'],
+                metiers: ['🔒 Veuillez vous reconnecter'],
+                ecoles: ['🔒 Veuillez vous reconnecter'],
             });
         } else if (err.response?.status === 429) {
             setRecommendations({

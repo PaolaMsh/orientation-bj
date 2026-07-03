@@ -171,36 +171,97 @@ export const recommendationService = {
     },
 
     /**
-     * ✅ Récupérer les recommandations avec priorité base de données
+     * ✅ Méthode principale avec priorité BASE DE DONNÉES
+     * Utilise cette méthode au lieu de getRiasecRecommendations directement
      */
-    getRiasecRecommendationsWithCache: async (assessmentId, leadingLetter) => {
-        // 1. Essayer la base de données
+    getRiasecRecommendationsWithDB: async (assessmentId, leadingLetter) => {
+        // 1. ✅ ESSAYER LA BASE DE DONNÉES D'ABORD
         try {
             const dbRecos = await recommendationService.getRecommendationsFromDatabase(assessmentId);
             if (dbRecos) {
-                console.log('📦 Recommandations récupérées depuis la base de données');
+                console.log('📦 Recommandations récupérées depuis la BASE DE DONNÉES');
+                
+                // Vérifier si l'axe demandé existe
+                if (leadingLetter) {
+                    const axisMapping = {
+                        'R': 'REALISTIC', 'I': 'INVESTIGATIVE', 'A': 'ARTISTIC',
+                        'S': 'SOCIAL', 'E': 'ENTERPRISING', 'C': 'CONVENTIONAL'
+                    };
+                    const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
+                    
+                    // Si l'axe n'existe pas, utiliser INVESTIGATIVE par défaut
+                    if (!dbRecos.recommendationsByAxis?.[dominantAxis]) {
+                        // Créer l'axe avec des données vides
+                        dbRecos.recommendationsByAxis = dbRecos.recommendationsByAxis || {};
+                        dbRecos.recommendationsByAxis[dominantAxis] = {
+                            formations: ['Aucune formation disponible'],
+                            metiers: ['Aucun métier disponible'],
+                            ecoles: ['Aucune école disponible']
+                        };
+                    }
+                }
+                
                 return dbRecos;
             }
-        } catch (err) {
-            console.warn('⚠️ Erreur lecture base:', err.message);
+        } catch (dbError) {
+            console.warn('⚠️ Erreur lecture base, fallback API:', dbError.message);
         }
 
-        // 2. Fallback vers l'API
-        console.log('🔍 Récupération depuis l\'API...');
-        const recoData = await recommendationService.getRiasecRecommendations(assessmentId);
+        // 2. 🔄 FALLBACK VERS L'API
+        console.log('🔍 Récupération des recommandations depuis l\'API...');
         
-        // 3. Sauvegarder en base pour la prochaine fois
         try {
-            await recommendationService.saveRecommendationsToDatabase(
-                assessmentId, 
-                recoData, 
-                'phase1'
-            );
-            console.log('✅ Recommandations sauvegardées en base');
-        } catch (saveErr) {
-            console.warn('⚠️ Impossible de sauvegarder en base:', saveErr.message);
+            const recoData = await recommendationService.getRiasecRecommendations(assessmentId);
+            
+            // 3. 💾 SAUVEGARDER EN BASE POUR LA PROCHAINE FOIS
+            try {
+                await recommendationService.saveRecommendationsToDatabase(
+                    assessmentId, 
+                    recoData, 
+                    leadingLetter ? 'phase1' : 'full'
+                );
+                console.log('✅ Recommandations sauvegardées en base');
+            } catch (saveErr) {
+                console.warn('⚠️ Impossible de sauvegarder en base:', saveErr.message);
+            }
+            
+            return recoData;
+        } catch (apiError) {
+            console.error('❌ Erreur API:', apiError);
+            
+            // 4. 📦 DERNIER RECOURS : Données mockées pour éviter l'écran vide
+            const emptyRecos = {
+                careers: [],
+                formations: [],
+                recommendationsByAxis: {}
+            };
+            
+            RIASEC_AXES.forEach(axis => {
+                emptyRecos.recommendationsByAxis[axis] = {
+                    formations: ['Information non disponible'],
+                    metiers: ['Information non disponible'],
+                    ecoles: ['Information non disponible']
+                };
+            });
+            
+            // Si un axe spécifique est demandé, s'assurer qu'il existe
+            if (leadingLetter) {
+                const axisMapping = {
+                    'R': 'REALISTIC', 'I': 'INVESTIGATIVE', 'A': 'ARTISTIC',
+                    'S': 'SOCIAL', 'E': 'ENTERPRISING', 'C': 'CONVENTIONAL'
+                };
+                const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
+                
+                if (!emptyRecos.recommendationsByAxis[dominantAxis]) {
+                    emptyRecos.recommendationsByAxis[dominantAxis] = {
+                        formations: ['Information non disponible'],
+                        metiers: ['Information non disponible'],
+                        ecoles: ['Information non disponible']
+                    };
+                }
+            }
+            
+            return emptyRecos;
         }
-        
-        return recoData;
     }
 };
