@@ -247,50 +247,24 @@ const Phase1Test = () => {
             }
 
             const reportData = response?.data || {};
-
-
             
-            try {
-            const code = reportData.phase1Code || reportData.code || 'IND';
-            const leadingLetter = String(code).charAt(0).toUpperCase();
+            // Sauvegarder les données
+            localStorage.setItem('assessment_id', String(assessmentIdParam));
+            localStorage.setItem('session_token', String(token));
+            localStorage.setItem('phase1_report_data', JSON.stringify(reportData));
             
-            console.log('📊 Récupération des recommandations...');
+            // Nettoyer les données temporaires
+            localStorage.removeItem('phase1_session_token');
+            localStorage.removeItem('phase1_assessment_id');
             
-            // Récupérer les recommandations
-            const recoData = await recommendationService.getRiasecRecommendations(
-                assessmentIdParam, 
-                leadingLetter
-            );
-            
-            // ✅ SAUVEGARDER EN BASE DE DONNÉES
-            await recommendationService.saveRecommendationsToDatabase(
-                assessmentIdParam, 
-                recoData, 
-                'phase1'
-            );
-            
-            console.log('✅ Recommandations sauvegardées en base de données');
-            
-            // Ajouter au rapport
-            reportData.recommendations = recoData;
-            reportData.recommendationsSaved = true;
-            reportData.recommendationsSavedAt = new Date().toISOString();
-            
-        } catch (recoErr) {
-            console.error('❌ Erreur sauvegarde recommandations:', recoErr);
-            reportData.recommendations = null;
-        }
-        
-        // Sauvegarder localement
-        localStorage.setItem('phase1_report_data', JSON.stringify(reportData));
-        
-        // Rediriger
-        navigate('/rapport-phase1', {
-            state: {
-                phaseResults: reportData,
-                assessmentId: assessmentIdParam,
-            },
-        });
+            // Rediriger vers le rapport
+            navigate('/rapport-phase1', {
+                state: {
+                    phaseResults: reportData,
+                    assessmentId: assessmentIdParam,
+                    sessionToken: token,
+                },
+            });
         } catch (err) {
             console.error('Error completing phase:', err);
             setError("Impossible de finaliser la phase et d'afficher le rapport");

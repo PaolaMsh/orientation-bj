@@ -539,58 +539,24 @@ export default function EspacePersonnel() {
         }
     }, [bourses]);
 
-    // EspacePersonnel.js - loadRecommendations MODIFIÉ
+    const loadRecommendations = useCallback(async (assessmentId) => {
+        if (!assessmentId) return null;
 
-const loadRecommendations = useCallback(async (assessmentId, assessmentData) => {
-    if (!assessmentId) return null;
+        setLoadingRecos((prev) => ({ ...prev, [assessmentId]: true }));
 
-    // ✅ PRIORITÉ 1 : Vérifier dans les données du test
-    if (assessmentData?.recommendations) {
-        console.log('📦 Recommandations trouvées dans les données du test');
-        return assessmentData.recommendations;
-    }
-
-    setLoadingRecos((prev) => ({ ...prev, [assessmentId]: true }));
-
-    try {
-        // ✅ PRIORITÉ 2 : Lire depuis la BASE DE DONNÉES
         try {
-            const dbRecos = await recommendationService.getRecommendationsFromDatabase(assessmentId);
-            if (dbRecos) {
-                console.log('✅ Recommandations trouvées en base');
-                return dbRecos;
-            }
-        } catch (dbError) {
-            console.warn('⚠️ Erreur lecture base:', dbError.message);
-        }
-
-        // ✅ PRIORITÉ 3 : Fallback vers l'API
-        console.log('🔍 Récupération depuis l\'API...');
-        const response = await api.get(`/users/me/assessments/${assessmentId}/recommendations`, {
-            params: { limit: 10 }
-        });
-        
-        // ✅ Sauvegarder en base pour la prochaine fois
-        try {
-            await recommendationService.saveRecommendationsToDatabase(
-                assessmentId, 
-                response.data, 
-                'full'
+            const response = await api.get(
+                `/users/me/assessments/${assessmentId}/recommendations`,
+                { params: { limit: 10 } }
             );
-            console.log('✅ Recommandations sauvegardées en base');
-        } catch (saveErr) {
-            console.warn('⚠️ Impossible de sauvegarder en base:', saveErr.message);
+            return response.data;
+        } catch (error) {
+            console.error('Erreur chargement recommandations:', error);
+            return null;
+        } finally {
+            setLoadingRecos((prev) => ({ ...prev, [assessmentId]: false }));
         }
-        
-        return response.data;
-        
-    } catch (error) {
-        console.error('❌ Erreur chargement recommandations:', error);
-        return null;
-    } finally {
-        setLoadingRecos((prev) => ({ ...prev, [assessmentId]: false }));
-    }
-}, []);
+    }, []);
 
     useEffect(() => {
         if (activeMenu === 'reports' && completedAssessments.length > 0) {
