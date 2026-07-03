@@ -31,7 +31,6 @@ export const recommendationService = {
             },
         });
         
-        // response.data est un tableau direct
         return response.data;
     },
 
@@ -54,34 +53,28 @@ export const recommendationService = {
             },
         });
         
-        // response.data est un tableau direct
         return response.data;
     },
 
     getRiasecRecommendations: async (assessmentId) => {
         try {
-            // Récupérer les deux types de données
             const [careersData, formationsData] = await Promise.all([
                 recommendationService.fetchCareerRecommendations(assessmentId).catch(() => []),
                 recommendationService.fetchFormationRecommendations(assessmentId).catch(() => []),
             ]);
             
-            // Extraire les noms des métiers et leurs codes RIASEC
             const careersList = careersData.map(item => ({
                 name: item.career?.name,
                 codes: item.career?.riasecCodes || []
             })).filter(c => c.name);
             
-            // Extraire les noms des formations et écoles
             const formationsList = formationsData.map(item => ({
                 name: item.formation?.name || item.formation?.title,
                 school: item.university?.name
             })).filter(f => f.name);
             
-            // Construire les recommandations par axe
             const recommendationsByAxis = {};
             
-            // Initialiser chaque axe
             RIASEC_AXES.forEach(axis => {
                 recommendationsByAxis[axis] = {
                     formations: [],
@@ -90,10 +83,8 @@ export const recommendationService = {
                 };
             });
             
-            // Répartir les métiers selon leurs codes RIASEC
             careersList.forEach(career => {
                 if (career.codes.length === 0) {
-                    // Si pas de code, mettre dans INVESTIGATIVE par défaut
                     if (!recommendationsByAxis.INVESTIGATIVE.metiers.includes(career.name)) {
                         recommendationsByAxis.INVESTIGATIVE.metiers.push(career.name);
                     }
@@ -107,11 +98,9 @@ export const recommendationService = {
                 }
             });
             
-            // Déterminer les axes qui ont des métiers
             const axesWithMetiers = RIASEC_AXES.filter(axis => recommendationsByAxis[axis].metiers.length > 0);
             const targetAxes = axesWithMetiers.length > 0 ? axesWithMetiers : ['INVESTIGATIVE'];
             
-            // Ajouter les formations et écoles aux axes cibles
             formationsList.forEach(formation => {
                 targetAxes.forEach(axis => {
                     if (!recommendationsByAxis[axis].formations.includes(formation.name)) {
@@ -123,14 +112,12 @@ export const recommendationService = {
                 });
             });
             
-            // Limiter à 10 éléments par axe
             RIASEC_AXES.forEach(axis => {
                 recommendationsByAxis[axis].metiers = recommendationsByAxis[axis].metiers.slice(0, 10);
                 recommendationsByAxis[axis].formations = recommendationsByAxis[axis].formations.slice(0, 10);
                 recommendationsByAxis[axis].ecoles = recommendationsByAxis[axis].ecoles.slice(0, 10);
             });
             
-            // Liste globale des métiers et formations
             const allCareers = careersList.map(c => c.name);
             const allFormations = formationsList.map(f => f.name);
             
@@ -142,7 +129,6 @@ export const recommendationService = {
             
         } catch (error) {
             console.error('Erreur getRiasecRecommendations:', error);
-            // Retourner une structure vide mais valide
             const emptyRecommendations = {};
             RIASEC_AXES.forEach(axis => {
                 emptyRecommendations[axis] = { formations: [], metiers: [], ecoles: [] };
@@ -154,4 +140,67 @@ export const recommendationService = {
             };
         }
     },
+    saveRecommendationsToDatabase: async (assessmentId, recommendations, phase = 'phase1') => {
+        try {
+            const response = await api.post(`/assessments/${assessmentId}/recommendations`, {
+                recommendations: recommendations,
+                phase: phase
+            });
+            console.log('✅ Recommandations sauvegardées en base:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ Erreur sauvegarde en base:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * ✅ Récupérer les recommandations depuis la base de données
+     */
+    getRecommendationsFromDatabase: async (assessmentId) => {
+        try {
+            const response = await api.get(`/assessments/${assessmentId}/recommendations/saved`);
+            return response.data?.recommendations || null;
+        } catch (error) {
+            if (error.response?.status === 404) {
+                return null; // Pas encore sauvegardé
+            }
+            console.error('❌ Erreur récupération base:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * ✅ Récupérer les recommandations avec priorité base de données
+     */
+    getRiasecRecommendationsWithCache: async (assessmentId, leadingLetter) => {
+        // 1. Essayer la base de données
+        try {
+            const dbRecos = await recommendationService.getRecommendationsFromDatabase(assessmentId);
+            if (dbRecos) {
+                console.log('📦 Recommandations récupérées depuis la base de données');
+                return dbRecos;
+            }
+        } catch (err) {
+            console.warn('⚠️ Erreur lecture base:', err.message);
+        }
+
+        // 2. Fallback vers l'API
+        console.log('🔍 Récupération depuis l\'API...');
+        const recoData = await recommendationService.getRiasecRecommendations(assessmentId);
+        
+        // 3. Sauvegarder en base pour la prochaine fois
+        try {
+            await recommendationService.saveRecommendationsToDatabase(
+                assessmentId, 
+                recoData, 
+                'phase1'
+            );
+            console.log('✅ Recommandations sauvegardées en base');
+        } catch (saveErr) {
+            console.warn('⚠️ Impossible de sauvegarder en base:', saveErr.message);
+        }
+        
+        return recoData;
+    }
 };
