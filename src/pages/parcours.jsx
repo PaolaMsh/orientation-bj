@@ -599,48 +599,122 @@ export default function EspacePersonnel() {
         loadHistory();
     }, [loadHistory]);
 
-    const exportAssessmentPdf = useCallback(async (assessment) => {
-        if (!assessment) return;
+    // EspacePersonnel.js - Remplacer l'ancienne fonction par celle-ci
 
-        setSavingPdfId(assessment.id);
+const exportAssessmentPdf = useCallback(async (assessment) => {
+    if (!assessment) return;
 
-        try {
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    setSavingPdfId(assessment.id);
 
-            const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
-            const code = assessment.code || 'N/A';
-
-            pdf.setFillColor(51, 71, 223);
-            pdf.rect(0, 0, 210, 42, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFontSize(20);
-            pdf.text(title, 20, 20);
-            pdf.setFontSize(10);
-            pdf.text(`Date: ${assessment.date}`, 20, 31);
-
-            pdf.setTextColor(17, 24, 39);
-            pdf.setFontSize(14);
-            pdf.text(`Code: ${code}`, 20, 55);
-            pdf.setFontSize(11);
-            pdf.text(`Statut: ${STATUS_LABELS[assessment.status] || assessment.status}`, 20, 65);
-            pdf.text(`Cohérence: ${assessment.consistencyLevel || 'Non renseignée'}`, 20, 73);
-            pdf.text(`Complétion: ${assessment.completionPercentage}%`, 20, 81);
-
-            pdf.setFontSize(12);
-            pdf.text('Sources du rapport', 20, 97);
-            pdf.setFontSize(10);
-            pdf.text(`Session: ${assessment.sessionToken || 'non disponible'}`, 20, 106);
-            pdf.text(`Assessment ID: ${assessment.assessmentId}`, 20, 114);
-
-            if (assessment.hasTreasureMap) {
-                pdf.text('Carte au trésor disponible.', 20, 126);
+    try {
+        // ✅ Utiliser treasureMapService pour générer le rapport complet
+        console.log('📄 Génération du rapport pour:', assessment.assessmentId);
+        
+        // Afficher une notification de progression
+        const progressMessages = {
+            10: 'Préparation du rapport...',
+            30: 'Génération de la carte...',
+            60: 'Téléchargement du PDF...',
+            90: 'Finalisation...',
+            100: 'Terminé !'
+        };
+        
+        // Appeler le service pour générer et télécharger le PDF
+        const result = await treasureMapService.downloadAndSavePdf(
+            assessment,
+            `Rapport_${assessment.type || 'RIASEC'}_${assessment.assessmentId}.pdf`,
+            (message, progress) => {
+                // Optionnel : afficher la progression dans la console
+                console.log(`📊 Progression: ${progress}% - ${message}`);
+                // Vous pouvez ajouter un état pour afficher une barre de progression
             }
+        );
+        
+        console.log('✅ Rapport téléchargé avec succès:', result);
+        
+    } catch (error) {
+        console.error('❌ Erreur téléchargement du rapport:', error);
+        
+        // ❌ FALLBACK : Si l'API treasure map échoue, utiliser l'ancienne méthode
+        console.log('⚠️ Fallback vers la génération PDF locale...');
+        await generateLocalPdf(assessment);
+        
+    } finally {
+        setSavingPdfId(null);
+    }
+}, []);
 
-            pdf.save(`${title.replace(/\s/g, '_')}_${assessment.assessmentId}.pdf`);
-        } finally {
-            setSavingPdfId(null);
+// Fonction de fallback (l'ancienne méthode)
+const generateLocalPdf = useCallback(async (assessment) => {
+    try {
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
+        const code = assessment.code || 'N/A';
+
+        pdf.setFillColor(51, 71, 223);
+        pdf.rect(0, 0, 210, 42, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(20);
+        pdf.text(title, 20, 20);
+        pdf.setFontSize(10);
+        pdf.text(`Date: ${assessment.date}`, 20, 31);
+
+        pdf.setTextColor(17, 24, 39);
+        pdf.setFontSize(14);
+        pdf.text(`Code: ${code}`, 20, 55);
+        pdf.setFontSize(11);
+        pdf.text(`Statut: ${STATUS_LABELS[assessment.status] || assessment.status}`, 20, 65);
+        pdf.text(`Cohérence: ${assessment.consistencyLevel || 'Non renseignée'}`, 20, 73);
+        pdf.text(`Complétion: ${assessment.completionPercentage}%`, 20, 81);
+
+        pdf.setFontSize(12);
+        pdf.text('Sources du rapport', 20, 97);
+        pdf.setFontSize(10);
+        pdf.text(`Session: ${assessment.sessionToken || 'non disponible'}`, 20, 106);
+        pdf.text(`Assessment ID: ${assessment.assessmentId}`, 20, 114);
+
+        if (assessment.hasTreasureMap) {
+            pdf.text('Carte au trésor disponible.', 20, 126);
         }
-    }, []);
+
+        // ✅ Ajouter les recommandations si disponibles
+        const recos = recommendations[assessment.id];
+        if (recos) {
+            let yPos = 130;
+            pdf.setFontSize(14);
+            pdf.text('Recommandations', 20, yPos);
+            yPos += 10;
+            
+            if (recos.trainings && recos.trainings.length > 0) {
+                pdf.setFontSize(12);
+                pdf.text('📚 Formations recommandées:', 20, yPos);
+                yPos += 7;
+                pdf.setFontSize(10);
+                recos.trainings.slice(0, 5).forEach((training, i) => {
+                    const name = typeof training === 'string' ? training : training.name;
+                    pdf.text(`• ${name}`, 25, yPos + (i * 7));
+                });
+                yPos += recos.trainings.length * 7 + 5;
+            }
+            
+            if (recos.schools && recos.schools.length > 0) {
+                pdf.setFontSize(12);
+                pdf.text('🎓 Écoles / Universités:', 20, yPos);
+                yPos += 7;
+                pdf.setFontSize(10);
+                recos.schools.slice(0, 5).forEach((school, i) => {
+                    const name = typeof school === 'string' ? school : school.name;
+                    pdf.text(`• ${name}`, 25, yPos + (i * 7));
+                });
+            }
+        }
+
+        pdf.save(`${title.replace(/\s/g, '_')}_${assessment.assessmentId}.pdf`);
+    } catch (error) {
+        console.error('❌ Erreur fallback PDF:', error);
+    }
+}, [recommendations]);
 
     const openAssessment = useCallback((assessment) => {
         if (!assessment) return;
