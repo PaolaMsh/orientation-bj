@@ -6,6 +6,7 @@ import api from '../services/api';
 import { bourseService } from '../services/bourseService';
 import { recommendationService } from '../services/recommendationService';
 import { treasureMapService } from '../services/treasureMapService';
+import '../styles/rapport.css';
 
 const IconUser = () => (
     <svg
