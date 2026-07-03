@@ -189,10 +189,7 @@ function RapportPhase1() {
         fetchRapport();
     }, [location.state]);
 
-    localStorage.setItem('assessment_id', String(assessmentIdParam));
-    localStorage.setItem('session_token', String(token));
-    localStorage.setItem('phase1_report_data', JSON.stringify(reportData));
-
+    
     // ✅ Nouveau test (avec nettoyage complet)
     const handleNewTest = () => {
         // Supprimer toutes les données de la Phase 1
