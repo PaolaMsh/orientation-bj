@@ -124,6 +124,23 @@ const CATEGORY = [
 ];
 
 const BATCH_SIZE = 6;
+const ACTIVE_TEST_STORAGE = {
+    sessionToken: 'session_token',
+    assessmentId: 'assessment_id',
+    testType: 'assessment_test_type',
+};
+
+const clearActiveAssessmentStorage = () => {
+    localStorage.removeItem(ACTIVE_TEST_STORAGE.sessionToken);
+    localStorage.removeItem(ACTIVE_TEST_STORAGE.assessmentId);
+    localStorage.removeItem(ACTIVE_TEST_STORAGE.testType);
+};
+
+const saveActiveAssessmentStorage = ({ sessionToken, assessmentId, testType }) => {
+    localStorage.setItem(ACTIVE_TEST_STORAGE.sessionToken, sessionToken);
+    localStorage.setItem(ACTIVE_TEST_STORAGE.assessmentId, assessmentId);
+    localStorage.setItem(ACTIVE_TEST_STORAGE.testType, testType);
+};
 
 const Spinner = ({ size = 40, color = '#6246E5' }) => (
     <div className="spinner-container" style={{ textAlign: 'center', padding: '50px' }}>
@@ -313,13 +330,23 @@ const Test = () => {
                 setError('Veuillez vous connecter pour passer le test');
                 return null;
             }
-            const existingSessionToken = localStorage.getItem('session_token');
-            const existingAssessmentId = localStorage.getItem('assessment_id');
-            if (existingSessionToken && existingAssessmentId)
+            const existingSessionToken = localStorage.getItem(ACTIVE_TEST_STORAGE.sessionToken);
+            const existingAssessmentId = localStorage.getItem(ACTIVE_TEST_STORAGE.assessmentId);
+            const existingTestType = localStorage.getItem(ACTIVE_TEST_STORAGE.testType);
+            if (
+                existingSessionToken &&
+                existingAssessmentId &&
+                existingTestType === initialTestType
+            ) {
                 return {
                     sessionToken: existingSessionToken,
                     assessmentId: existingAssessmentId,
                 };
+            }
+
+            if (existingSessionToken || existingAssessmentId || existingTestType) {
+                clearActiveAssessmentStorage();
+            }
 
             const response = await api.post('/sessions', {
                 testVersionId: 1,
@@ -334,8 +361,11 @@ const Test = () => {
             if (response?.data) {
                 const newSessionToken = response.data.sessionToken;
                 const newAssessmentId = response.data.assessment.id;
-                localStorage.setItem('session_token', newSessionToken);
-                localStorage.setItem('assessment_id', newAssessmentId);
+                saveActiveAssessmentStorage({
+                    sessionToken: newSessionToken,
+                    assessmentId: newAssessmentId,
+                    testType: initialTestType,
+                });
                 return { sessionToken: newSessionToken, assessmentId: newAssessmentId };
             }
             throw new Error("Erreur lors de l'initialisation");
@@ -487,14 +517,14 @@ const Test = () => {
             console.log('✅ Résultats calculés avec succès');
             console.log('🆔 AssessmentId:', assessmentId);
 
-            localStorage.setItem('assessment_id', assessmentId);
+            localStorage.setItem(ACTIVE_TEST_STORAGE.assessmentId, assessmentId);
 
             console.log('🔀 Redirection vers /orientations');
             navigate('/orientations');
         } catch (err) {
             console.error('❌ Erreur finalisation:', err);
             if (err.response?.status === 400) {
-                localStorage.setItem('assessment_id', assessmentId);
+                localStorage.setItem(ACTIVE_TEST_STORAGE.assessmentId, assessmentId);
                 navigate('/orientations');
             } else {
                 setError('Impossible de finaliser le test');
@@ -579,8 +609,7 @@ const Test = () => {
                 if (progressData.status === 'COMPLETED') {
                     console.log("⚠️ Test déjà terminé, création d'un nouveau...");
 
-                    localStorage.removeItem('session_token');
-                    localStorage.removeItem('assessment_id');
+                    clearActiveAssessmentStorage();
 
                     const newSession = await initializeSession();
                     if (newSession) {

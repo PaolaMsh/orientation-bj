@@ -7,15 +7,14 @@ import {
     faSignOutAlt,
     faChevronDown,
     faUserCircle,
-    faGraduationCap,
     faArrowRightToBracket,
 } from '@fortawesome/free-solid-svg-icons';
-import { useAuth } from '../context/authContext';
+import { useAuth } from '../context/auth';
 
 const Header = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, logout } = useAuth();
 
     const [showMenu, setShowMenu] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -31,11 +30,6 @@ const Header = () => {
     const toggleMenu = () => {
         setShowMenu(!showMenu);
         setShowLogoutConfirm(false);
-    };
-
-    const handleAccessProfile = () => {
-        navigate('/profil');
-        setShowMenu(false);
     };
 
     const handleAccessParcours = () => {

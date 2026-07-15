@@ -1,7 +1,7 @@
 // src/pages/LoginPage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/authContext';
+import { useAuth } from '../context/auth';
 import '../styles/auth.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
@@ -16,7 +16,13 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
+    const [infoMessage] = useState(() => {
+        const params = new URLSearchParams(location.search);
+        if (params.get('verification') === 'sent') {
+            return 'Un email de vérification a été envoyé. Consultez votre boîte mail.';
+        }
+        return location.state?.message || '';
+    });
 
     const getLoginErrorMessage = (err) => {
         // Utiliser le message personnalisé de l'intercepteur
@@ -37,14 +43,6 @@ const LoginPage = () => {
         return backendMessage || 'Impossible de se connecter pour le moment';
     };
 
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const verificationStatus = params.get('verification');
-        if (verificationStatus === 'sent' && !infoMessage) {
-            setInfoMessage('Un email de vérification a été envoyé. Consultez votre boîte mail.');
-        }
-    }, [location.search, infoMessage]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -64,8 +62,8 @@ const LoginPage = () => {
                 role: userData.role,
             };
 
-            login(user, accessToken);
-            navigate('/accueil');
+            login(user, accessToken, refreshToken);
+            navigate(location.state?.from || '/accueil');
         } catch (error) {
             console.error('Erreur:', error.response?.data);
             setError(getLoginErrorMessage(error));
