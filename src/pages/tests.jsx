@@ -134,18 +134,27 @@ const ACTIVE_TEST_STORAGE = {
     sessionToken: 'session_token',
     assessmentId: 'assessment_id',
     testType: 'assessment_test_type',
+    currentCategory: 'assessment_current_category',
+    flowVersion: 'assessment_flow_version',
 };
+const ACTIVE_TEST_FLOW_VERSION = 'full-starts-generale-v1';
 
 const clearActiveAssessmentStorage = () => {
     localStorage.removeItem(ACTIVE_TEST_STORAGE.sessionToken);
     localStorage.removeItem(ACTIVE_TEST_STORAGE.assessmentId);
     localStorage.removeItem(ACTIVE_TEST_STORAGE.testType);
+    localStorage.removeItem(ACTIVE_TEST_STORAGE.currentCategory);
+    localStorage.removeItem(ACTIVE_TEST_STORAGE.flowVersion);
 };
 
-const saveActiveAssessmentStorage = ({ sessionToken, assessmentId, testType }) => {
+const saveActiveAssessmentStorage = ({ sessionToken, assessmentId, testType, currentCategory }) => {
     localStorage.setItem(ACTIVE_TEST_STORAGE.sessionToken, sessionToken);
     localStorage.setItem(ACTIVE_TEST_STORAGE.assessmentId, assessmentId);
     localStorage.setItem(ACTIVE_TEST_STORAGE.testType, testType);
+    localStorage.setItem(ACTIVE_TEST_STORAGE.flowVersion, ACTIVE_TEST_FLOW_VERSION);
+    if (currentCategory) {
+        localStorage.setItem(ACTIVE_TEST_STORAGE.currentCategory, currentCategory);
+    }
 };
 
 const Spinner = ({ size = 40, color = '#6246E5' }) => (
@@ -339,14 +348,20 @@ const Test = () => {
             const existingSessionToken = localStorage.getItem(ACTIVE_TEST_STORAGE.sessionToken);
             const existingAssessmentId = localStorage.getItem(ACTIVE_TEST_STORAGE.assessmentId);
             const existingTestType = localStorage.getItem(ACTIVE_TEST_STORAGE.testType);
+            const existingCurrentCategory = localStorage.getItem(
+                ACTIVE_TEST_STORAGE.currentCategory,
+            );
+            const existingFlowVersion = localStorage.getItem(ACTIVE_TEST_STORAGE.flowVersion);
             if (
                 existingSessionToken &&
                 existingAssessmentId &&
-                existingTestType === initialTestType
+                existingTestType === initialTestType &&
+                existingFlowVersion === ACTIVE_TEST_FLOW_VERSION
             ) {
                 return {
                     sessionToken: existingSessionToken,
                     assessmentId: existingAssessmentId,
+                    currentCategory: existingCurrentCategory || selectedCategories[0],
                 };
             }
 
@@ -371,15 +386,20 @@ const Test = () => {
                     sessionToken: newSessionToken,
                     assessmentId: newAssessmentId,
                     testType: initialTestType,
+                    currentCategory: selectedCategories[0],
                 });
-                return { sessionToken: newSessionToken, assessmentId: newAssessmentId };
+                return {
+                    sessionToken: newSessionToken,
+                    assessmentId: newAssessmentId,
+                    currentCategory: selectedCategories[0],
+                };
             }
             throw new Error("Erreur lors de l'initialisation");
         } catch (err) {
             setError(err.response?.data?.message || "Impossible d'initialiser le test");
             return null;
         }
-    }, [initialTestType]);
+    }, [initialTestType, selectedCategories]);
 
     const resolveProgress = useCallback(async (token, assessmentIdParam) => {
         try {
@@ -424,6 +444,12 @@ const Test = () => {
                     setCurrentCategory(category);
                     setCurrentBatch(formatted);
                     setDraftAnswers({});
+                    saveActiveAssessmentStorage({
+                        sessionToken: tokenToUse,
+                        assessmentId: assessmentIdToUse,
+                        testType: initialTestType,
+                        currentCategory: category,
+                    });
                     return true;
                 }
                 if (!options.allowEmpty) setError('Aucune donnée reçue');
@@ -438,7 +464,7 @@ const Test = () => {
                 setLoadingBatch(false);
             }
         },
-        [sessionToken, assessmentId],
+        [sessionToken, assessmentId, initialTestType],
     );
 
     const submitBatch = useCallback(async () => {
@@ -636,8 +662,9 @@ const Test = () => {
                     }
                 }
 
+                const categoryToLoad = sessionData.currentCategory || selectedCategories[0];
                 await fetchBatch(
-                    selectedCategories[0],
+                    categoryToLoad,
                     sessionData.sessionToken,
                     sessionData.assessmentId,
                 );
@@ -649,7 +676,13 @@ const Test = () => {
             }
         };
         loadAssessment();
-    }, [initializeSession, resolveProgress, fetchBatch, navigate, selectedCategories]);
+    }, [
+        initializeSession,
+        resolveProgress,
+        fetchBatch,
+        selectedCategories,
+        initialTestType,
+    ]);
 
     const handleAnswer = useCallback((questionId, value) => {
         setDraftAnswers((prev) => ({ ...prev, [questionId]: { value } }));

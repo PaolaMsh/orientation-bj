@@ -38,6 +38,15 @@ const EmotionSvgs = {
 };
 
 const BATCH_SIZE = 6;
+const GENERAL_TEST_STORAGE = {
+    sessionToken: 'general_session_token',
+    assessmentId: 'general_assessment_id',
+};
+
+const clearGeneralAssessmentStorage = () => {
+    localStorage.removeItem(GENERAL_TEST_STORAGE.sessionToken);
+    localStorage.removeItem(GENERAL_TEST_STORAGE.assessmentId);
+};
 
 const Spinner = ({ size = 40 }) => (
     <div className="spinner-container" style={{ textAlign: 'center', padding: '50px' }}>
@@ -139,7 +148,7 @@ const GeneralTest = () => {
         }
     }, []);
 
-    const initializeSession = useCallback(async () => {
+    const initializeSession = useCallback(async (forceNew = false) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -147,10 +156,14 @@ const GeneralTest = () => {
                 return null;
             }
 
-            const existingSessionToken = localStorage.getItem('general_session_token');
-            const existingAssessmentId = localStorage.getItem('general_assessment_id');
+            const existingSessionToken = localStorage.getItem(GENERAL_TEST_STORAGE.sessionToken);
+            const existingAssessmentId = localStorage.getItem(GENERAL_TEST_STORAGE.assessmentId);
 
-            if (existingSessionToken && existingAssessmentId && !assessmentCompleted) {
+            if (forceNew) {
+                clearGeneralAssessmentStorage();
+            }
+
+            if (!forceNew && existingSessionToken && existingAssessmentId && !assessmentCompleted) {
                 return { sessionToken: existingSessionToken, assessmentId: existingAssessmentId };
             }
 
@@ -169,8 +182,8 @@ const GeneralTest = () => {
             if (response?.data) {
                 const newSessionToken = response.data.sessionToken;
                 const newAssessmentId = response.data.assessment.id;
-                localStorage.setItem('general_session_token', newSessionToken);
-                localStorage.setItem('general_assessment_id', newAssessmentId);
+                localStorage.setItem(GENERAL_TEST_STORAGE.sessionToken, newSessionToken);
+                localStorage.setItem(GENERAL_TEST_STORAGE.assessmentId, newAssessmentId);
                 return { sessionToken: newSessionToken, assessmentId: newAssessmentId };
             }
             throw new Error("Erreur lors de l'initialisation");
@@ -203,8 +216,7 @@ const GeneralTest = () => {
             localStorage.setItem('general_report_data', JSON.stringify(reportData));
             
             // Nettoyer les données temporaires
-            localStorage.removeItem('general_session_token');
-            localStorage.removeItem('general_assessment_id');
+            clearGeneralAssessmentStorage();
             
             // Rediriger vers le rapport
             navigate('/rapport-general', {
@@ -223,7 +235,7 @@ const GeneralTest = () => {
     }, [navigate]);
 
     const fetchBatch = useCallback(
-        async (tokenParam = null, assessmentIdParam = null) => {
+        async (tokenParam = null, assessmentIdParam = null, options = {}) => {
             setLoadingBatch(true);
             const tokenToUse = tokenParam || sessionToken;
             const assessmentIdToUse = assessmentIdParam || assessmentId;
@@ -258,13 +270,41 @@ const GeneralTest = () => {
                     await completeAssessment(tokenToUse, assessmentIdToUse);
                     return false;
                 }
+                if (
+                    options.retryOnInvalidCategory !== false &&
+                    (String(message).toLowerCase().includes('catégorie courante invalide') ||
+                        String(message).toLowerCase().includes('section courante invalide'))
+                ) {
+                    clearGeneralAssessmentStorage();
+                    const newSession = await initializeSession(true);
+                    if (newSession) {
+                        setSessionToken(newSession.sessionToken);
+                        setAssessmentId(newSession.assessmentId);
+                        const retryResponse = await api.get('/questions/category', {
+                            params: {
+                                sessionToken: newSession.sessionToken,
+                                assessmentId: newSession.assessmentId,
+                                currentCategory: TEST_TYPES.GENERALE,
+                                lang: 'fr',
+                                take: BATCH_SIZE,
+                            },
+                        });
+
+                        if (retryResponse?.data && retryResponse.data.length > 0) {
+                            const formatted = formatQuestions(retryResponse.data);
+                            setCurrentBatch(formatted);
+                            setDraftAnswers({});
+                            return true;
+                        }
+                    }
+                }
                 setError(err.response?.data?.message || 'Impossible de charger les questions');
                 return false;
             } finally {
                 setLoadingBatch(false);
             }
         },
-        [sessionToken, assessmentId, completeAssessment],
+        [sessionToken, assessmentId, completeAssessment, initializeSession],
     );
 
     const submitBatch = useCallback(async () => {
