@@ -360,10 +360,13 @@ const Testsorientations = () => {
 
                         <h2 className="to-card-title">Test complet</h2>
                         <p className="to-card-desc">
-                            Répondez aux questions en une seule session pour obtenir un profil
+                            Enchaînez les 4 tests en une seule session pour obtenir un profil
                             RIASEC complet et des recommandations précises.
                         </p>
                         <ul className="to-card-features">
+                            <li>
+                                <IconCheckCircle /> Test général, occupations, aptitudes et personnalité
+                            </li>
                             <li>
                                 <IconCheckCircle /> Profil détaillé sur 6 dimensions
                             </li>

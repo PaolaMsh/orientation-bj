@@ -104,6 +104,12 @@ const SectionSvgs = {
 
 const CATEGORY = [
     {
+        name: 'GENERALE',
+        label: 'Général',
+        icon: SectionSvgs.realist,
+        description: 'Première évaluation de vos intérêts professionnels',
+    },
+    {
         name: 'OCCUPATIONS',
         label: 'Occupations',
         icon: SectionSvgs.realist,
@@ -235,8 +241,8 @@ const QuestionCard = ({ question, value, onAnswer }) => {
         }
 
         return [
-            { value: 0, label: 'Oui', emoji: EmotionSvgs.happy },
-            { value: 1, label: 'Non', emoji: EmotionSvgs.sad },
+            { value: 0, label: 'Non', emoji: EmotionSvgs.sad },
+            { value: 1, label: 'Oui', emoji: EmotionSvgs.happy },
         ];
     };
 
@@ -556,7 +562,10 @@ const Test = () => {
 
         setHasUsedPrevious(false);
 
-        if (progressData.status === 'COMPLETED') {
+        const currentIndex = selectedCategories.indexOf(currentCategory);
+        const isLastCategory = currentIndex === selectedCategories.length - 1;
+
+        if (progressData.status === 'COMPLETED' && isLastCategory) {
             handleAssessmentCompletion();
             return;
         }
@@ -567,7 +576,6 @@ const Test = () => {
         if (sameCategoryHasQuestions) return;
 
         setCompletedCategories((prev) => ({ ...prev, [currentCategory]: true }));
-        const currentIndex = selectedCategories.indexOf(currentCategory);
         const remainingCategories = selectedCategories.slice(currentIndex + 1);
         for (const category of remainingCategories) {
             const hasQuestions = await fetchBatch(category, sessionToken, assessmentId, {
