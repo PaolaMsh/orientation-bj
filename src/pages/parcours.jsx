@@ -4,8 +4,8 @@ import { jsPDF } from 'jspdf';
 import '../styles/parcours.css';
 import api from '../services/api';
 import { bourseService } from '../services/bourseService';
-import { recommendationService } from '../services/recommendationService';
 import { treasureMapService } from '../services/treasureMapService';
+import { getCategoryLabel } from '../utils/riasec';
 
 const IconUser = () => (
     <svg
@@ -237,13 +237,11 @@ function normalizeStatus(status, assessment) {
 
 function buildAssessmentTitle(assessment) {
     const type = String(assessment?.type || 'RIASEC').toUpperCase();
-    if (type === 'FULL') return 'Test complet';
-    if (type === 'PHASE1') return 'Test Phase 1';
-    return `Test ${type}`;
+    return getCategoryLabel(type);
 }
 
 function buildAssessmentCode(assessment) {
-    return assessment?.phase2Code || assessment?.phase1Code || assessment?.code || '';
+    return assessment?.specificCode || assessment?.generalCode || assessment?.riasecCode || assessment?.code || '';
 }
 
 function flattenAssessments(historyData) {
@@ -267,8 +265,6 @@ function flattenAssessments(historyData) {
                 status: status,
                 score: Number(assessment.completionPercentage ?? 0),
                 completionPercentage: Number(assessment.completionPercentage ?? 0),
-                phase1Code: assessment.phase1Code || null,
-                phase2Code: assessment.phase2Code || null,
                 code: buildAssessmentCode(assessment),
                 consistencyLevel: assessment.consistencyLevel || null,
                 hasResult: Boolean(assessment.hasResult),
@@ -296,8 +292,6 @@ function flattenAssessments(historyData) {
             status: status,
             score: Number(assessment.completionPercentage ?? 0),
             completionPercentage: Number(assessment.completionPercentage ?? 0),
-            phase1Code: assessment.phase1Code || null,
-            phase2Code: assessment.phase2Code || null,
             code: buildAssessmentCode(assessment),
             consistencyLevel: assessment.consistencyLevel || null,
             hasResult: Boolean(assessment.hasResult),
@@ -345,12 +339,11 @@ export default function EspacePersonnel() {
     const [activeMenu, setActiveMenu] = useState('dashboard');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [savingPdfId, setSavingPdfId] = useState(null);
+    const [, setSavingPdfId] = useState(null);
     const [historyData, setHistoryData] = useState(null);
     const [recommendations, setRecommendations] = useState({});
     const [loadingRecos, setLoadingRecos] = useState({});
-    const [savingScholarship, setSavingScholarship] = useState(null);
-    const [saveMessage, setSaveMessage] = useState(null);
+    const [, setSaveMessage] = useState(null);
     
     // ✅ États pour les bourses sauvegardées depuis la base de données
     const [savedBourses, setSavedBourses] = useState([]);
@@ -360,8 +353,6 @@ export default function EspacePersonnel() {
 
     const assessments = useMemo(() => flattenAssessments(historyData), [historyData]);
     const evolutionData = useMemo(() => buildEvolution(assessments), [assessments]);
-    const bourses = Array.isArray(historyData?.bourses) ? historyData.bourses : [];
-
     const userInfo = useMemo(() => {
         const firstName = historyData?.firstName || '';
         const lastName = historyData?.lastName || '';
@@ -450,95 +441,10 @@ export default function EspacePersonnel() {
     // ✅ Charger les bourses quand on est dans la section bourses
     useEffect(() => {
         if (activeMenu === 'bourses') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             loadSavedScholarshipsFromDB();
         }
     }, [activeMenu, refreshKey, loadSavedScholarshipsFromDB]);
-
-    // ✅ Fonction pour sauvegarder une bourse
-    const saveScholarship = useCallback(async (scholarshipId) => {
-        if (!scholarshipId) return;
-
-        setSavingScholarship(scholarshipId);
-
-        try {
-            console.log('📝 Sauvegarde de la bourse ID:', scholarshipId);
-            
-            const response = await api.post(`/users/me/scholarship/${scholarshipId}`);
-            
-            console.log('✅ Bourse sauvegardée avec succès:', response.data);
-            
-            setSaveMessage({
-                id: scholarshipId,
-                text: '✓ Bourse sauvegardée avec succès !',
-                type: 'success',
-            });
-            
-            // Mettre à jour le localStorage
-            try {
-                const savedScholarships = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-                if (!savedScholarships.some(s => s.id === scholarshipId)) {
-                    const bourse = bourses.find(b => b.id === scholarshipId);
-                    if (bourse) {
-                        savedScholarships.push({
-                            id: bourse.id,
-                            name: bourse.name,
-                            title: bourse.name,
-                            description: bourse.description,
-                            unlockedAt: bourse.unlockedAt,
-                            savedAt: new Date().toISOString(),
-                            emoji: bourse.emoji || '🎓',
-                            pointsValue: bourse.pointsValue || 0
-                        });
-                        localStorage.setItem('savedScholarships', JSON.stringify(savedScholarships));
-                        console.log('📦 Bourse ajoutée au localStorage');
-                    }
-                }
-            } catch (storageError) {
-                console.warn('⚠️ Erreur de sauvegarde locale:', storageError);
-            }
-            
-            // Rafraîchir la liste
-            setRefreshKey(prev => prev + 1);
-            
-            setTimeout(() => setSaveMessage(null), 3000);
-            return { success: true, data: response.data };
-        } catch (error) {
-            console.error('❌ Erreur lors de la sauvegarde:', error);
-            
-            let errorMessage = '✗ Erreur lors de la sauvegarde';
-            
-            if (error.response) {
-                switch (error.response.status) {
-                    case 403:
-                        errorMessage = '⛔ Vous n\'avez pas les droits pour sauvegarder cette bourse';
-                        break;
-                    case 404:
-                        errorMessage = '❌ Bourse non trouvée';
-                        break;
-                    case 401:
-                        errorMessage = '🔒 Veuillez vous reconnecter';
-                        break;
-                    case 409:
-                        errorMessage = 'ℹ️ Cette bourse est déjà dans vos favoris';
-                        break;
-                    default:
-                        errorMessage = error.response.data?.message || '✗ Erreur lors de la sauvegarde';
-                }
-            } else if (error.request) {
-                errorMessage = '⚠️ Impossible de contacter le serveur. Vérifiez votre connexion.';
-            }
-            
-            setSaveMessage({
-                id: scholarshipId,
-                text: errorMessage,
-                type: 'error',
-            });
-            setTimeout(() => setSaveMessage(null), 3000);
-            return { success: false, error: error.response?.data?.message || error.message };
-        } finally {
-            setSavingScholarship(null);
-        }
-    }, [bourses]);
 
     const loadRecommendations = useCallback(async (assessmentId) => {
         if (!assessmentId) return null;
@@ -596,53 +502,9 @@ export default function EspacePersonnel() {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadHistory();
     }, [loadHistory]);
-
-    // EspacePersonnel.js - Remplacer l'ancienne fonction par celle-ci
-
-const exportAssessmentPdf = useCallback(async (assessment) => {
-    if (!assessment) return;
-
-    setSavingPdfId(assessment.id);
-
-    try {
-        // ✅ Utiliser treasureMapService pour générer le rapport complet
-        console.log('📄 Génération du rapport pour:', assessment.assessmentId);
-        
-        // Afficher une notification de progression
-        const progressMessages = {
-            10: 'Préparation du rapport...',
-            30: 'Génération de la carte...',
-            60: 'Téléchargement du PDF...',
-            90: 'Finalisation...',
-            100: 'Terminé !'
-        };
-        
-        // Appeler le service pour générer et télécharger le PDF
-        const result = await treasureMapService.downloadAndSavePdf(
-            assessment,
-            `Rapport_${assessment.type || 'RIASEC'}_${assessment.assessmentId}.pdf`,
-            (message, progress) => {
-                // Optionnel : afficher la progression dans la console
-                console.log(`📊 Progression: ${progress}% - ${message}`);
-                // Vous pouvez ajouter un état pour afficher une barre de progression
-            }
-        );
-        
-        console.log('✅ Rapport téléchargé avec succès:', result);
-        
-    } catch (error) {
-        console.error('❌ Erreur téléchargement du rapport:', error);
-        
-        // ❌ FALLBACK : Si l'API treasure map échoue, utiliser l'ancienne méthode
-        console.log('⚠️ Fallback vers la génération PDF locale...');
-        await generateLocalPdf(assessment);
-        
-    } finally {
-        setSavingPdfId(null);
-    }
-}, []);
 
 // EspacePersonnel.js - generateLocalPdf avec style pro
 
@@ -674,7 +536,7 @@ const generateLocalPdf = useCallback(async (assessment) => {
             orange: [251, 146, 60],      // #fb923c
         };
 
-        const title = assessment.type === 'PHASE1' ? 'Rapport Phase 1' : 'Rapport RIASEC';
+        const title = 'Rapport RIASEC';
         const code = assessment.code || 'N/A';
 
         // ===== PAGE 1 : EN-TÊTE =====
@@ -727,8 +589,8 @@ const generateLocalPdf = useCallback(async (assessment) => {
         y += 38;
 
         // ===== SCORES RIASEC =====
-        if (assessment.scores || assessment.phase2Scores) {
-            const scores = assessment.scores || assessment.phase2Scores || {};
+        if (assessment.scores) {
+            const scores = assessment.scores || {};
             const labels = {
                 R: 'Réaliste',
                 I: 'Investigateur', 
@@ -956,15 +818,34 @@ const generateLocalPdf = useCallback(async (assessment) => {
     }
 }, [recommendations]);
 
+const exportAssessmentPdf = useCallback(async (assessment) => {
+    if (!assessment) return;
+
+    setSavingPdfId(assessment.id);
+
+    try {
+        console.log('📄 Génération du rapport pour:', assessment.assessmentId);
+
+        const result = await treasureMapService.downloadAndSavePdf(
+            assessment,
+            `Rapport_${assessment.type || 'RIASEC'}_${assessment.assessmentId}.pdf`,
+            (message, progress) => {
+                console.log(`📊 Progression: ${progress}% - ${message}`);
+            }
+        );
+
+        console.log('✅ Rapport téléchargé avec succès:', result);
+    } catch (error) {
+        console.error('❌ Erreur téléchargement du rapport:', error);
+        console.log('⚠️ Fallback vers la génération PDF locale...');
+        await generateLocalPdf(assessment);
+    } finally {
+        setSavingPdfId(null);
+    }
+}, [generateLocalPdf]);
+
     const openAssessment = useCallback((assessment) => {
         if (!assessment) return;
-
-        if (assessment.type === 'PHASE1') {
-            navigate('/rapport-phase1', {
-                state: { assessmentId: assessment.assessmentId, sessionToken: assessment.sessionToken }
-            });
-            return;
-        }
 
         navigate('/orientations', {
             state: { assessmentId: assessment.assessmentId, sessionToken: assessment.sessionToken }
@@ -1152,8 +1033,8 @@ const generateLocalPdf = useCallback(async (assessment) => {
                                                         <span><IconCalendar /> {assessment.date}</span>
                                                         <span><IconLoader /> {assessment.completionPercentage}%</span>
                                                     </div>
-                                                    {assessment.phase2Code && (
-                                                        <div className="report-code-badge"><strong>Code RIASEC:</strong> {assessment.phase2Code}</div>
+                                                    {assessment.code && (
+                                                        <div className="report-code-badge"><strong>Code RIASEC:</strong> {assessment.code}</div>
                                                     )}
                                                     <div className="report-recommendations">
                                                         {isLoading ? (

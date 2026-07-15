@@ -3,8 +3,8 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
-import { saveTestResult, savePdfReport } from '../services/testService';
 import api from '../services/api';
+import { getNormalizedScores, getRiasecCode } from '../utils/riasec';
 
 const IconDoc = () => (
     <svg
@@ -334,8 +334,6 @@ const MOCK_SCORES = {
     CONVENTIONAL: 45,
 };
 
-const API_BASE_URL = 'https://api-orientation-production.up.railway.app/api/v1';
-
 function RadarChart({ scores }) {
     const cx = 200,
         cy = 175,
@@ -442,11 +440,9 @@ export default function Orientations() {
     const location = useLocation();
     const routeAssessmentId =
         assessmentId || location.state?.assessmentId || localStorage.getItem('assessment_id');
-    const [activeTab, setActiveTab] = useState('investigative');
+    const [activeTab, setActiveTab] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [saving, setSaving] = useState(false);
-    const [saveSuccess, setSaveSuccess] = useState(false);
     const [data, setData] = useState({
         scores: null,
         recommendationsByAxis: null,
@@ -456,104 +452,14 @@ export default function Orientations() {
         behavioral: null,
     });
 
-    const handleSaveReport = () => {
-        setSaving(true);
-
-        const scores = data.scores || MOCK_SCORES;
-        const riasecCode =
-            data.assessmentInfo?.code ||
-            Object.entries(scores)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3)
-                .map(([key]) => key[0])
-                .join('');
-
-        const behavioralData = data.behavioral || {
-            pointsForts: [
-                {
-                    title: 'Curiosité intellectuelle',
-                    description:
-                        'Vous aimez résoudre des problèmes complexes et apprendre par vous-même.',
-                },
-                {
-                    title: 'Pragmatisme',
-                    description: "Capacité à passer à l'action et à manipuler des outils concrets.",
-                },
-            ],
-            axesAmelioration: [
-                {
-                    title: 'Travail collaboratif',
-                    description: 'Développer la collaboration en équipe.',
-                },
-            ],
-        };
-
-        const testResult = {
-            title: "Test RIASEC - Rapport d'orientation",
-            score: Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 6),
-            type: 'RIASEC',
-            code: riasecCode,
-            fullReport: {
-                scores: scores,
-                code: riasecCode,
-                recommendations: data.recommendationsByAxis,
-                completedAt: new Date().toISOString(),
-                assessmentId: assessmentId || localStorage.getItem('assessment_id'),
-                behavioral: behavioralData,
-                assessmentInfo: data.assessmentInfo,
-            },
-        };
-
-        const savedTest = saveTestResult(testResult);
-        console.log('✅ Test sauvegardé:', savedTest);
-
-        const report = {
-            title: `Rapport RIASEC - ${new Date().toLocaleDateString()}`,
-            type: 'RIASEC',
-            testId: savedTest.id,
-            content: {
-                scores: scores,
-                code: riasecCode,
-                recommendations: data.recommendationsByAxis,
-                behavioral: behavioralData,
-                assessmentInfo: data.assessmentInfo,
-            },
-        };
-
-        savePdfReport(report);
-        console.log('✅ Rapport sauvegardé');
-
-        setSaving(false);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-    };
-
     const fetchCompleteReport = async (id) => {
         setLoading(true);
 
         try {
             console.log('🔍 Fetching results for assessment:', id);
 
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.error('❌ Token manquant');
-                setError("Token d'authentification manquant");
-                setLoading(false);
-                return;
-            }
-
-            const response = await fetch(`${API_BASE_URL}/results/by-assessment/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-
-            const resultData = await response.json();
+            const response = await api.get(`/results/by-assessment/${id}`);
+            const resultData = response.data;
             console.log('📊 Données reçues:', resultData);
 
             let recommendationsData = {
@@ -568,20 +474,7 @@ export default function Orientations() {
                 console.error('❌ Erreur API recommandations:', recoError);
             }
 
-            const phase2Scores = resultData.phase2Scores || {};
-            const convertScore = (value) => {
-                const numValue = Number(value) || 0;
-                let calculated = Math.round((numValue / 20) * 100);
-                return Math.min(calculated, 100);
-            };
-            const scores = {
-                REALISTIC: convertScore(phase2Scores.R || 0),
-                INVESTIGATIVE: convertScore(phase2Scores.I || 0),
-                ARTISTIC: convertScore(phase2Scores.A || 0),
-                SOCIAL: convertScore(phase2Scores.S || 0),
-                ENTERPRISING: convertScore(phase2Scores.E || 0),
-                CONVENTIONAL: convertScore(phase2Scores.C || 0),
-            };
+            const scores = getNormalizedScores(resultData);
 
             console.log('🎯 Scores convertis:', scores);
 
@@ -604,13 +497,7 @@ export default function Orientations() {
                 description: `L'axe ${axisNames[w] || w} est à développer.`,
             }));
 
-            const riasecCode =
-                resultData.phase2Code ||
-                Object.entries(scores)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 3)
-                    .map(([key]) => key[0])
-                    .join('');
+            const riasecCode = getRiasecCode(resultData);
 
             const topScoreValue = Math.max(...Object.values(scores));
             let coherenceLevel = 'Faible';
@@ -715,6 +602,7 @@ export default function Orientations() {
 
     const dominantScores = getDominantScores();
     const topAxes = getTopAxes();
+    const effectiveActiveTab = activeTab || topAxes[0]?.key;
     const topScoreValue = Math.min(dominantScores[0]?.[1] || 0, 100);
     const code = dominantScores.map(([key]) => key[0]).join('');
 
@@ -750,12 +638,6 @@ export default function Orientations() {
     <button className="button" onClick={generateTreasureMap}>
         Générer ma carte 🗺️
     </button>;
-
-    useEffect(() => {
-        if (topAxes.length > 0 && activeTab === 'investigative') {
-            setActiveTab(topAxes[0].key);
-        }
-    }, [topAxes, activeTab]);
 
     const behavioralData = data.behavioral || {
         pointsForts: [
@@ -824,12 +706,6 @@ export default function Orientations() {
     return (
         <div className="ria-body">
             <div className="ria-container">
-                {saveSuccess && (
-                    <div className="save-success-message">
-                        ✅ Rapport enregistré avec succès dans votre espace personnel !
-                    </div>
-                )}
-
                 <div className="ria-page-header">
                     <div className="ria-page-header-icon">
                         <IconBarChart />
@@ -1036,7 +912,7 @@ export default function Orientations() {
                         {topAxes.map((axis) => (
                             <button
                                 key={axis.key}
-                                className={`ria-tab${activeTab === axis.key ? ' active' : ''}`}
+                                className={`ria-tab${effectiveActiveTab === axis.key ? ' active' : ''}`}
                                 onClick={() => setActiveTab(axis.key)}
                             >
                                 {axis.icon} {axis.label} ({axis.score})
@@ -1046,7 +922,7 @@ export default function Orientations() {
 
                     {topAxes.map(
                         (axis) =>
-                            activeTab === axis.key && (
+                            effectiveActiveTab === axis.key && (
                                 <GenericTab
                                     key={axis.key}
                                     axisKey={axis.key}

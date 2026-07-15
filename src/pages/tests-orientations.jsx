@@ -258,11 +258,11 @@ const IconClock = () => (
     </svg>
 );
 
-const phases = [
-    { id: 1, name: 'Amorçage', icon: <IconSeedling />, desc: 'Premiers traits de personnalité' },
-    { id: 2, name: 'Aptitude', icon: <IconBulb />, desc: 'Compétences et aptitudes' },
-    { id: 3, name: 'Compétence', icon: <IconTarget />, desc: 'Domaines de maîtrise' },
-    { id: 4, name: 'Personnalité', icon: <IconBrain />, desc: 'Traits comportementaux' },
+const testOptions = [
+    { id: 'GENERALE', name: 'Test général', icon: <IconSeedling />, desc: 'Premiers intérêts professionnels', to: '/test-general' },
+    { id: 'OCCUPATIONS', name: 'Occupations', icon: <IconTarget />, desc: 'Préférences d’activités', to: '/tests' },
+    { id: 'APTITUDES', name: 'Aptitudes', icon: <IconBulb />, desc: 'Compétences et aptitudes', to: '/tests' },
+    { id: 'PERSONALITY', name: 'Personnalité', icon: <IconBrain />, desc: 'Traits comportementaux', to: '/tests' },
 ];
 
 const steps = [
@@ -376,7 +376,7 @@ const Testsorientations = () => {
                         </ul>
                         <Link
                             to="/tests"
-                            state={{ mode: 'full', phases: phases.map((p) => p.id) }}
+                            state={{ mode: 'full' }}
                             className="to-btn to-btn--primary"
                         >
                             Commencer le test complet →
@@ -384,26 +384,23 @@ const Testsorientations = () => {
                     </div>
 
                     <div className="to-card">
-                        <h2 className="to-card-title">Choisir une phase</h2>
+                        <h2 className="to-card-title">Choisir un test</h2>
                         <p className="to-card-desc">
                             Explorez une dimension spécifique du test si vous souhaitez approfondir
                             un aspect particulier de votre profil.
                         </p>
-                        <div className="to-phases-grid">
-                            {phases.map((ph) => (
+                        <div className="to-tests-grid">
+                            {testOptions.map((option) => (
                                 <Link
-                                    key={ph.id}
-                                    to={ph.id === 1 ? '/phase1Test' : '/tests'}
-                                    //         ↑ Nouvelle route vers Phase1Test
-                                    state={
-                                        ph.id === 1 ? undefined : { mode: 'single', phaseId: ph.id }
-                                    }
-                                    className="to-phase-btn"
+                                    key={option.id}
+                                    to={option.to}
+                                    state={option.id === 'GENERALE' ? undefined : { mode: 'single', testType: option.id }}
+                                    className="to-test-btn"
                                 >
-                                    <span className="to-phase-icon">{ph.icon}</span>
-                                    <span className="to-phase-info">
-                                        <span className="to-phase-name">Phase {ph.id}</span>
-                                        <span className="to-phase-sub">{ph.name}</span>
+                                    <span className="to-test-icon">{option.icon}</span>
+                                    <span className="to-test-info">
+                                        <span className="to-category-name">{option.name}</span>
+                                        <span className="to-test-sub">{option.desc}</span>
                                     </span>
                                 </Link>
                             ))}

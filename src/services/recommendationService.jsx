@@ -140,91 +140,15 @@ export const recommendationService = {
             };
         }
     },
-    saveRecommendationsToDatabase: async (assessmentId, recommendations, phase = 'phase1') => {
-        try {
-            const response = await api.post(`/assessments/${assessmentId}/recommendations`, {
-                recommendations: recommendations,
-                phase: phase
-            });
-            console.log('✅ Recommandations sauvegardées en base:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('❌ Erreur sauvegarde en base:', error);
-            throw error;
-        }
-    },
-
     /**
-     * ✅ Récupérer les recommandations depuis la base de données
-     */
-    getRecommendationsFromDatabase: async (assessmentId) => {
-        try {
-            const response = await api.get(`/assessments/${assessmentId}/recommendations/saved`);
-            return response.data?.recommendations || null;
-        } catch (error) {
-            if (error.response?.status === 404) {
-                return null; // Pas encore sauvegardé
-            }
-            console.error('❌ Erreur récupération base:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * ✅ Méthode principale avec priorité BASE DE DONNÉES
+     * Méthode principale compatible avec le backend actuel.
      * Utilise cette méthode au lieu de getRiasecRecommendations directement
      */
     getRiasecRecommendationsWithDB: async (assessmentId, leadingLetter) => {
-        // 1. ✅ ESSAYER LA BASE DE DONNÉES D'ABORD
-        try {
-            const dbRecos = await recommendationService.getRecommendationsFromDatabase(assessmentId);
-            if (dbRecos) {
-                console.log('📦 Recommandations récupérées depuis la BASE DE DONNÉES');
-                
-                // Vérifier si l'axe demandé existe
-                if (leadingLetter) {
-                    const axisMapping = {
-                        'R': 'REALISTIC', 'I': 'INVESTIGATIVE', 'A': 'ARTISTIC',
-                        'S': 'SOCIAL', 'E': 'ENTERPRISING', 'C': 'CONVENTIONAL'
-                    };
-                    const dominantAxis = axisMapping[leadingLetter] || 'INVESTIGATIVE';
-                    
-                    // Si l'axe n'existe pas, utiliser INVESTIGATIVE par défaut
-                    if (!dbRecos.recommendationsByAxis?.[dominantAxis]) {
-                        // Créer l'axe avec des données vides
-                        dbRecos.recommendationsByAxis = dbRecos.recommendationsByAxis || {};
-                        dbRecos.recommendationsByAxis[dominantAxis] = {
-                            formations: ['Aucune formation disponible'],
-                            metiers: ['Aucun métier disponible'],
-                            ecoles: ['Aucune école disponible']
-                        };
-                    }
-                }
-                
-                return dbRecos;
-            }
-        } catch (dbError) {
-            console.warn('⚠️ Erreur lecture base, fallback API:', dbError.message);
-        }
-
-        // 2. 🔄 FALLBACK VERS L'API
         console.log('🔍 Récupération des recommandations depuis l\'API...');
         
         try {
             const recoData = await recommendationService.getRiasecRecommendations(assessmentId);
-            
-            // 3. 💾 SAUVEGARDER EN BASE POUR LA PROCHAINE FOIS
-            try {
-                await recommendationService.saveRecommendationsToDatabase(
-                    assessmentId, 
-                    recoData, 
-                    leadingLetter ? 'phase1' : 'full'
-                );
-                console.log('✅ Recommandations sauvegardées en base');
-            } catch (saveErr) {
-                console.warn('⚠️ Impossible de sauvegarder en base:', saveErr.message);
-            }
-            
             return recoData;
         } catch (apiError) {
             console.error('❌ Erreur API:', apiError);

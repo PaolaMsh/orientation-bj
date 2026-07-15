@@ -2,22 +2,17 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faQuestionCircle,
-    faLightbulb,
     faChartLine,
     faRobot,
     faMapMarkedAlt,
     faUserGraduate,
-    faFileAlt,
     faEnvelope,
     faPhone,
     faChevronDown,
     faChevronUp,
-    faCheckCircle,
     faHeadset,
     faComments,
     faTimes,
-    faQuoteLeft,
     faDownload,
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/support.css';
@@ -46,7 +41,7 @@ const Support = () => {
                 "Merci pour votre message. Un conseiller vous répondra bientôt. En attendant, n'hésitez pas à consulter notre FAQ ou à passer le test d'orientation.";
             if (chatMessage.toLowerCase().includes('test')) {
                 botReply =
-                    "Le test d'orientation se compose de deux phases : 15 questions de base puis des questions adaptatives. Il dure environ 15-20 minutes. Voulez-vous le commencer ?";
+                    "Le test d'orientation est organisé par catégories RIASEC : occupations, aptitudes et personnalité. Il dure environ 15-20 minutes. Voulez-vous le commencer ?";
             } else if (chatMessage.toLowerCase().includes('riasec')) {
                 botReply =
                     'Le modèle RIASEC classe les personnalités en 6 types : Réaliste, Investigateur, Artistique, Social, Entreprenant, Conventionnel. Chaque utilisateur reçoit un code à 3 lettres (ex: SAE).';
@@ -63,7 +58,7 @@ const Support = () => {
         },
         {
             question: "Comment se déroule le test d'orientation ?",
-            answer: "Le test comporte deux phases : un questionnaire de base de 15 questions, puis un test adaptatif où les questions s'ajustent à vos réponses. Le test s'arrête automatiquement lorsque le profil est suffisamment fiable (généralement 15-20 minutes).",
+            answer: "Le test est organisé par catégories RIASEC : occupations, aptitudes et personnalité. Vous pouvez passer le parcours complet ou un test ciblé selon votre besoin. Il dure généralement 15-20 minutes.",
         },
         {
             question: 'Mes données sont-elles sécurisées ?',

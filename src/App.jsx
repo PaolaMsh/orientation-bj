@@ -9,7 +9,7 @@ import Orientations from './pages/orientations';
 import Support from './pages/support';
 import Test from './pages/tests';
 import Testsorientations from './pages/tests-orientations';
-import Phase1Test from './pages/phase1Test'; 
+import GeneralTest from './pages/generalTest';
 import UniversitiesPage from './pages/universites-formations';
 import HeaderParent from './components/headerParent';
 import Footer from './components/footer';
@@ -19,7 +19,7 @@ import Parcours from './pages/parcours';
 import Contact from './pages/contact';
 import Guide from './pages/guide-riasec';
 import Faq from './pages/faq';
-import RapportPhase1 from './pages/rapport-phase1';
+import RapportGeneral from './pages/rapport-general';
 import VerifyEmailGuard from './components/VerifyEmailGuard';
     
 const ProtectedRoute = ({ children }) => {
@@ -89,10 +89,10 @@ function App() {
                     
 
                     <Route
-                        path="/phase1Test"
+                        path="/test-general"
                         element={
                             <ProtectedRoute>
-                                <Phase1Test />
+                                <GeneralTest />
                             </ProtectedRoute>
                         }
                     />
@@ -149,10 +149,10 @@ function App() {
                         }
                     />
                     <Route
-                        path="/rapport-phase1"
+                        path="/rapport-general"
                         element={
                             <ProtectedRoute>
-                                <RapportPhase1 />
+                                <RapportGeneral />
                             </ProtectedRoute>
                         }
                     />

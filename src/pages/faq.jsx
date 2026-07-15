@@ -19,7 +19,7 @@ const FAQ = () => {
     const faqs = [
         {
             question: "Comment fonctionne le test d'orientation ?",
-            answer: "Le test d'orientation est basé sur le modèle RIASEC qui évalue vos intérêts et préférences pour différents types d'activités professionnelles. Il se compose de deux phases : un questionnaire de base de 15 questions, puis un test adaptatif où les questions s'ajustent à vos réponses. Le test s'arrête automatiquement lorsque le profil est suffisamment fiable (généralement 15-20 minutes).",
+            answer: "Le test d'orientation est basé sur le modèle RIASEC qui évalue vos intérêts et préférences pour différents types d'activités professionnelles. Il est organisé par catégories : occupations, aptitudes et personnalité, avec un parcours complet ou des tests ciblés. Le test dure généralement 15-20 minutes.",
         },
         {
             question: 'Combien de temps faut-il pour obtenir mes résultats ?',

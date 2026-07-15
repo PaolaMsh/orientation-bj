@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // ✅ Correction pour Vite - utiliser import.meta.env au lieu de process.env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 console.log('🔗 API URL:', API_URL); // Pour déboguer
 
@@ -73,7 +73,7 @@ api.interceptors.response.use(
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
-                window.location.href = '/login';
+                window.location.href = '/auth/login';
                 return Promise.reject(refreshError);
             }
         }

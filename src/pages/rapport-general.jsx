@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/orientations.css';
 import { recommendationService } from '../services/recommendationService';
 import api from '../services/api';
+import { getRiasecCode } from '../utils/riasec';
 
 const IconInfo = () => (
     <svg
@@ -63,30 +64,25 @@ const IconHome = ({ size = 18 }) => (
     </svg>
 );
 
-function RapportPhase1() {
+function RapportGeneral() {
     const navigate = useNavigate();
     const location = useLocation();
 
     const [rapportData, setRapportData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [assessmentId, setAssessmentId] = useState(null);
     const [recommendations, setRecommendations] = useState({
         formations: [],
         metiers: [],
         ecoles: [],
     });
 
-    // RapportPhase1.js - fetchRecommendations MODIFIÉ
-
-// RapportPhase1.js - fetchRecommendations MODIFIÉ
-
-const fetchRecommendations = async (id, phase1Code) => {
+const fetchRecommendations = async (id, riasecCode) => {
     try {
-        const code = phase1Code || rapportData?.phase1Code || rapportData?.code || 'IND';
+        const code = riasecCode || getRiasecCode(rapportData) || 'IND';
         const leadingLetter = String(code).charAt(0).toUpperCase();
 
-        console.log('📊 Code RIASEC Phase 1:', code);
+        console.log('📊 Code RIASEC:', code);
         console.log('📊 Première lettre (axe dominant):', leadingLetter);
 
         // ✅ UTILISER LA NOUVELLE MÉTHODE AVEC PRIORITÉ BASE DE DONNÉES
@@ -150,26 +146,24 @@ const fetchRecommendations = async (id, phase1Code) => {
                 setLoading(true);
 
                 // 1. Vérifier les données dans location.state
-                const stateResults = location.state?.phaseResults;
+                const stateResults = location.state?.assessmentResults;
                 if (stateResults) {
                     console.log('📦 Données chargées depuis location.state');
                     setRapportData(stateResults);
                     const id = stateResults.assessmentId;
-                    setAssessmentId(id);
-                    await fetchRecommendations(id, stateResults.phase1Code);
+                    await fetchRecommendations(id, getRiasecCode(stateResults));
                     setLoading(false);
                     return;
                 }
 
                 // 2. Vérifier les données dans localStorage
-                const storedReport = localStorage.getItem('phase1_report_data');
+                const storedReport = localStorage.getItem('general_report_data');
                 if (storedReport) {
                     console.log('📦 Données chargées depuis localStorage');
                     const parsed = JSON.parse(storedReport);
                     setRapportData(parsed);
                     const id = parsed.assessmentId;
-                    setAssessmentId(id);
-                    await fetchRecommendations(id, parsed.phase1Code);
+                    await fetchRecommendations(id, getRiasecCode(parsed));
                     setLoading(false);
                     return;
                 }
@@ -177,9 +171,6 @@ const fetchRecommendations = async (id, phase1Code) => {
                 // 3. Récupérer depuis l'API
                 const assessmentIdFromState =
                     location.state?.assessmentId || localStorage.getItem('assessment_id');
-                const sessionToken =
-                    location.state?.sessionToken || localStorage.getItem('session_token');
-
                 if (!assessmentIdFromState) {
                     setError('Identifiant de test non trouvé');
                     setLoading(false);
@@ -187,21 +178,11 @@ const fetchRecommendations = async (id, phase1Code) => {
                 }
 
                 console.log("🔍 Récupération des données depuis l'API...");
-                setAssessmentId(assessmentIdFromState);
-
-                let response;
-                try {
-                    response = await api.get(`/results/by-assessment/${assessmentIdFromState}`);
-                } catch (byAssessmentErr) {
-                    console.warn('⚠️ Erreur /results/by-assessment, tentative /results/phase1');
-                    response = await api.get('/results/phase1', {
-                        params: { assessmentId: assessmentIdFromState, sessionToken },
-                    });
-                }
+                const response = await api.get(`/results/by-assessment/${assessmentIdFromState}`);
 
                 const data = response?.data;
                 setRapportData(data);
-                await fetchRecommendations(assessmentIdFromState, data?.phase1Code);
+                await fetchRecommendations(assessmentIdFromState, getRiasecCode(data));
             } catch (err) {
                 console.error('❌ Erreur lors du chargement du rapport:', err);
                 setError(err.message || 'Erreur lors du chargement du rapport');
@@ -216,21 +197,18 @@ const fetchRecommendations = async (id, phase1Code) => {
     
     // ✅ Nouveau test (avec nettoyage complet)
     const handleNewTest = () => {
-        // Supprimer toutes les données de la Phase 1
-        localStorage.removeItem('phase1_report_data');
-        localStorage.removeItem('phase1_assessment_id');
-        localStorage.removeItem('phase1_session_token');
-        localStorage.removeItem('phase1_responses');
-        localStorage.removeItem('phase1_progress');
-        localStorage.removeItem('phase1_current_question');
+        // Supprimer toutes les données temporaires du test général.
+        localStorage.removeItem('general_report_data');
+        localStorage.removeItem('general_assessment_id');
+        localStorage.removeItem('general_session_token');
         localStorage.removeItem('assessment_id');
         localStorage.removeItem('session_token');
 
-        // Naviguer vers un nouveau test Phase 1
-        navigate('/phase1Test', {
+        // Naviguer vers un nouveau test général.
+        navigate('/test-general', {
             state: {
                 newTest: true,
-                phase: 'phase1',
+                category: 'GENERALE',
             },
         });
     };
@@ -247,7 +225,7 @@ const fetchRecommendations = async (id, phase1Code) => {
                 <div className="ori-wrapper">
                     <div style={{ textAlign: 'center', padding: '50px' }}>
                         <div className="spinner"></div>
-                        <p style={{ marginTop: '20px' }}>Calcul de votre rapport Phase 1...</p>
+                        <p style={{ marginTop: '20px' }}>Calcul de votre rapport général...</p>
                     </div>
                 </div>
             </div>
@@ -291,7 +269,7 @@ const fetchRecommendations = async (id, phase1Code) => {
     }
 
     // ============ PRÉPARATION DES DONNÉES ============
-    const phase1Code = rapportData?.phase1Code || rapportData?.code || 'IND';
+    const riasecCode = getRiasecCode(rapportData) || 'IND';
 
     const axisFromCode = {
         R: { code: 'REALISTIC', label: 'Réaliste' },
@@ -302,7 +280,7 @@ const fetchRecommendations = async (id, phase1Code) => {
         C: { code: 'CONVENTIONAL', label: 'Conventionnel' },
     };
 
-    const leadingLetter = String(phase1Code).charAt(0).toUpperCase();
+    const leadingLetter = String(riasecCode).charAt(0).toUpperCase();
     const fallbackAxis = axisFromCode[leadingLetter] || axisFromCode.I;
 
     const primaryAxis = rapportData.primaryAxis || {
@@ -349,7 +327,7 @@ const fetchRecommendations = async (id, phase1Code) => {
                     <div className="ori-header-content">
                         <div className="ori-logo-section">
                             <h1 className="orientations-header" style={{ marginTop: '7rem' }}>
-                                 Votre Rapport - Phase 1
+                                 Votre rapport général
                             </h1>
                         </div>
                     </div>
@@ -522,4 +500,4 @@ const fetchRecommendations = async (id, phase1Code) => {
     );
 }
 
-export default RapportPhase1;
+export default RapportGeneral;

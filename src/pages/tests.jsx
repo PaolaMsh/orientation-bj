@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
-import { saveTestResult, savePdfReport } from '../services/testService';
+import { FULL_TEST_CATEGORIES, TEST_TYPES } from '../utils/riasec';
 
 const EmotionSvgs = {
     sad: (
@@ -102,24 +102,24 @@ const SectionSvgs = {
     ),
 };
 
-const PHASE2_SECTIONS = [
+const CATEGORY = [
     {
         name: 'OCCUPATIONS',
-        label: 'Réaliste',
+        label: 'Occupations',
         icon: SectionSvgs.realist,
-        description: 'Travail pratique et technique',
+        description: 'Préférences pour les activités professionnelles',
     },
     {
         name: 'APTITUDES',
-        label: 'Investigateur',
+        label: 'Aptitudes',
         icon: SectionSvgs.investigator,
-        description: 'Exploration et analyse',
+        description: 'Compétences et niveaux de maîtrise',
     },
     {
-        name: 'PERSONNALITY',
-        label: 'Artistique',
+        name: 'PERSONALITY',
+        label: 'Personnalité',
         icon: SectionSvgs.artistic,
-        description: 'Créativité et expression',
+        description: 'Traits comportementaux et préférences',
     },
 ];
 
@@ -176,29 +176,18 @@ const EmptyView = ({ onReload }) => (
     </div>
 );
 
-const ProgressHeader = ({
-    currentPhase,
-    currentSection,
-    completionPercentage,
-    draftCount,
-    batchSize,
-}) => {
-    const section =
-        currentPhase === 'PHASE2' ? PHASE2_SECTIONS.find((s) => s.name === currentSection) : null;
+const ProgressHeader = ({ currentCategory, completionPercentage, draftCount, batchSize }) => {
+    const section = CATEGORY.find((s) => s.name === currentCategory);
     return (
         <div className="test-header">
             <div className="logo-section">
                 <span className="logos-text">RIASEC Profiler</span>
             </div>
             <div className="progress-section">
-                <div className="phase-indicator">
-                    <span className="phase-name">
-                        {currentPhase === 'PHASE1' ? 'Phase 1 - ' : `Phase 2 - `}
-                    </span>
-                    <span className="phase-desc">
-                        {currentPhase === 'PHASE1'
-                            ? 'Evaluation de vos intérêts professionnels'
-                            : section?.description || 'Évaluation approfondie'}
+                <div className="category-indicator">
+                    <span className="category-name">{currentCategory}</span>
+                    <span className="category-desc">
+                        {section?.description || 'Évaluation approfondie'}
                     </span>
                 </div>
                 <div className="progress-stats">
@@ -220,14 +209,7 @@ const ProgressHeader = ({
 
 const QuestionCard = ({ question, value, onAnswer }) => {
     const getOptions = () => {
-        if (question.phase === 'PHASE1') {
-            return [
-                { value: 0, label: 'Oui', emoji: EmotionSvgs.happy },
-                { value: 1, label: 'Non', emoji: EmotionSvgs.sad },
-            ];
-        }
-
-        if (question.section === 'APTITUDES') {
+        if (question.category === 'APTITUDES') {
             return [
                 { value: 1, label: 'Faible', emoji: EmotionSvgs.sad },
                 { value: 2, label: 'Moyen', emoji: EmotionSvgs.neutral },
@@ -266,7 +248,7 @@ const QuestionCard = ({ question, value, onAnswer }) => {
     );
 };
 
-const formatQuestions = (data, phase, section) =>
+const formatQuestions = (data, category) =>
     data.map((q) => {
         const base = {
             id: q.id,
@@ -274,24 +256,16 @@ const formatQuestions = (data, phase, section) =>
             riasecType: q.riasecType,
             subtext: q.subtext || null,
             pointsValue: q.pointsValue || 1,
-            phase,
+            category: q.category || category,
         };
-        if (phase === 'PHASE1')
-            return {
-                ...base,
-                minValue: q.minValue || 1,
-                maxValue: q.maxValue || 3,
-                valueLabels: q.valueLabels || ['Non', { emoji: EmotionSvgs.happy, label: 'Oui' }],
-            };
         return {
             ...base,
-            section,
             sectionType: q.sectionType,
-            minValue: section === 'APTITUDES' ? q.minValue || 1 : (q.minValue ?? 0),
-            maxValue: section === 'APTITUDES' ? q.maxValue || 3 : 1,
+            minValue: category === 'APTITUDES' ? q.minValue || 1 : (q.minValue ?? 0),
+            maxValue: category === 'APTITUDES' ? q.maxValue || 3 : 1,
             valueLabels:
                 q.valueLabels ||
-                (section === 'APTITUDES'
+                (category === 'APTITUDES'
                     ? [
                           'Faible',
                           { emoji: EmotionSvgs.neutral, label: 'Moyen' },
@@ -303,9 +277,19 @@ const formatQuestions = (data, phase, section) =>
 
 const Test = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const requestedTestType = location.state?.testType;
+    const selectedCategories = useMemo(
+        () =>
+            FULL_TEST_CATEGORIES.includes(requestedTestType)
+                ? [requestedTestType]
+                : FULL_TEST_CATEGORIES,
+        [requestedTestType],
+    );
+    const initialTestType =
+        selectedCategories.length === 1 ? selectedCategories[0] : TEST_TYPES.FULL;
 
-    const [currentPhase, setCurrentPhase] = useState(null);
-    const [currentSection, setCurrentSection] = useState(null);
+    const [currentCategory, setCurrentCategory] = useState(selectedCategories[0]);
     const [completionPercentage, setCompletionPercentage] = useState(0);
     const [sessionToken, setSessionToken] = useState(null);
     const [assessmentId, setAssessmentId] = useState(null);
@@ -316,7 +300,7 @@ const Test = () => {
     const [loadingBatch, setLoadingBatch] = useState(true);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [phase2SectionsCompleted, setPhase2SectionsCompleted] = useState({});
+    const [completedCategories, setCompletedCategories] = useState({});
 
     const [batchHistory, setBatchHistory] = useState([]);
     const [savedAnswersHistory, setSavedAnswersHistory] = useState([]);
@@ -339,9 +323,13 @@ const Test = () => {
 
             const response = await api.post('/sessions', {
                 testVersionId: 1,
-                initialAssessmentType: 'FULL',
+                initialTestType,
                 depth: 5,
-                profile: { startedAt: new Date().toISOString(), mode: 'full' },
+                profile: {
+                    startedAt: new Date().toISOString(),
+                    mode: initialTestType === TEST_TYPES.FULL ? 'full' : 'category',
+                    testType: initialTestType,
+                },
             });
             if (response?.data) {
                 const newSessionToken = response.data.sessionToken;
@@ -355,73 +343,60 @@ const Test = () => {
             setError(err.response?.data?.message || "Impossible d'initialiser le test");
             return null;
         }
-    }, []);
+    }, [initialTestType]);
 
     const resolveProgress = useCallback(async (token, assessmentIdParam) => {
         try {
             if (!token || token === 'null')
                 return {
                     status: 'IN_PROGRESS',
-                    currentPhase: 'PHASE1',
-                    currentSection: null,
+                    currentCategory: selectedCategories[0],
                 };
             const progressResponse = await api.get(`/assessments/${assessmentIdParam}/progress`, {
                 params: { sessionToken: token },
             });
             const progressData = progressResponse.data;
-            setCurrentPhase(progressData.currentPhase);
-            setCurrentSection(progressData.currentSection);
             setCompletionPercentage(progressData.completionPercentage || 0);
             return progressData;
-        } catch (err) {
+        } catch {
             return {
                 status: 'IN_PROGRESS',
-                currentPhase: 'PHASE1',
-                currentSection: null,
+                currentCategory: selectedCategories[0],
             };
         }
-    }, []);
+    }, [selectedCategories]);
 
     const fetchBatch = useCallback(
-        async (phase, section = null, tokenParam = null, assessmentIdParam = null) => {
+        async (category, tokenParam = null, assessmentIdParam = null, options = {}) => {
             setLoadingBatch(true);
             const tokenToUse = tokenParam || sessionToken;
             const assessmentIdToUse = assessmentIdParam || assessmentId;
 
             try {
-                let response;
-                if (phase === 'PHASE1') {
-                    response = await api.get('/questions/phase1', {
-                        params: {
-                            sessionToken: tokenToUse,
-                            assessmentId: assessmentIdToUse,
-                            lang: 'fr',
-                            take: BATCH_SIZE,
-                        },
-                    });
-                } else if (phase === 'PHASE2' && section) {
-                    response = await api.get('/questions/phase2', {
-                        params: {
-                            sessionToken: tokenToUse,
-                            assessmentId: assessmentIdToUse,
-                            section,
-                            lang: 'fr',
-                            take: BATCH_SIZE,
-                        },
-                    });
-                } else throw new Error('Phase ou section invalide');
+                const response = await api.get('/questions/category', {
+                    params: {
+                        sessionToken: tokenToUse,
+                        assessmentId: assessmentIdToUse,
+                        currentCategory: category,
+                        lang: 'fr',
+                        take: BATCH_SIZE,
+                    },
+                });
 
                 if (response?.data && response.data.length > 0) {
-                    const formatted = formatQuestions(response.data, phase, section);
+                    const formatted = formatQuestions(response.data, category);
+                    setCurrentCategory(category);
                     setCurrentBatch(formatted);
                     setDraftAnswers({});
                     return true;
                 }
-                setError('Aucune donnée reçue');
+                if (!options.allowEmpty) setError('Aucune donnée reçue');
                 return false;
             } catch (err) {
                 console.error('Fetch batch error:', err);
-                setError(err.response?.data?.message || 'Impossible de charger les questions');
+                if (!options.allowEmpty) {
+                    setError(err.response?.data?.message || 'Impossible de charger les questions');
+                }
                 return false;
             } finally {
                 setLoadingBatch(false);
@@ -438,31 +413,20 @@ const Test = () => {
         }
         setSubmitting(true);
         try {
-            const endpoint = currentPhase === 'PHASE1' ? '/responses/phase1' : '/responses/phase2';
-            const payload =
-                currentPhase === 'PHASE2'
-                    ? {
-                          sessionToken,
-                          assessmentId,
-                          responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
-                              questionId: Number(questionId),
-                              responseValue:
-                                  currentSection === 'APTITUDES'
-                                      ? Math.min(3, Math.max(1, Number(answer.value)))
-                                      : Number(answer.value) === 0
-                                        ? 0
-                                        : 1,
-                          })),
-                      }
-                    : {
-                          sessionToken,
-                          assessmentId,
-                          responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
-                              questionId: Number(questionId),
-                              responseValue: answer.value,
-                          })),
-                      };
-            await api.post(endpoint, payload);
+            const payload = {
+                sessionToken,
+                assessmentId,
+                responses: Object.entries(draftAnswers).map(([questionId, answer]) => ({
+                    questionId: Number(questionId),
+                    responseValue:
+                        currentCategory === TEST_TYPES.APTITUDES
+                            ? Math.min(3, Math.max(1, Number(answer.value)))
+                            : Number(answer.value) === 0
+                              ? 0
+                              : 1,
+                })),
+            };
+            await api.post('/responses/category', payload);
 
             setDraftAnswers({});
             const updatedProgress = await resolveProgress(sessionToken, assessmentId);
@@ -477,8 +441,7 @@ const Test = () => {
     }, [
         draftAnswers,
         currentBatch,
-        currentPhase,
-        currentSection,
+        currentCategory,
         sessionToken,
         assessmentId,
         resolveProgress,
@@ -490,7 +453,7 @@ const Test = () => {
                 'Vous êtes au début du test. Voulez-vous recharger les questions ?',
             );
             if (shouldReload) {
-                await fetchBatch(currentPhase, currentSection, sessionToken, assessmentId);
+                await fetchBatch(currentCategory, sessionToken, assessmentId);
             }
             return;
         }
@@ -506,96 +469,14 @@ const Test = () => {
         setCurrentBatch(previousBatchData.questions);
         setDraftAnswers(previousAnswers || {});
 
-        setCurrentPhase(previousBatchData.phase);
-        if (previousBatchData.section) {
-            setCurrentSection(previousBatchData.section);
-        }
+        setCurrentCategory(previousBatchData.category);
     }, [
         batchHistory,
         savedAnswersHistory,
-        currentPhase,
-        currentSection,
+        currentCategory,
         sessionToken,
         assessmentId,
         fetchBatch,
-    ]);
-
-    const handleManualNextBatch = useCallback(async () => {
-        if (Object.keys(draftAnswers).length !== currentBatch.length) {
-            const remaining = currentBatch.length - Object.keys(draftAnswers).length;
-            alert(
-                `Veuillez répondre à toutes les questions avant de continuer (${remaining} restante${remaining > 1 ? 's' : ''})`,
-            );
-            return;
-        }
-
-        setBatchHistory((prev) => [
-            ...prev,
-            {
-                batchId: Date.now(),
-                phase: currentPhase,
-                section: currentSection,
-                questions: [...currentBatch],
-            },
-        ]);
-        setSavedAnswersHistory((prev) => [...prev, { ...draftAnswers }]);
-
-        const progressData = await submitBatch();
-        if (!progressData) return;
-
-        setHasUsedPrevious(false);
-
-        if (progressData.status === 'COMPLETED') {
-            handleAssessmentCompletion();
-            return;
-        }
-
-        const previousPhase = currentPhase;
-        const newPhase = progressData.currentPhase;
-
-        if (newPhase === 'PHASE1' && previousPhase === 'PHASE1') {
-            const success = await fetchBatch('PHASE1', null, sessionToken, assessmentId);
-            if (!success) setError('Impossible de charger la prochaine batch');
-        } else if (newPhase === 'PHASE2' && previousPhase === 'PHASE1') {
-            setCurrentPhase('PHASE2');
-            setCurrentSection(PHASE2_SECTIONS[0].name);
-            const success = await fetchBatch(
-                'PHASE2',
-                PHASE2_SECTIONS[0].name,
-                sessionToken,
-                assessmentId,
-            );
-            if (!success) setError('Impossible de charger la Phase 2');
-        } else if (newPhase === 'PHASE2' && previousPhase === 'PHASE2') {
-            if (progressData.currentSection !== currentSection) {
-                setPhase2SectionsCompleted((p) => ({ ...p, [currentSection]: true }));
-                setCurrentSection(progressData.currentSection);
-                const success = await fetchBatch(
-                    'PHASE2',
-                    progressData.currentSection,
-                    sessionToken,
-                    assessmentId,
-                );
-                if (!success) setError('Impossible de charger la prochaine section');
-            } else {
-                const success = await fetchBatch(
-                    'PHASE2',
-                    currentSection,
-                    sessionToken,
-                    assessmentId,
-                );
-                if (!success) setError('Impossible de charger la prochaine batch');
-            }
-        }
-    }, [
-        currentPhase,
-        currentSection,
-        fetchBatch,
-        submitBatch,
-        sessionToken,
-        assessmentId,
-        currentBatch,
-        draftAnswers,
     ]);
 
     const handleAssessmentCompletion = useCallback(async () => {
@@ -620,6 +501,64 @@ const Test = () => {
             }
         }
     }, [sessionToken, assessmentId, navigate]);
+
+    const handleManualNextBatch = useCallback(async () => {
+        if (Object.keys(draftAnswers).length !== currentBatch.length) {
+            const remaining = currentBatch.length - Object.keys(draftAnswers).length;
+            alert(
+                `Veuillez répondre à toutes les questions avant de continuer (${remaining} restante${remaining > 1 ? 's' : ''})`,
+            );
+            return;
+        }
+
+        setBatchHistory((prev) => [
+            ...prev,
+            {
+                batchId: Date.now(),
+                category: currentCategory,
+                questions: [...currentBatch],
+            },
+        ]);
+        setSavedAnswersHistory((prev) => [...prev, { ...draftAnswers }]);
+
+        const progressData = await submitBatch();
+        if (!progressData) return;
+
+        setHasUsedPrevious(false);
+
+        if (progressData.status === 'COMPLETED') {
+            handleAssessmentCompletion();
+            return;
+        }
+
+        const sameCategoryHasQuestions = await fetchBatch(currentCategory, sessionToken, assessmentId, {
+            allowEmpty: true,
+        });
+        if (sameCategoryHasQuestions) return;
+
+        setCompletedCategories((prev) => ({ ...prev, [currentCategory]: true }));
+        const currentIndex = selectedCategories.indexOf(currentCategory);
+        const remainingCategories = selectedCategories.slice(currentIndex + 1);
+        for (const category of remainingCategories) {
+            const hasQuestions = await fetchBatch(category, sessionToken, assessmentId, {
+                allowEmpty: true,
+            });
+            if (hasQuestions) return;
+            setCompletedCategories((prev) => ({ ...prev, [category]: true }));
+        }
+
+        handleAssessmentCompletion();
+    }, [
+        currentCategory,
+        selectedCategories,
+        fetchBatch,
+        submitBatch,
+        sessionToken,
+        assessmentId,
+        currentBatch,
+        draftAnswers,
+        handleAssessmentCompletion,
+    ]);
 
     useEffect(() => {
         const loadAssessment = async () => {
@@ -648,19 +587,10 @@ const Test = () => {
                         setSessionToken(newSession.sessionToken);
                         setAssessmentId(newSession.assessmentId);
 
-                        const newProgress = await resolveProgress(
-                            newSession.sessionToken,
-                            newSession.assessmentId,
-                        );
-
-                        const phase = newProgress.currentPhase || 'PHASE1';
-                        const section =
-                            newProgress.currentSection ||
-                            (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
+                        await resolveProgress(newSession.sessionToken, newSession.assessmentId);
 
                         await fetchBatch(
-                            phase,
-                            section,
+                            selectedCategories[0],
                             newSession.sessionToken,
                             newSession.assessmentId,
                         );
@@ -669,13 +599,8 @@ const Test = () => {
                     }
                 }
 
-                const phase = progressData.currentPhase || 'PHASE1';
-                const section =
-                    progressData.currentSection ||
-                    (phase === 'PHASE2' ? PHASE2_SECTIONS[0].name : null);
                 await fetchBatch(
-                    phase,
-                    section,
+                    selectedCategories[0],
                     sessionData.sessionToken,
                     sessionData.assessmentId,
                 );
@@ -687,7 +612,7 @@ const Test = () => {
             }
         };
         loadAssessment();
-    }, [initializeSession, resolveProgress, fetchBatch, navigate]);
+    }, [initializeSession, resolveProgress, fetchBatch, navigate, selectedCategories]);
 
     const handleAnswer = useCallback((questionId, value) => {
         setDraftAnswers((prev) => ({ ...prev, [questionId]: { value } }));
@@ -749,31 +674,28 @@ const Test = () => {
         <div className="test-page">
             <div className="test-container">
                 <ProgressHeader
-                    currentPhase={currentPhase}
-                    currentSection={currentSection}
+                    currentCategory={currentCategory}
                     completionPercentage={completionPercentage}
                     draftCount={Object.keys(draftAnswers).length}
                     batchSize={currentBatch.length}
                 />
 
-                {currentPhase === 'PHASE2' && (
-                    <div className="phase2-sections-indicator">
-                        {PHASE2_SECTIONS.map((section) => (
-                            <div
-                                key={section.name}
-                                className={`section-badge ${section.name === currentSection ? 'active' : ''} ${phase2SectionsCompleted[section.name] ? 'completed' : ''}`}
-                            >
-                                <div className="sec">
-                                    <span className="section-icon">{section.icon}</span>
-                                    <span className="section-name">{section.label}</span>
-                                    {phase2SectionsCompleted[section.name] && (
-                                        <span className="section-check">✓</span>
-                                    )}
-                                </div>
+                <div className="category-sections-indicator">
+                    {CATEGORY.filter((section) => selectedCategories.includes(section.name)).map((section) => (
+                        <div
+                            key={section.name}
+                            className={`section-badge ${section.name === currentCategory ? 'active' : ''} ${completedCategories[section.name] ? 'completed' : ''}`}
+                        >
+                            <div className="sec">
+                                <span className="section-icon">{section.icon}</span>
+                                <span className="section-name">{section.label}</span>
+                                {completedCategories[section.name] && (
+                                    <span className="section-check">✓</span>
+                                )}
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </div>
+                    ))}
+                </div>
 
                 {loadingBatch ? (
                     <Spinner size={30} />

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/tests.css';
 import api from '../services/api';
+import { TEST_TYPES } from '../utils/riasec';
 
 const EmotionSvgs = {
     sad: (
@@ -51,9 +52,9 @@ const ProgressHeader = ({ completionPercentage, draftCount, batchSize }) => {
                 <span className="logos-text">RIASEC Profiler</span>
             </div>
             <div className="progress-section">
-                <div className="phase-indicator">
-                    <span className="phase-name">Phase 1 - Intérêts</span>
-                    <span className="phase-desc">Évaluation de vos intérêts professionnels</span>
+                <div className="category-indicator">
+                    <span className="category-name">Test général - Intérêts</span>
+                    <span className="category-desc">Évaluation de vos intérêts professionnels</span>
                 </div>
                 <div className="progress-stats">
                     <span>
@@ -106,12 +107,12 @@ const formatQuestions = (data) => {
         id: q.id,
         text: q.text,
         subtext: q.subtext || null,
-        phase: 'PHASE1',
+        category: q.category || TEST_TYPES.GENERALE,
         riasecType: q.riasecType,
     }));
 };
 
-const Phase1Test = () => {
+const GeneralTest = () => {
     const navigate = useNavigate();
 
     const [sessionToken, setSessionToken] = useState(null);
@@ -123,8 +124,7 @@ const Phase1Test = () => {
     const [loading, setLoading] = useState(true);
     const [loadingBatch, setLoadingBatch] = useState(true);
     const [error, setError] = useState(null);
-    const [phaseCompleted, setPhaseCompleted] = useState(false);
-    const [phaseResults, setPhaseResults] = useState(null);
+    const [assessmentCompleted] = useState(false);
 
     const resolveProgress = useCallback(async (token, assessmentIdParam) => {
         try {
@@ -134,7 +134,7 @@ const Phase1Test = () => {
             const progressData = progressResponse.data;
             setCompletionPercentage(progressData.completionPercentage || 0);
             return progressData;
-        } catch (err) {
+        } catch {
             return { status: 'IN_PROGRESS' };
         }
     }, []);
@@ -147,30 +147,30 @@ const Phase1Test = () => {
                 return null;
             }
 
-            const existingSessionToken = localStorage.getItem('phase1_session_token');
-            const existingAssessmentId = localStorage.getItem('phase1_assessment_id');
+            const existingSessionToken = localStorage.getItem('general_session_token');
+            const existingAssessmentId = localStorage.getItem('general_assessment_id');
 
-            if (existingSessionToken && existingAssessmentId && !phaseCompleted) {
+            if (existingSessionToken && existingAssessmentId && !assessmentCompleted) {
                 return { sessionToken: existingSessionToken, assessmentId: existingAssessmentId };
             }
 
             const response = await api.post('/sessions', {
                 testVersionId: 1,
-                initialAssessmentType: 'PHASE1',
+                initialTestType: TEST_TYPES.GENERALE,
                 depth: 5,
                 profile: {
                     startedAt: new Date().toISOString(),
-                    mode: 'phase',
-                    phaseId: 1,
-                    isSimplePhase: true,
+                    mode: 'category',
+                    category: TEST_TYPES.GENERALE,
+                    isGeneralTest: true,
                 },
             });
 
             if (response?.data) {
                 const newSessionToken = response.data.sessionToken;
                 const newAssessmentId = response.data.assessment.id;
-                localStorage.setItem('phase1_session_token', newSessionToken);
-                localStorage.setItem('phase1_assessment_id', newAssessmentId);
+                localStorage.setItem('general_session_token', newSessionToken);
+                localStorage.setItem('general_assessment_id', newAssessmentId);
                 return { sessionToken: newSessionToken, assessmentId: newAssessmentId };
             }
             throw new Error("Erreur lors de l'initialisation");
@@ -179,7 +179,48 @@ const Phase1Test = () => {
             setError(err.response?.data?.message || "Impossible d'initialiser le test");
             return null;
         }
-    }, [phaseCompleted]);
+    }, [assessmentCompleted]);
+
+    const completeAssessment = useCallback(async (token, assessmentIdParam) => {
+        setSubmitting(true);
+        try {
+            try {
+                await api.post('/results/compute', {
+                    sessionToken: token,
+                    assessmentId: assessmentIdParam,
+                });
+            } catch (computeErr) {
+                console.warn('Compute warning:', computeErr);
+            }
+
+            const response = await api.get(`/results/by-assessment/${assessmentIdParam}`);
+
+            const reportData = { ...(response?.data || {}), assessmentId: assessmentIdParam };
+            
+            // Sauvegarder les données
+            localStorage.setItem('assessment_id', String(assessmentIdParam));
+            localStorage.setItem('session_token', String(token));
+            localStorage.setItem('general_report_data', JSON.stringify(reportData));
+            
+            // Nettoyer les données temporaires
+            localStorage.removeItem('general_session_token');
+            localStorage.removeItem('general_assessment_id');
+            
+            // Rediriger vers le rapport
+            navigate('/rapport-general', {
+                state: {
+                    assessmentResults: reportData,
+                    assessmentId: assessmentIdParam,
+                    sessionToken: token,
+                },
+            });
+        } catch (err) {
+            console.error('Error completing assessment:', err);
+            setError("Impossible de finaliser le test et d'afficher le rapport");
+        } finally {
+            setSubmitting(false);
+        }
+    }, [navigate]);
 
     const fetchBatch = useCallback(
         async (tokenParam = null, assessmentIdParam = null) => {
@@ -188,10 +229,11 @@ const Phase1Test = () => {
             const assessmentIdToUse = assessmentIdParam || assessmentId;
 
             try {
-                const response = await api.get('/questions/phase1', {
+                const response = await api.get('/questions/category', {
                     params: {
                         sessionToken: tokenToUse,
                         assessmentId: assessmentIdToUse,
+                        currentCategory: TEST_TYPES.GENERALE,
                         lang: 'fr',
                         take: BATCH_SIZE,
                     },
@@ -204,7 +246,7 @@ const Phase1Test = () => {
                     return true;
                 }
 
-                await completePhase(tokenToUse, assessmentIdToUse);
+                await completeAssessment(tokenToUse, assessmentIdToUse);
                 return false;
             } catch (err) {
                 console.error('Fetch batch error:', err);
@@ -213,7 +255,7 @@ const Phase1Test = () => {
                     String(message).toLowerCase().includes('aucun test actif') ||
                     String(message).toLowerCase().includes('no active')
                 ) {
-                    await completePhase(tokenToUse, assessmentIdToUse);
+                    await completeAssessment(tokenToUse, assessmentIdToUse);
                     return false;
                 }
                 setError(err.response?.data?.message || 'Impossible de charger les questions');
@@ -222,56 +264,8 @@ const Phase1Test = () => {
                 setLoadingBatch(false);
             }
         },
-        [sessionToken, assessmentId],
+        [sessionToken, assessmentId, completeAssessment],
     );
-
-    const completePhase = async (token, assessmentIdParam) => {
-        setSubmitting(true);
-        try {
-            try {
-                await api.post('/results/compute', {
-                    sessionToken: token,
-                    assessmentId: assessmentIdParam,
-                });
-            } catch (computeErr) {
-                console.warn('Compute warning:', computeErr);
-            }
-
-            let response;
-            try {
-                response = await api.get(`/results/by-assessment/${assessmentIdParam}`);
-            } catch (resultErr) {
-                response = await api.get(`/results/phase1`, {
-                    params: { assessmentId: assessmentIdParam, sessionToken: token },
-                });
-            }
-
-            const reportData = response?.data || {};
-            
-            // Sauvegarder les données
-            localStorage.setItem('assessment_id', String(assessmentIdParam));
-            localStorage.setItem('session_token', String(token));
-            localStorage.setItem('phase1_report_data', JSON.stringify(reportData));
-            
-            // Nettoyer les données temporaires
-            localStorage.removeItem('phase1_session_token');
-            localStorage.removeItem('phase1_assessment_id');
-            
-            // Rediriger vers le rapport
-            navigate('/rapport-phase1', {
-                state: {
-                    phaseResults: reportData,
-                    assessmentId: assessmentIdParam,
-                    sessionToken: token,
-                },
-            });
-        } catch (err) {
-            console.error('Error completing phase:', err);
-            setError("Impossible de finaliser la phase et d'afficher le rapport");
-        } finally {
-            setSubmitting(false);
-        }
-    };
 
     const submitBatch = useCallback(async () => {
         if (Object.keys(draftAnswers).length !== currentBatch.length) {
@@ -292,7 +286,7 @@ const Phase1Test = () => {
                 })),
             };
 
-            await api.post('/responses/phase1', payload);
+            await api.post('/responses/category', payload);
             setDraftAnswers({});
             const updatedProgress = await resolveProgress(sessionToken, assessmentId);
             return updatedProgress;
@@ -310,13 +304,13 @@ const Phase1Test = () => {
         if (!progressData) return;
 
         if (progressData.status === 'COMPLETED') {
-            await completePhase(sessionToken, assessmentId);
+            await completeAssessment(sessionToken, assessmentId);
             return;
         }
 
         // Charger le prochain lot de questions
         await fetchBatch(sessionToken, assessmentId);
-    }, [submitBatch, sessionToken, assessmentId, fetchBatch]);
+    }, [submitBatch, sessionToken, assessmentId, fetchBatch, completeAssessment]);
 
     const handleAnswer = useCallback((questionId, value) => {
         setDraftAnswers((prev) => ({ ...prev, [questionId]: { value } }));
@@ -324,7 +318,7 @@ const Phase1Test = () => {
 
     // Initialisation
     useEffect(() => {
-        const loadPhase = async () => {
+        const loadAssessment = async () => {
             setLoading(true);
             setError(null);
             const sessionData = await initializeSession();
@@ -336,7 +330,7 @@ const Phase1Test = () => {
             }
             setLoading(false);
         };
-        loadPhase();
+        loadAssessment();
     }, [initializeSession, fetchBatch, resolveProgress]);
 
     // Auto-soumission quand toutes les questions sont répondues
@@ -348,7 +342,7 @@ const Phase1Test = () => {
             allAnswered &&
             !submitting &&
             !loadingBatch &&
-            !phaseCompleted &&
+            !assessmentCompleted &&
             currentBatch.length > 0
         ) {
             const timer = setTimeout(() => {
@@ -360,7 +354,7 @@ const Phase1Test = () => {
         allAnswered,
         submitting,
         loadingBatch,
-        phaseCompleted,
+        assessmentCompleted,
         currentBatch.length,
         handleBatchComplete,
     ]);
@@ -371,7 +365,7 @@ const Phase1Test = () => {
                 <div className="test-container">
                     <Spinner />
                     <p style={{ textAlign: 'center', marginTop: '20px' }}>
-                        Chargement de la Phase 1...
+                        Chargement du test général...
                     </p>
                 </div>
             </div>
@@ -435,4 +429,4 @@ const Phase1Test = () => {
     );
 };
 
-export default Phase1Test;
+export default GeneralTest;
