@@ -259,7 +259,7 @@ const IconClock = () => (
 );
 
 const testOptions = [
-    { id: 'GENERALE', name: 'Test général', icon: <IconSeedling />, desc: 'Premiers intérêts professionnels', to: '/test-general' },
+    { id: 'GENERALE', name: 'Général', icon: <IconSeedling />, desc: 'Premiers intérêts professionnels', to: '/test-general' },
     { id: 'OCCUPATIONS', name: 'Occupations', icon: <IconTarget />, desc: 'Préférences d’activités', to: '/tests' },
     { id: 'APTITUDES', name: 'Aptitudes', icon: <IconBulb />, desc: 'Compétences et aptitudes', to: '/tests' },
     { id: 'PERSONALITY', name: 'Personnalité', icon: <IconBrain />, desc: 'Traits comportementaux', to: '/tests' },
@@ -365,7 +365,7 @@ const Testsorientations = () => {
                         </p>
                         <ul className="to-card-features">
                             <li>
-                                <IconCheckCircle /> Test général, occupations, aptitudes et personnalité
+                                <IconCheckCircle /> Général, occupations, aptitudes et personnalité
                             </li>
                             <li>
                                 <IconCheckCircle /> Profil détaillé sur 6 dimensions

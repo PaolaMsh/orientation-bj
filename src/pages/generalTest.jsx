@@ -62,7 +62,7 @@ const ProgressHeader = ({ completionPercentage, draftCount, batchSize }) => {
             </div>
             <div className="progress-section">
                 <div className="category-indicator">
-                    <span className="category-name">Test général - Intérêts</span>
+                    <span className="category-name">Général - Intérêts</span>
                     <span className="category-desc">Évaluation de vos intérêts professionnels</span>
                 </div>
                 <div className="progress-stats">
@@ -405,7 +405,7 @@ const GeneralTest = () => {
                 <div className="test-container">
                     <Spinner />
                     <p style={{ textAlign: 'center', marginTop: '20px' }}>
-                        Chargement du test général...
+                        Chargement du général...
                     </p>
                 </div>
             </div>

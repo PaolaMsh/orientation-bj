@@ -60,7 +60,7 @@ export function getDominantAxisFromCode(code) {
 
 export function getCategoryLabel(category) {
     const labels = {
-        [TEST_TYPES.GENERALE]: 'Test général',
+        [TEST_TYPES.GENERALE]: 'Général',
         [TEST_TYPES.OCCUPATIONS]: 'Occupations',
         [TEST_TYPES.APTITUDES]: 'Aptitudes',
         [TEST_TYPES.PERSONALITY]: 'Personnalité',
