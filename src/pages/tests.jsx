@@ -104,7 +104,6 @@ const SectionSvgs = {
 
 const CATEGORY = [
     {
-        name: 'GENERALE',
         label: 'Général',
         icon: SectionSvgs.realist,
         description: 'Première évaluation de vos intérêts professionnels',
